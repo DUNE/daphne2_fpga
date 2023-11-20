@@ -27,7 +27,7 @@ port(
 
     reset_n: in std_logic; -- active LOW async reset from the microcontroller
     sysclk_p, sysclk_n: in std_logic; -- system clock LVDS 100MHz from local oscillator
-
+    
     -- AFE interface, LVDS, 5 AFE chips, each AFE has 8 DATA + 1 FCLK outputs
 
     afe_p, afe_n: array_5x9_type; -- (7..0=DATA, 8=FCLK)
@@ -250,6 +250,29 @@ architecture DAPHNE2_arch of DAPHNE2 is
         dout:    out array_5x9x14_type -- data synchronized to clock
       );
     end component;
+    
+    component Self_Trig_CIEMAT is
+    port(
+        clock: in  std_logic;                           -- AFE clock 
+        din:   in  std_logic_vector(13 downto 0);       -- Raw AFE data
+        Config_Param: in std_logic_vector(63 downto 0);    -- Trigger threshold relative to baseline
+        triggered: out std_logic;                       -- Self-Trigger Signal. Active HIGH
+        Data_Available: out std_logic;                  -- Primitives calculation available. Active HIGH
+        Time_Peak: out  std_logic_vector(7 downto 0);   -- Time in Samples to achieve de Max peak
+        Time_Pulse_UB: out  std_logic_vector(9 downto 0);  -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+        Time_Pulse_OB: out  std_logic_vector(10 downto 0);  -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
+        Max_Peak: out  std_logic_vector(15 downto 0);    -- Amplitude in ADC counts od the peak
+        Charge: out  std_logic_vector(19 downto 0);      -- Charge of the light pulse (without undershoot) in ADC*samples
+        Number_Peaks_UB: out  std_logic_vector(3 downto 0);-- Number of peaks detected when signal is UNDER BASELINE (without undershoot). 
+        Number_Peaks_OB: out  std_logic_vector(3 downto 0);-- Number of peaks detected when signal is OVER BASELINE (undershoot).     
+        -- Variables that will be removed before debugging
+        peak: out std_logic;                            -- Peak detection. Active HIGH
+        trigsample: out std_logic_vector(13 downto 0);  -- The sample that caused the trigger
+        slope: out std_logic_vector(13 downto 0);       -- Actual value of slope
+        amplitude: out std_logic_vector(14 downto 0);   -- Actual value of amplitude
+        baseline: out std_logic_vector(13 downto 0)     -- Baseline that caused the trigger
+        );
+    end component;
 
     component spy
     port(
@@ -318,7 +341,23 @@ architecture DAPHNE2_arch of DAPHNE2 is
 
     signal gbe_refclk_bufg_out, oeiclk, ready: std_logic;
     signal gbe_refclk_p_ibuf, gbe_refclk_n_ibuf: std_logic;
-
+    signal Self_Trigger: std_logic; -- self-Trigger signal. TEST
+    signal Self_Baseline: std_logic_vector(13 downto 0);
+    signal Self_Amplitude: std_logic_vector(14 downto 0);
+    signal Self_Slope: std_logic_vector(13 downto 0);
+    signal Self_Trigger_16: std_logic_vector(15 downto 0);
+    signal Self_Baseline_16: std_logic_vector(15 downto 0);
+    signal Self_Amplitude_16: std_logic_vector(15 downto 0);
+    signal Self_Slope_16: std_logic_vector(15 downto 0);
+    signal Spy_Trigger_16: std_logic_vector(15 downto 0);
+    signal Spy_Baseline_16: std_logic_vector(15 downto 0);
+    signal Spy_Amplitude_16: std_logic_vector(15 downto 0);
+    signal Spy_Slope_16: std_logic_vector(15 downto 0);
+    signal Spy_Trigger_64: std_logic_vector(63 downto 0);
+    signal Spy_Baseline_64: std_logic_vector(63 downto 0);
+    signal Spy_Amplitude_64: std_logic_vector(63 downto 0);
+    signal Spy_Slope_64: std_logic_vector(63 downto 0);
+    
     signal gmii_rxd, gmii_txd: std_logic_vector(7 downto 0);
     signal gmii_tx_en, gmii_tx_er: std_logic;
     signal gmii_rx_dv, gmii_rx_er: std_logic;
@@ -386,6 +425,9 @@ architecture DAPHNE2_arch of DAPHNE2 is
 
     signal st_enable_reg: std_logic_vector(39 downto 0);
     signal st_enable_we: std_logic;
+    
+    signal st_config_reg: std_logic_vector(63 downto 0);
+    signal st_config_we: std_logic;
 
 begin
 
@@ -487,10 +529,10 @@ begin
         end if;
     end process trig_oei_proc;
 
-    trig_proc: process(mclk) -- note external trigger input is inverted on DAPHNE2
+    trig_proc: process(mclk) -- note external trigger input is inverted on DAPHNE2. Self Trigger added for test
     begin
         if rising_edge(mclk) then
-            trig_sync <= (not trig_ext) or trig_gbe0_reg or trig_gbe1_reg or trig_gbe2_reg; 
+            trig_sync <= (not trig_ext) or trig_gbe0_reg or trig_gbe1_reg or trig_gbe2_reg or Self_Trigger; 
         end if;
     end process trig_proc;
 
@@ -515,14 +557,138 @@ begin
         dout => afe_dout -- 5x9x14
     );
 
+    
+    -- SELF TRIGGER TEST
+    Self_Trig_inst: Self_Trig_CIEMAT
+        port map(
+        clock           =>  mclk,                           -- AFE clock 
+        din             =>  afe_dout(0)(0),             -- Raw AFE data
+        Config_Param    =>  st_config_reg,    -- Trigger threshold relative to baseline
+        triggered       =>  Self_Trigger,                       -- Self-Trigger Signal. Active HIGH
+        Data_Available  =>  open,                 -- Primitives calculation available. Active HIGH
+        Time_Peak       =>  open,   -- Time in Samples to achieve de Max peak
+        Time_Pulse_UB   =>  open,  -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+        Time_Pulse_OB   =>  open,  -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
+        Max_Peak        =>  open,    -- Amplitude in ADC counts od the peak
+        Charge          =>  open,     -- Charge of the light pulse (without undershoot) in ADC*samples
+        Number_Peaks_UB =>  open,-- Number of peaks detected when signal is UNDER BASELINE (without undershoot). 
+        Number_Peaks_OB =>  open,-- Number of peaks detected when signal is OVER BASELINE (undershoot).     
+        -- Variables that will be removed before debugging
+        peak            =>  open,                            -- Peak detection. Active HIGH
+        trigsample      =>  open,  -- The sample that caused the trigger
+        slope           =>  Self_Slope,       -- Actual value of slope
+        amplitude       =>  Self_Amplitude,   -- Actual value of amplitude
+        baseline        =>  Self_Baseline      -- Baseline that caused the trigger
+        );
+        
     -- pad this out to make it 5x9x16
     gen_a: for a in 4 downto 0 generate
         gen_b: for b in 8 downto 0 generate
             afe_dout_pad(a)(b) <= "00" & afe_dout(a)(b);
         end generate gen_b;
     end generate gen_a;
-
+    
+    Self_Baseline_16 <= std_logic_vector(resize(unsigned(Self_Baseline),16));
+    Self_Amplitude_16 <= std_logic_vector(resize(signed(Self_Amplitude),16));
+    Self_Slope_16 <= std_logic_vector(resize(signed(Self_Slope),16));
+    Self_Trigger_16 <= X"000" & "000" & Self_Trigger;
+    
+    Spy_Baseline_64 <= std_logic_vector(resize(unsigned(Spy_Baseline_16),64));
+    Spy_Amplitude_64 <= std_logic_vector(resize(signed(Spy_Amplitude_16),64));
+    Spy_Slope_64 <= std_logic_vector(resize(signed(Spy_Slope_16),64));
+    Spy_Trigger_64 <= std_logic_vector(resize(signed(Spy_Trigger_16),64));
+    
+    
+--    Send_data_Self_Trigger: process(Self_Baseline, Self_Trigger, Self_Amplitude, Self_Slope, Spy_Baseline_16, Spy_Trigger_16, Spy_Amplitude_16, Spy_Slope_16)
+--    begin
+--    
+--        Self_Baseline_16 <= "00" & Self_Baseline;
+--        Spy_Baseline_64 <= X"000000000000" & Spy_Baseline_16;
+--        Self_Trigger_16 <= X"000" & "000" & Self_Trigger;
+--        Spy_Trigger_64 <= X"000000000000" & Spy_Trigger_16;
+--        
+--        if (signed(Self_Amplitude)>=0) then
+--            Self_Amplitude_16 <= "00" & Self_Amplitude;
+--        else
+--            Self_Amplitude_16 <= "11" & Self_Amplitude;
+--        end if;
+--        
+--        if (signed(Self_Slope)>=0) then
+--            Self_Slope_16 <= "00" & Self_Slope;
+--        else
+--            Self_Slope_16 <= "11" & Self_Slope;
+--        end if;
+--
+--        if (signed(Spy_Amplitude_16)>=0) then
+--            Spy_Amplitude_64 <= X"000000000000" & Spy_Amplitude_16;
+--        else
+--            Spy_Amplitude_64 <= X"FFFFFFFFFFFF" & Spy_Amplitude_16;
+--        end if;
+--        
+--        if (signed(Spy_Slope_16)>=0) then
+--            Spy_Slope_64 <= X"000000000000" & Spy_Slope_16;
+--        else
+--            Spy_Slope_64 <= X"FFFFFFFFFFFF" & Spy_Slope_16;
+--        end if;        
+--        
+--    end process Send_data_Self_Trigger;
+            
+    
     -- Spy Buffers ------------------------------------------------------------
+    
+    -- Spy Buffers for Self Trigger TEST
+    
+   spy_trigger_baseline: spy
+        port map(
+        -- mclk domain
+        clka  => mclk,
+        reset => reset_async,
+        trig  => trig_sync,
+        dia   => Self_Baseline_16,
+        -- oeiclk domain    
+        clkb  => oeiclk,
+        addrb => rx_addr(11 downto 0),
+        dob   => Spy_Baseline_16
+        );
+        
+    spy_trigger_amplitude: spy
+        port map(
+        -- mclk domain
+        clka  => mclk,
+        reset => reset_async,
+        trig  => trig_sync,
+        dia   => Self_Amplitude_16,
+        -- oeiclk domain    
+        clkb  => oeiclk,
+        addrb => rx_addr(11 downto 0),
+        dob   => Spy_Amplitude_16
+        );
+                
+    spy_trigger_slope: spy
+        port map(
+        -- mclk domain
+        clka  => mclk,
+        reset => reset_async,
+        trig  => trig_sync,
+        dia   => Self_Slope_16,
+        -- oeiclk domain    
+        clkb  => oeiclk,
+        addrb => rx_addr(11 downto 0),
+        dob   => Spy_Slope_16
+        );
+        
+    spy_trigger_trigger: spy
+        port map(
+        -- mclk domain
+        clka  => mclk,
+        reset => reset_async,
+        trig  => trig_sync,
+        dia   => Self_Trigger_16,
+        -- oeiclk domain    
+        clkb  => oeiclk,
+        addrb => rx_addr(11 downto 0),
+        dob   => Spy_Trigger_16
+        );
 
     -- make 45 spy buffers for AFE data, these buffers are READ ONLY
 
@@ -747,6 +913,11 @@ begin
                (X"00000000000000" & outmode_reg(7 downto 0)) when std_match(rx_addr_reg, DAQ_OUTMODE_BASEADDR) else 
                (X"00000000000000" & "00" & inmux_dout(5 downto 0)) when std_match(rx_addr_reg, CORE_INMUX_ADDR) else
                (X"000000" & st_enable_reg) when std_match(rx_addr_reg, ST_ENABLE_ADDR) else
+               -- Self Trigger Spy Buffers
+               Spy_Baseline_64(63 downto 0)  when std_match(rx_addr_reg, SPYBUF_TRIGGER_BASELINE_BASEADDR) else
+               Spy_Amplitude_64(63 downto 0)  when std_match(rx_addr_reg, SPYBUF_TRIGGER_AMPLITUDE_BASEADDR) else
+               Spy_Slope_64(63 downto 0)  when std_match(rx_addr_reg, SPYBUF_TRIGGER_SLOPE_BASEADDR) else
+               Spy_Trigger_64(63 downto 0)  when std_match(rx_addr_reg, SPYBUF_TRIGGER_TRIGGER_BASEADDR) else
 
                (others=>'0');
 
@@ -798,6 +969,7 @@ begin
     -- test FIFO is 512 x 64. what happens if we try to read from an empty FIFO?
 
     fifo_WREN <= '1' when (std_match(rx_addr,FIFO_ADDR) and rx_wren='1') else '0'; 
+    --fifo_WREN <= Self_Trigger; 
     fifo_RDEN <= '1' when (std_match(rx_addr,FIFO_ADDR) and tx_rden='1') else '0'; 
     
     FIFO_SYNC_inst: FIFO_SYNC_MACRO
@@ -819,6 +991,7 @@ begin
         WRERR => open,
         CLK => oeiclk,
         DI => rx_data,
+        --DI => X"000000000000" & "00" & Self_Baseline,
         RDEN => fifo_RDEN,
         RST => reset_async,
         WREN => fifo_WREN
@@ -922,6 +1095,23 @@ begin
             end if;
         end if;
     end process st_enable_proc;
+    
+    -- register to enable or disable individual input channels for the self triggered sender
+    -- which is connected to all 40 input data channels. this 40 bit reg is R/W. this does NOT
+    -- apply to the four streaming senders, which use a more flexible muxing scheme on their inputs
+
+    st_config_we <= '1' when (std_match(rx_addr,ST_CONFIG_ADDR) and rx_wren='1') else '0';
+
+    st_config_proc: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            if (reset_async='1') then
+                st_config_reg <= DEFAULT_ST_CONFIG;
+            elsif (st_config_we='1') then
+                st_config_reg <= rx_data(63 downto 0);
+            end if;
+        end if;
+    end process st_config_proc;
 
     -- decode write enable for core inmux control register block of 40 6-bit registers
 
