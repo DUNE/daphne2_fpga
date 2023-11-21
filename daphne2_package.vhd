@@ -117,6 +117,11 @@ package daphne2_package is
     constant ST_ENABLE_ADDR: std_logic_vector(31 downto 0) := X"00006001";
 
     constant DEFAULT_ST_ENABLE: std_logic_vector(39 downto 0) := X"0000000000"; -- all self triggered channels OFF 
+    
+    -- Self-Trigger CONFIGURATION Address
+
+    constant ST_CONFIG_ADDR: std_logic_vector(31 downto 0) := X"00007001";
+    constant DEFAULT_ST_CONFIG: std_logic_vector(63 downto 0) :="0000000000000000000000010101100011111111111101000000000000000000"; -- all self triggered channels OFF 
 
     -- spy buffers are 4k deep
 
@@ -169,6 +174,13 @@ package daphne2_package is
     constant SPYBUF_AFE4_D6_BASEADDR: std_logic_vector(31 downto 0) := "0100000001000110----------------";
     constant SPYBUF_AFE4_D7_BASEADDR: std_logic_vector(31 downto 0) := "0100000001000111----------------";
     constant SPYBUF_AFE4_FR_BASEADDR: std_logic_vector(31 downto 0) := "0100000001001000----------------";
+    
+    -- spy buffers for SELF TRIGGER TEST
+
+    constant SPYBUF_TRIGGER_BASELINE_BASEADDR: std_logic_vector(31 downto 0) := "0101000000000000----------------";
+    constant SPYBUF_TRIGGER_AMPLITUDE_BASEADDR: std_logic_vector(31 downto 0) := "0101000000000001----------------";
+    constant SPYBUF_TRIGGER_SLOPE_BASEADDR: std_logic_vector(31 downto 0) := "0101000000000010----------------";
+    constant SPYBUF_TRIGGER_TRIGGER_BASEADDR: std_logic_vector(31 downto 0) := "0101000000000011----------------";
 
     -- spy buffer for the 64 bit timestamp value
 
