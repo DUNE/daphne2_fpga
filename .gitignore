@@ -7,4 +7,4 @@ xilinx/*.jou
 xilinx/*.log
 xilinx/*.txt
 
-./vscode/*
+.vscode/*
