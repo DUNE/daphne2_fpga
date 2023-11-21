@@ -6,3 +6,5 @@ xilinx/output/
 xilinx/*.jou
 xilinx/*.log
 xilinx/*.txt
+
+./vscode/*
