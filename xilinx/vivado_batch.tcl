@@ -28,8 +28,12 @@ read_vhdl ../core/core.vhd
   read_vhdl ../core/crc20_update.vhd
  read_vhdl ../core/trig/st40_top.vhd
   read_vhdl ../core/trig/stc.vhd
-   read_vhdl ../core/trig/baseline256.vhd
-   read_vhdl ../core/trig/trig.vhd
+#   read_vhdl ../core/trig/baseline256.vhd
+#   read_vhdl ../core/trig/trig.vhd
+read_vhdl ../core/trig/Filter_CIEMAT.vhd
+read_vhdl ../core/trig/LocalPrimitives_CIEMAT.vhd
+read_vhdl ../core/trig/PeakDetector_SelfTrigger_CIEMAT.vhd
+read_vhdl ../core/trig/Self_Trigger_Primitive_Calculation.vhd
  read_vhdl ../core/core_mgt4.vhd
 
 read_vhdl ../oei/hdl/burst_traffic_controller.vhd
@@ -128,13 +132,15 @@ read_xdc -verbose ./constraints.xdc
 # Note this is a 7 character HEX string, e.g. 28 bits, but Vivado requires 
 # this number to be in Verilog notation, even if the top level source is VHDL.
 
-set git_sha [exec git rev-parse --short=7 HEAD]
-set v_git_sha "28'h$git_sha"
-puts "INFO: passing git commit number $v_git_sha to top level generic"
+#COMENTADO POR NACHO!!!!!!!!
+#set git_sha [exec git rev-parse --short=7 HEAD]
+#set v_git_sha "28'h$git_sha"
+#puts "INFO: passing git commit number $v_git_sha to top level generic"
 
 # synth design...
 
-synth_design -top daphne2 -generic version=$v_git_sha
+synth_design -top daphne2 
+#-generic version=$v_git_sha COMENTADO POR NACHO (subir línea a la línea de arriba)!!!!!
 report_clocks -file $outputDir/clocks.rpt
 report_timing_summary -file $outputDir/post_synth_timing_summary.rpt
 report_power -file $outputDir/post_synth_power.rpt
@@ -171,7 +177,8 @@ report_io -file $outputDir/io.rpt
 
 # generate bitstream...
 
-write_bitstream -force -bin_file $outputDir/daphne2_$git_sha.bit
+#write_bitstream -force -bin_file $outputDir/daphne2_$git_sha.bit COMENTADO POR NACHO!!!
+write_bitstream -force -bin_file $outputDir/daphne2_CIEMAT.bit
 
 # write out ILA debug probes file
 write_debug_probes -force $outputDir/probes.ltx

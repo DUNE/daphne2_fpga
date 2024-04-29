@@ -36,7 +36,11 @@ port(
 
     outmode: in std_logic_vector(7 downto 0); -- output link mode control
     threshold: in std_logic_vector(13 downto 0); -- for self-triggered mode, relative to average baseline
+    st_config: in std_logic_vector(13 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
 
+    ti_trigger: in std_logic_vector(7 downto 0); ------------------------
+    ti_trigger_stbr: in std_logic; -------------------------------------
+    
     slot_id: in std_logic_vector(3 downto 0); -- used in output header
     crate_id: in std_logic_vector(9 downto 0); -- used in output header
     detector_id: in std_logic_vector(5 downto 0); -- used in output header
@@ -95,8 +99,11 @@ architecture core_arch of core is
     component st40_top -- 40 channel self-triggered sender
     generic( link_id: std_logic_vector(5 downto 0)  := "000000" );
     port(
-        reset: in std_logic;    
+        reset: in std_logic;
+        st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation CIEMAT (Nacho)     
         threshold: in std_logic_vector(13 downto 0); -- user defined threshold relative to baseline
+        ti_trigger: in std_logic_vector(7 downto 0); -------------------------
+        ti_trigger_stbr: in std_logic;  -------------------------
         slot_id: in std_logic_vector(3 downto 0);
         crate_id: in std_logic_vector(9 downto 0);
         detector_id: in std_logic_vector(5 downto 0);
@@ -218,6 +225,7 @@ begin
     generic map( link_id => "000000" )
     port map(
         reset => reset,
+        st_config => st_config, -- CIEMAT (Nacho) 
         threshold => threshold,
         slot_id => slot_id,
         crate_id => crate_id,
@@ -226,6 +234,8 @@ begin
         enable => st_enable,
         aclk => mclk,
         timestamp => timestamp,
+        ti_trigger => ti_trigger, ------------------------------
+        ti_trigger_stbr => ti_trigger_stbr, -------------------------
     	afe_dat => afe_dat, -- AFE raw data after alignment all 40 channels
         fclk => fclk(0), 
         dout => selftrig_sender_dout,
