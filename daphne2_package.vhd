@@ -123,7 +123,13 @@ package daphne2_package is
     constant ST_ADHOC_BASEADDR: std_logic_vector(31 downto 0) := X"00006010";
 
     constant DEFAULT_ST_ADHOC_COMMAND: std_logic_vector(7 downto 0) := X"07";
+
+    -- address of the cross correlation threshold register for the self trig sender
+
+    constant THRESHOLD_XC_BASEADDR: std_logic_vector(31 downto 0) := X"00006100";
     
+    constant DEFAULT_THRESHOLD_XC: std_logic_vector(41 downto 0) := "111111101100000000000000000000000100101100";
+
     -- spy buffers are 4k deep
 
     constant SPYBUF_AFE0_D0_BASEADDR: std_logic_vector(31 downto 0) := "0100000000000000----------------";

@@ -27,6 +27,7 @@ port(
     version_id: std_logic_vector(5 downto 0);
     adhoc: std_logic_vector(7 downto 0); -- command for adhoc trigger
     threshold: std_logic_vector(13 downto 0); -- trig threshold relative to calculated baseline
+    threshold_xc: std_logic_vector(41 downto 0); -- matching filter trigger threshold values
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
     ti_trigger_stbr: in std_logic;  -------------------------
     aclk: in std_logic; -- AFE clock 62.500 MHz
@@ -67,7 +68,7 @@ architecture stc_arch of stc is
     type array_4x8_type is array(3 downto 0) of std_logic_vector(7 downto 0);
     signal DIP, DOP: array_4x8_type;
 
-    signal baseline, trigsample: std_logic_vector(13 downto 0);
+    signal baseline, trigsample, trigsample_th, trigsample_xc: std_logic_vector(13 downto 0);
 
     component baseline256 is -- establish average signal level
     port(
@@ -90,6 +91,18 @@ architecture stc_arch of stc is
         ti_trigger_stbr: in std_logic);  -------------------------
     end component;
 
+    -- EIA implementation
+    component trig_xc is -- cross correlation matching filter self trigger, latency = 3 + 16 + 1 clocks
+    port(
+        reset: in std_logic;
+        clock: in std_logic;
+        din: in std_logic_vector(13 downto 0);
+        threshold: in std_logic_vector(41 downto 0); 
+        baseline: out std_logic_vector(13 downto 0); 
+        triggered: out std_logic;
+        trigsample: out std_logic_vector(13 downto 0));
+    end component;
+
     component CRC_OL is
     generic( Nbits: positive := 32; CRC_Width: positive := 20;
              G_Poly: std_logic_vector := X"8359f"; G_InitVal: std_logic_vector := X"fffff" );
@@ -101,7 +114,7 @@ architecture stc_arch of stc is
         Reset: in std_logic);
     end component;
 
-    signal crc_calc, crc_reset, triggered: std_logic;
+    signal crc_calc, crc_reset, triggered, triggered_th, triggered_xc: std_logic;
     signal crc20: std_logic_vector(19 downto 0);
 
 begin
@@ -183,11 +196,43 @@ begin
          baseline => baseline,
          adhoc => adhoc,
          threshold => threshold,
-         triggered => triggered,
-         trigsample => trigsample, -- the ADC sample that caused the trigger 
+         triggered => triggered_th,
+         trigsample => trigsample_th, -- the ADC sample that caused the trigger 
          ti_trigger => ti_trigger,
          ti_trigger_stbr => ti_trigger_stbr
     );        
+
+    -- cross correlation matching filter self trigger core module
+
+    trig_xc_inst: trig_xc
+    port map(
+        reset => reset,
+        clock => aclk,
+        din => afe_dat, -- watching live AFE data
+        baseline => open,
+        threshold => threshold_xc,
+        triggered => triggered_xc,
+        trigsample => trigsample_xc -- the ADC sample that caused the trigger
+    );
+    
+    -- real output of self trigger is the output of an OR gate between threshold trigger and matching filter trigger
+    
+    triggered <= '1' when ( triggered_th='1' or triggered_xc='1' ) else '0';
+
+    -- choose the right trigger sample
+
+    trigsample_proc: process(triggered_th, triggered_xc, trigsample_th, trigsample_xc)
+    begin
+        if ( triggered_th='1' and triggered_xc='0' ) then
+            trigsample <= trigsample_th;
+        elsif ( triggered_th='0' and triggered_xc='1' ) then
+            trigsample <= trigsample_xc;
+        elsif ( triggered_th='1' and triggered_xc='1' ) then
+            trigsample <= trigsample_th;
+        else
+            trigsample <= (others => '0'); 
+        end if;
+    end process trigsample_proc;      
 
     -- FSM waits for trigger condition then assembles output frame and stores into FIFO
 

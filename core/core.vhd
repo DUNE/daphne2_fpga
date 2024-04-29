@@ -37,6 +37,7 @@ port(
     outmode: in std_logic_vector(7 downto 0); -- output link mode control
     adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
     threshold: in std_logic_vector(13 downto 0); -- for self-triggered mode, relative to average baseline
+    threshold_xc: in std_logic_vector(41 downto 0); -- for self-triggered mode, cross correlation matching filter output threshold values (SP-DP-TP)
 
     ti_trigger: in std_logic_vector(7 downto 0); ------------------------
     ti_trigger_stbr: in std_logic; -------------------------------------
@@ -102,6 +103,7 @@ architecture core_arch of core is
         reset: in std_logic;    
         adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
         threshold: in std_logic_vector(13 downto 0); -- user defined threshold relative to baseline
+        threshold_xc: in std_logic_vector(41 downto 0); -- user defined threshold values for cross correlation matching filter 
         ti_trigger: in std_logic_vector(7 downto 0); -------------------------
         ti_trigger_stbr: in std_logic;  -------------------------
         slot_id: in std_logic_vector(3 downto 0);
@@ -227,6 +229,7 @@ begin
         reset => reset,
         adhoc => adhoc,
         threshold => threshold,
+        threshold_xc => threshold_xc,
         slot_id => slot_id,
         crate_id => crate_id,
         detector_id => detector_id,

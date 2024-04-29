@@ -54,9 +54,6 @@ begin
     -- our super basic trigger condition is this: one sample ABOVE trig_thresh followed by two samples
     -- BELOW trig_thresh.
 
-    -- triggered_i <= '1' when ( din2>trig_thresh and din1<trig_thresh and din0<trig_thresh ) else '0';
-    -- triggered_i <= '1' when ( ti_trigger=adhoc and ti_trigger_stbr='1' ) else '0';
-
     -- trigger goes between the adhoc conditions or the self trigger threshold condition
     triggered_i <= '1' when ( ( ti_trigger=adhoc and ti_trigger_stbr='1' ) or ( din2>trig_thresh and din1<trig_thresh and din0<trig_thresh ) ) else '0';
     

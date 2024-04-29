@@ -20,6 +20,7 @@ port(
 
     adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
     threshold: in std_logic_vector(13 downto 0); -- user defined threshold relative to avg baseline
+    threshold_xc: in std_logic_vector(41 downto 0); -- user defined cross correlation matching filter output trigger threshold
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
     ti_trigger_stbr: in std_logic;  -------------------------
     slot_id: in std_logic_vector(3 downto 0);
@@ -58,8 +59,9 @@ architecture st40_top_arch of st40_top is
     port(
         reset: in std_logic;
 
-        adhoc: in std_logic_vector(7 downto 0);
+        adhoc: std_logic_vector(7 downto 0);
         threshold: std_logic_vector(13 downto 0);
+        threshold_xc: std_logic_vector(41 downto 0);
         slot_id: std_logic_vector(3 downto 0);
         crate_id: std_logic_vector(9 downto 0);
         detector_id: std_logic_vector(5 downto 0);
@@ -93,6 +95,7 @@ begin
     
                 adhoc => adhoc,
                 threshold => threshold,
+                threshold_xc => threshold_xc,
                 ti_trigger => ti_trigger, -------------------------
                 ti_trigger_stbr => ti_trigger_stbr,  -------------------------
                 slot_id => slot_id,
