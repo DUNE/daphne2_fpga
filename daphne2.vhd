@@ -1090,3 +1090,4 @@ begin
     led <= not led1_reg;
 
 end DAPHNE2_arch;
+
