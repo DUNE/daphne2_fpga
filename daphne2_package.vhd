@@ -128,7 +128,7 @@ package daphne2_package is
 
     constant THRESHOLD_XC_BASEADDR: std_logic_vector(31 downto 0) := X"00006100";
     
-    constant DEFAULT_THRESHOLD_XC: std_logic_vector(41 downto 0) := "111111101100000000000000000000000100101100";
+    constant DEFAULT_THRESHOLD_XC: std_logic_vector(41 downto 0) := "111111101100000000000000000000000011001000";
 
     -- spy buffers are 4k deep
 

@@ -28,10 +28,10 @@ end st_xc;
 
 architecture st_xc_arch of st_xc is
 
-    type type_r_st_xc_dat is array (0 to 31) of std_logic_vector(13 downto 0);
-    type type_s_r_st_xc_dat is array (0 to 31) of signed(13 downto 0);
-    type type_r_st_xc_mult is array (0 to 31) of signed(27 downto 0);
-    type type_r_st_xc_add is array (0 to 4) of signed(27 downto 0);
+    type type_r_st_xc_dat is array (0 to 15) of std_logic_vector(13 downto 0);
+    type type_s_r_st_xc_dat is array (0 to 15) of signed(13 downto 0);
+    type type_r_st_xc_mult is array (0 to 15) of signed(27 downto 0);
+    type type_r_st_xc_add is array (0 to 2) of signed(27 downto 0);
 
     signal r_st_xc_dat: type_r_st_xc_dat := (others => (others => '0'));
     signal s_r_st_xc_dat: type_s_r_st_xc_dat := (others => (others => '0'));
@@ -49,39 +49,23 @@ architecture st_xc_arch of st_xc is
     signal trig_ignore_count: std_logic_vector(7 downto 0) := (others => '0');
 
     -- matching filter template
-    type template is array (0 to 31) of signed(13 downto 0);
+    type template is array (0 to 15) of signed(13 downto 0);
     constant sig_templ: template := (
         to_signed(integer(1),14),
         to_signed(integer(0),14),
         to_signed(integer(0),14),
-        to_signed(integer(0),14),
-        to_signed(integer(0),14),
-        to_signed(integer(0),14),
         to_signed(integer(-1),14),
         to_signed(integer(-1),14),
-        to_signed(integer(-1),14),
-        to_signed(integer(-1),14),
-        to_signed(integer(-1),14),
-        to_signed(integer(-2),14),
         to_signed(integer(-2),14),
         to_signed(integer(-3),14),
         to_signed(integer(-4),14),
+        to_signed(integer(-5),14),
+        to_signed(integer(-6),14),
+        to_signed(integer(-7),14),
+        to_signed(integer(-7),14),
+        to_signed(integer(-6),14),
         to_signed(integer(-4),14),
-        to_signed(integer(-5),14),
-        to_signed(integer(-5),14),
-        to_signed(integer(-6),14),
-        to_signed(integer(-7),14),
-        to_signed(integer(-6),14),
-        to_signed(integer(-7),14),
-        to_signed(integer(-7),14),
-        to_signed(integer(-7),14),
-        to_signed(integer(-7),14),
-        to_signed(integer(-6),14),
-        to_signed(integer(-5),14),
-        to_signed(integer(-4),14),
-        to_signed(integer(-3),14),
         to_signed(integer(-2),14),
-        to_signed(integer(-1),14),
         to_signed(integer(0),14)
     );
 
@@ -150,7 +134,7 @@ begin
 
     -- use "for generates" in order to create a pipeline with a desired amount of registers
     -- fill all of the registers by using 4 clock ticks delays
-    st_xc_buff_gen: for i in 0 to 31 generate
+    st_xc_buff_gen: for i in 0 to 15 generate
         undersampling_ticks_gen: for j in 13 downto 0 generate
             -- generate 4 ticks in between samples to generate a proper undersampling (4 clock ticks)
 
@@ -158,11 +142,11 @@ begin
             gendelay_reg0: if (i=0) generate
                 srl16e_inst_0 : srl16e
                     port map(
-                        -- must set input a3a2a1a0 as "0001" so that it has 2 bits of depth (which means 4 clock ticks)
+                        -- must set input a3a2a1a0 as "0011" so that it has 2 bits of depth (which means 4 clock ticks)
                         clk => clock,
                         ce => '1',
                         a0 => '1',
-                        a1 => '0',
+                        a1 => '1',
                         a2 => '0',
                         a3 => '0',  
                         d => din(j), -- input AFE data bit to the register
@@ -174,11 +158,11 @@ begin
             gendelay_regn: if (i>0) generate
                 srl16e_inst_bit : srl16e
                     port map(
-                        -- must set input a3a2a1a0 as "0001" so that it has 2 bits of depth (which means 4 clock ticks)
+                        -- must set input a3a2a1a0 as "0011" so that it has 2 bits of depth (which means 4 clock ticks)
                         clk => clock,
                         ce => '1',
                         a0 => '1',
-                        a1 => '0',
+                        a1 => '1',
                         a2 => '0',
                         a3 => '0',  
                         d => r_st_xc_dat(i-1)(j), -- input data bit to the register
@@ -192,7 +176,7 @@ begin
     end generate st_xc_buff_gen;
 
     -- multiply the data registers with the template
-    st_xc_mult_gen: for i in 0 to 31 generate
+    st_xc_mult_gen: for i in 0 to 15 generate
         -- consecutive multiplication
         st_xc_mult_proc: process(clock, reset, s_r_st_xc_dat)
         begin
@@ -219,15 +203,9 @@ begin
                 -- second pipeline stage
                 r_st_xc_add(1) <= r_st_xc_mult(8) + r_st_xc_mult(9) + r_st_xc_mult(10) + r_st_xc_mult(11) +
                                   r_st_xc_mult(12) + r_st_xc_mult(13) + r_st_xc_mult(14) + r_st_xc_mult(15);
-                -- third pipeline stage
-                r_st_xc_add(2) <= r_st_xc_mult(16) + r_st_xc_mult(17) + r_st_xc_mult(18) + r_st_xc_mult(19) +
-                                  r_st_xc_mult(20) + r_st_xc_mult(21) + r_st_xc_mult(22) + r_st_xc_mult(23);
-                -- fourth pipeline stage
-                r_st_xc_add(3) <= r_st_xc_mult(24) + r_st_xc_mult(25) + r_st_xc_mult(26) + r_st_xc_mult(27) +
-                                  r_st_xc_mult(28) + r_st_xc_mult(29) + r_st_xc_mult(30) + r_st_xc_mult(31);
 
                 -- final addition
-                r_st_xc_add(4) <= r_st_xc_add(0) + r_st_xc_add(1) + r_st_xc_add(2) + r_st_xc_add(3);
+                r_st_xc_add(2) <= r_st_xc_add(0) + r_st_xc_add(1);
             end if;
         end if;
     end process add_proc;
