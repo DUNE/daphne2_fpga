@@ -36,6 +36,8 @@ architecture trig_xc_arch of trig_xc is
     signal afe_del_reg0, afe_del_reg1, afe_del_reg2: std_logic_vector(13 downto 0) := (others => '0');
     signal trigsample_reg: std_logic_vector(13 downto 0) := (others => '0');
     signal triggered_core, trig_reg: std_logic;
+    signal hold_trigsample: std_logic;
+    signal hold_trigsample_counter: std_logic_vector(11 downto 0);
 
     component st_xc_filt is -- high pass first order iir filter for the algorithm (subtracts the baseline)
     port(
@@ -148,24 +150,41 @@ begin
             if (reset='1') then
                 baseline <= (others => '0');
             else
-                baseline <= std_logic_vector(afe_reg2-st_xc_filt_dout);
+                baseline <= std_logic_vector(signed(afe_reg2) - signed(st_xc_filt_dout));
             end if;
         end if;
     end process baseline_calc;
 
     -- determine the sample that asserted the trigger 
 
-    xc_trigsample_proc: process(clock, reset, trig_reg, triggered_core, afe_del_reg2)
+    xc_trigsample_proc: process(clock, reset, trig_reg, triggered_core, afe_del_reg2, hold_trigsample, hold_trigsample_counter)
     begin
         if rising_edge(clock) then
             if (reset='1') then
                 trig_reg <= '0';
+                hold_trigsample <= '0';
                 trigsample_reg <= (others => '0');
+                hold_trigsample_counter <= (others => '0');
             else
                 trig_reg <= triggered_core;
-                if ( trig_reg='0' and triggered_core='1' ) then
-                    -- a trigger just happened, show the sample that caused it
+                if ( trig_reg='0' and triggered_core='1' and hold_trigsample='0' ) then
+                    -- a trigger just happened, show the sample that caused it                    
                     trigsample_reg <= afe_del_reg2;
+                    hold_trigsample <= '1';
+                end if;    
+
+                -- hold the trigger sample 
+                if (hold_trigsample='1') then
+                    -- count at least 10 clock ticks more before allowing this signal to change again
+                    -- this in order to keep the right sample if another trigger happens before the 
+                    -- actual sample is sent in the header
+                    if (hold_trigsample_counter=X"400") then
+                        hold_trigsample <= '0';
+                        hold_trigsample_counter <= (others => '0');
+                    else
+                        hold_trigsample <= '1';
+                        hold_trigsample_counter <= std_logic_vector(hold_trigsample_counter + 1);
+                    end if;
                 end if;
             end if;
         end if;
