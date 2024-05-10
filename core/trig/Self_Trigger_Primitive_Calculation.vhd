@@ -622,9 +622,9 @@ end process Output_FrameFormat;
 Select_Delay: process(Config_Param_FILTER_aux (0)) -- While filtering delay is bigger 
 begin
     if (Config_Param_FILTER_aux (0)='0') then
-        Trigger_Delay <= "11011"; -- 4 clk
+        Trigger_Delay <= "10100"; -- 11 clk
     else
-        Trigger_Delay <= "10111"; -- 8 clk
+        Trigger_Delay <= "10000"; -- 8 clk
     end if;
 end process Select_Delay;
 
@@ -642,7 +642,7 @@ srlc32e_1_inst : srlc32e
 port map(
     clk => clock_aux,
     ce  => '1',
-    a   => "11011",  -- adjust this delay to make overall latency = 64
+    a   => Trigger_Delay,  -- adjust this delay to make overall latency = 64
     d   => triggered_dly32_i,
     q   => Self_trigger,
     q31 => open

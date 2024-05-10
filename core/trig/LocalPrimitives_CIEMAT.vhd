@@ -73,7 +73,16 @@ architecture Behavioral of LocalPrimitives_CIEMAT is
 
 -- INTERFACE with SELF-TRIGGER BLOCK signals
 signal Interface_LOCAL_Primitves_IN_reg: std_logic_vector(23 downto 0);
-signal Peak_Current: std_logic:='0'; -- ACTIVE HIGH When a Peak is detected. 
+signal Peak_Current: std_logic:='0'; -- ACTIVE HIGH When a Peak is detected.
+signal Peak_Current_delay1: std_logic:='0'; -- ACTIVE HIGH When a Peak is detected. 
+signal Peak_Current_delay2: std_logic:='0'; -- ACTIVE HIGH When a Peak is detected. 
+signal Peak_Current_delay3: std_logic:='0'; -- ACTIVE HIGH When a Peak is detected. 
+signal Peak_Current_delay4: std_logic:='0'; -- ACTIVE HIGH When a Peak is detected. 
+signal Peak_Current_delay5: std_logic:='0'; -- ACTIVE HIGH When a Peak is detected.  
+signal Peak_Current_delay6: std_logic:='0'; -- ACTIVE HIGH When a Peak is detected.
+signal Peak_Current_delay7: std_logic:='0'; -- ACTIVE HIGH When a Peak is detected.
+signal Peak_Current_delay8: std_logic:='0'; -- ACTIVE HIGH When a Peak is detected.
+signal Peak_Current_delay9: std_logic:='0'; -- ACTIVE HIGH When a Peak is detected.
 signal Sending: std_logic:='0'; -- ACTIVE HIGH When the frame format is being formed 1024 samples = 64 presamples + 960 samples.  
 signal Previous_Frame: std_logic:='0'; -- ACTIVE HIGH When there is info from previous frame format. 
 signal Slope_Current: std_logic_vector(13 downto 0):= (others=>'0'); -- Real value of the Slope of the signal. 
@@ -220,7 +229,7 @@ end process Baseline_Amplitude;
 --      * Detection_UB --> Baseline is constant, Primitives calculation (Max _Amplitude, Time to max, Charge, Width_UB, number of pekas UB)
 --      * Detection_OB --> Baseline is constant, Primitives calculation (Width_OB, number of pekas OB)
 --      * Data --> Shows data of primitives calculated in previous stage  
-Next_State_Detection: process(CurrentState_Detection, Self_Trigger, Amplitude_Current, Slope_Current, Time_Pulse_OB_Current, Detection_Time)
+Next_State_Detection: process(CurrentState_Detection, Self_Trigger, Amplitude_Current, Slope_Current, Time_Pulse_OB_Current, Detection_Time, Peak_Current, Peak_Current_delay1, Peak_Current_delay2, Peak_Current_delay3, Peak_Current_delay4, Peak_Current_delay5, Peak_Current_delay6, Peak_Current_delay7, Peak_Current_delay8, Peak_Current_delay9)
 begin
     case CurrentState_Detection is
         when No_Detection =>
@@ -238,7 +247,8 @@ begin
                 NextState_Detection <= Detection_UB;
             end if;
         when Detection_OB => 
-            if ((signed(Amplitude_Current)<=0) and (signed(Slope_Current)>=-2) and (signed(Slope_Current)<=0)and (unsigned(Time_Pulse_OB_Current)>=Minimum_Time_Undershoot))  then
+            --if ((signed(Amplitude_Current)<=0) and (signed(Slope_Current)>=-2) and (signed(Slope_Current)<=0)and (unsigned(Time_Pulse_OB_Current)>=Minimum_Time_Undershoot))  then
+            if ((signed(Amplitude_Current)<=0) and (Peak_Current='0') and (Peak_Current_delay1='0')and (Peak_Current_delay2='0')and (Peak_Current_delay3='0')and (Peak_Current_delay4='0')and (Peak_Current_delay5='0')and (Peak_Current_delay6='0')and (Peak_Current_delay7='0')and (Peak_Current_delay8='0')and (Peak_Current_delay9='0')  )then
                 NextState_Detection <= Data;
             elsif (Detection_Time<=0) then
                 NextState_Detection <= No_Detection;
@@ -452,7 +462,33 @@ end process Output_Detection;
 --            Data_Trailer_Available  <= '1';     
 --    end case;
 --end process Output_FrameFormat;
-
+----------------------- PEAK CURRENT DELAY     -----------------------
+Peak_Delay: process(clock, reset)
+begin
+    if (clock'event and clock='1') then
+        if(reset='1')then
+            Peak_Current_delay1 <= '0';
+            Peak_Current_delay2 <= '0';
+            Peak_Current_delay3 <= '0'; 
+            Peak_Current_delay4 <= '0';
+            Peak_Current_delay5 <= '0'; 
+            Peak_Current_delay6 <= '0';
+            Peak_Current_delay7 <= '0';
+            Peak_Current_delay8 <= '0';
+            Peak_Current_delay9 <= '0';
+        else
+            Peak_Current_delay1 <= Peak_Current;
+            Peak_Current_delay2 <= Peak_Current_delay1;
+            Peak_Current_delay3 <= Peak_Current_delay2; 
+            Peak_Current_delay4 <= Peak_Current_delay3;
+            Peak_Current_delay5 <= Peak_Current_delay4; 
+            Peak_Current_delay6 <= Peak_Current_delay5;
+            Peak_Current_delay7 <= Peak_Current_delay6;
+            Peak_Current_delay8 <= Peak_Current_delay7;
+            Peak_Current_delay9 <= Peak_Current_delay8;
+        end if;
+    end if;
+end process Peak_Delay;
 ----------------------- INTERFACE WITH LOCAL PRIMITIVES CALCULATION BLOCK    -----------------------
 
 -- Data coming from SELF_TRIGGER Block
