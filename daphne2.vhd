@@ -297,8 +297,8 @@ architecture DAPHNE2_arch of DAPHNE2 is
         version_id: in std_logic_vector(5 downto 0);
         st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
         outmode: in std_logic_vector(7 downto 0); -- choose streaming or self-trig sender for each output
-        adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
         threshold: in std_logic_vector(13 downto 0); -- for self-trig senders, threshold relative to average baseline
+        st_config: in std_logic_vector(13 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
         --
         ti_trigger: in std_logic_vector(7 downto 0); -- WARNING
         ti_trigger_stbr: in std_logic; -- WARNING
@@ -388,12 +388,8 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal outmode_reg: std_logic_vector(7 downto 0);
     signal outmode_we: std_logic;
 
-    signal threshold_reg: std_logic_vector(13 downto 0);
+    signal threshold_reg : std_logic_vector(13 downto 0);
     signal threshold_we: std_logic;
-    
-    signal adhoc_reg: std_logic_vector(7 downto 0);
-    signal adhoc_we: std_logic;
-
     --
     signal ti_trigger_reg: std_logic_vector(7 downto 0); ------------------
     signal ti_trigger_stbr_reg: std_logic;  ---------------------------
@@ -404,6 +400,10 @@ architecture DAPHNE2_arch of DAPHNE2 is
     
     signal st_enable_reg: std_logic_vector(39 downto 0);
     signal st_enable_we: std_logic;
+
+    -- Self_Trigger config CIEMAT (Nacho)
+    signal st_config_reg: std_logic_vector(13 downto 0);
+    signal st_config_we: std_logic;
 
 begin
 
@@ -498,7 +498,7 @@ begin
     -- square this up and edge detect this and move it into the MCLK domain
 
     trig_gbe <= '1' when (std_match(rx_addr,TRIGGER_ADDR) and rx_wren='1') else '0';
-    ti_trigger_en <= '1' when ( ti_trigger_reg=adhoc_reg and ti_trigger_stbr_reg='1' ) else '0';
+    ti_trigger_en <= '1' when ( ti_trigger_reg=X"07" and ti_trigger_stbr_reg='1' ) else '0';
 
     trig_oei_proc: process(oeiclk)
     begin
@@ -769,7 +769,7 @@ begin
                (X"000000000000" & mclk_ctrl_reg) when std_match(rx_addr_reg, MCLK_CTRL_ADDR) else 
                (X"00000000000000" & spi_res_fifo_data) when std_match(rx_addr_reg, SPI_FIFO_ADDR) else 
                (X"000000000000" & "00" & threshold_reg(13 downto 0)) when std_match(rx_addr_reg, THRESHOLD_BASEADDR) else 
-               (X"00000000000000" & adhoc_reg(7 downto 0)) when std_match(rx_addr_reg, ST_ADHOC_BASEADDR) else 
+               (X"000000000000" & "00" & st_config_reg(13 downto 0))  when std_match(rx_addr_reg, ST_CONFIG_ADDR) else
                (X"00000000000000" & outmode_reg(7 downto 0)) when std_match(rx_addr_reg, DAQ_OUTMODE_BASEADDR) else 
                (X"00000000000000" & "00" & inmux_dout(5 downto 0)) when std_match(rx_addr_reg, CORE_INMUX_ADDR) else
                (X"000000" & st_enable_reg) when std_match(rx_addr_reg, ST_ENABLE_ADDR) else
@@ -932,22 +932,6 @@ begin
         end if;
     end process thresh_proc;
 
-    -- register for setting the adhoc trigger command for the self triggered senders
-    -- register is 8 bits, R/W from GBE
-
-    adhoc_we <= '1' when (std_match(rx_addr,ST_ADHOC_BASEADDR) and rx_wren='1') else '0';
-
-    adhoc_proc: process(oeiclk)
-    begin
-        if rising_edge(oeiclk) then
-            if (reset_async='1') then
-                adhoc_reg <= DEFAULT_ST_ADHOC_COMMAND;
-            elsif (adhoc_we='1') then
-                adhoc_reg <= rx_data(7 downto 0);
-            end if;
-        end if;
-    end process adhoc_proc;
-
     -- register to enable or disable individual input channels for the self triggered sender
     -- which is connected to all 40 input data channels. this 40 bit reg is R/W. this does NOT
     -- apply to the four streaming senders, which use a more flexible muxing scheme on their inputs
@@ -965,6 +949,29 @@ begin
         end if;
     end process st_enable_proc;
 
+       -- CONFIGURATION FOR SELF-TRIGGER & LOCAL PRIMITIVE CALCULATION
+        -- Config_Param[0] --> 1 = ENABLE filtering / 0 = DISABLE filtering 
+        -- Config_Param[1] --> '0' = 1 LSB truncated / '1' = 2 LSBs truncated 
+        -- Config_Param[3 downto 2] --> '00' = 4 Samples Window / '01' = 8 Samples Window / '10' = 16 Samples Window / '11' = 32 Samples Window
+        -- Config_Param[4] --> '0' = Peak detector as self-trigger  / '1' = Main detection as Self-Trigger (Undershoot peaks will not trigger)
+        -- Config_Param[5] --> '0' = NOT ALLOWED  Self-Trigger with light pulse between 2 data adquisition frames   
+        --                 --> '1' = ALLOWED Self-Trigger with light pulse between 2 data adquisition frames
+        -- Config_Param[6] --> '0' = Slope calculation with 2 consecutive samples --> x(n) - x(n-1)  / '1' = Slope calculation with 3 consecutive samples --> [x(n) - x(n-2)] / 2 
+        -- Config_Param[13 downto 7] --> Slope_Threshold (signed) 1(sign) + 6 bits, must be negative.
+
+    st_config_we <= '1' when (std_match(rx_addr,ST_CONFIG_ADDR) and rx_wren='1') else '0';
+
+    st_config_proc: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            if (reset_async='1') then
+                st_config_reg <= DEFAULT_ST_CONFIG;
+            elsif (st_config_we='1') then
+                st_config_reg <= rx_data(13 downto 0);
+            end if;
+        end if;
+    end process st_config_proc;
+
     -- decode write enable for core inmux control register block of 40 6-bit registers
 
     inmux_we <= '1' when (std_match(rx_addr,CORE_INMUX_ADDR) and rx_wren='1') else '0';
@@ -981,8 +988,8 @@ begin
         timestamp => timestamp,
 
         outmode => outmode_reg,
-        adhoc => adhoc_reg,
         threshold => threshold_reg,
+        st_config => st_config_reg, -- Self-Trigger Config CIEMAT (Nacho)
         --
         ti_trigger => ti_trigger_reg, --------------------
         ti_trigger_stbr => ti_trigger_stbr_reg, -------------------
@@ -1083,3 +1090,4 @@ begin
     led <= not led1_reg;
 
 end DAPHNE2_arch;
+

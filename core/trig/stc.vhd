@@ -20,12 +20,11 @@ entity stc is
 generic( link_id: std_logic_vector(5 downto 0) := "000000"; ch_id: std_logic_vector(5 downto 0) := "000000" );
 port(
     reset: in std_logic;    
-
+    st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
     slot_id: std_logic_vector(3 downto 0);
     crate_id: std_logic_vector(9 downto 0);
     detector_id: std_logic_vector(5 downto 0);
     version_id: std_logic_vector(5 downto 0);
-    adhoc: std_logic_vector(7 downto 0); -- command for adhoc trigger
     threshold: std_logic_vector(13 downto 0); -- trig threshold relative to calculated baseline
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
     ti_trigger_stbr: in std_logic;  -------------------------
@@ -69,26 +68,109 @@ architecture stc_arch of stc is
 
     signal baseline, trigsample: std_logic_vector(13 downto 0);
 
-    component baseline256 is -- establish average signal level
+    --signal    Self_trigger_aux:                    std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
+    signal    Data_Available_aux:                  std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
+    signal    Time_Peak_aux:                       std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
+    signal    Time_Pulse_UB_aux:                   std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+    signal    Time_Pulse_OB_aux:                   std_logic_vector(9 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
+    signal    Max_Peak_aux:                        std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
+    signal    Charge_aux:                          std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
+    signal    Number_Peaks_UB_aux:                 std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
+    signal    Number_Peaks_OB_aux:                 std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+    signal    filtered_dout_aux:                   std_logic_vector (13 downto 0);                         -- HIGH PASS Filtered signal
+    signal    Baseline_aux:                        std_logic_vector(14 downto 0);                          -- Real Time calculated BASELINE
+    signal    Amplitude_aux:                       std_logic_vector(14 downto 0);                          -- Real Time calculated AMPLITUDE
+    signal    Peak_Current_aux:                    std_logic;                                              -- ACTIVE HIGH when a peak is detected
+    signal    Slope_Current_aux:                   std_logic_vector(13 downto 0);                          -- Real Time calculated SLOPE
+    signal    Slope_Threshold_aux:                 std_logic_vector(6 downto 0);                           -- Threshold over the slope to detect Peaks
+    signal    Detection_aux:                       std_logic;                                              -- ACTIVE HIGH when primitives are being calculated (during light pulse)
+    signal    Sending_aux:                         std_logic;                                              -- ACTIVE HIGH when colecting data for self-trigger frame
+    signal    Info_Previous_aux:                   std_logic;                                              -- ACTIVE HIGH when self-trigger is produced by a waveform between two frames 
+    signal    Data_Available_Trailer_aux:          std_logic;                                              -- ACTIVE HIGH when metadata is ready
+    signal    Trailer_Word_0_aux:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+    signal    Trailer_Word_1_aux:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+    signal    Trailer_Word_2_aux:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+    signal    Trailer_Word_3_aux:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+    signal    Trailer_Word_4_aux:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+    signal    Trailer_Word_5_aux:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+    signal    Trailer_Word_6_aux:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+    signal    Trailer_Word_7_aux:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+    signal    Trailer_Word_8_aux:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+    signal    Trailer_Word_9_aux:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+    signal    Trailer_Word_10_aux:                 std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+    signal    Trailer_Word_11_aux:                 std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+
+    signal    Trailer_Word_0_reg:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+    signal    Trailer_Word_1_reg:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+    signal    Trailer_Word_2_reg:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+    signal    Trailer_Word_3_reg:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+    signal    Trailer_Word_4_reg:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+    signal    Trailer_Word_5_reg:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+    signal    Trailer_Word_6_reg:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+    signal    Trailer_Word_7_reg:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+    signal    Trailer_Word_8_reg:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+    signal    Trailer_Word_9_reg:                  std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+    signal    Trailer_Word_10_reg:                 std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+    signal    Trailer_Word_11_reg:                 std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives) REGISTER
+
+    component Self_Trigger_Primitive_Calculation is -- establish average signal level
     port(
-        clock: in std_logic;
-        reset: in std_logic;
-        din: in std_logic_vector(13 downto 0);
-        baseline: out std_logic_vector(13 downto 0));
+        clock:                          in  std_logic;                                              -- AFE clock
+        reset:                          in  std_logic;                                              -- Reset signal. ACTIVE HIGH
+        din:                            in  std_logic_vector(13 downto 0);                          -- Data coming from the Filter Block / Raw data from AFEs
+        Config_Param:                   in  std_logic_vector(13 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
+        Self_trigger:                   out std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
+        Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
+        Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
+        Time_Pulse_UB:                  out std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+        Time_Pulse_OB:                  out std_logic_vector(9 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
+        Max_Peak:                       out std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
+        Charge:                         out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
+        Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
+        Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+        filtered_dout:                  out std_logic_vector (13 downto 0);                         -- HIGH PASS Filtered signal
+        Baseline:                       out std_logic_vector(14 downto 0);                          -- Real Time calculated BASELINE
+        Amplitude:                      out std_logic_vector(14 downto 0);                          -- Real Time calculated AMPLITUDE
+        Peak_Current:                   out std_logic;                                              -- ACTIVE HIGH when a peak is detected
+        Slope_Current:                  out std_logic_vector(13 downto 0);                          -- Real Time calculated SLOPE
+        Slope_Threshold:                out std_logic_vector(6 downto 0);                           -- Threshold over the slope to detect Peaks
+        Detection:                      out std_logic;                                              -- ACTIVE HIGH when primitives are being calculated (during light pulse)
+        Sending:                        out std_logic;                                              -- ACTIVE HIGH when colecting data for self-trigger frame
+        Info_Previous:                  out std_logic;                                              -- ACTIVE HIGH when self-trigger is produced by a waveform between two frames 
+        Data_Available_Trailer:         out std_logic;                                              -- ACTIVE HIGH when metadata is ready
+        Trailer_Word_0:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_1:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_2:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_3:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_4:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_5:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_6:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_7:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_8:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_9:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_10:                out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_11:                out std_logic_vector(31 downto 0));                         -- TRAILER WORD with metada (Local Trigger Primitives)
     end component;
 
-    component trig is -- example trigger algorithm broken out separately, latency = 64 clocks
-    port(
-        clock: in std_logic;
-        din: in std_logic_vector(13 downto 0);
-        baseline: in std_logic_vector(13 downto 0);
-        adhoc: in std_logic_vector(7 downto 0);
-        threshold: in std_logic_vector(13 downto 0);
-        triggered: out std_logic;        
-        trigsample: out std_logic_vector(13 downto 0);
-        ti_trigger: in std_logic_vector(7 downto 0); -------------------------
-        ti_trigger_stbr: in std_logic);  -------------------------
-    end component;
+    -- component baseline256 is -- establish average signal level
+    -- port(
+    --     clock: in std_logic;
+    --     reset: in std_logic;
+    --     din: in std_logic_vector(13 downto 0);
+    --     baseline: out std_logic_vector(13 downto 0));
+    -- end component;
+
+    -- component trig is -- example trigger algorithm broken out separately, latency = 64 clocks
+    -- port(
+    --     clock: in std_logic;
+    --     din: in std_logic_vector(13 downto 0);
+    --     baseline: in std_logic_vector(13 downto 0);
+    --     threshold: in std_logic_vector(13 downto 0);
+    --     triggered: out std_logic;        
+    --     trigsample: out std_logic_vector(13 downto 0);
+    --     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
+    --     ti_trigger_stbr: in std_logic);  -------------------------
+    -- end component;
 
     component CRC_OL is
     generic( Nbits: positive := 32; CRC_Width: positive := 20;
@@ -155,13 +237,13 @@ begin
 
     -- compute the average signal baseline level over the last 256 samples
 
-    baseline_inst: baseline256
-    port map(
-        clock => aclk,
-        reset => reset,
-        din => afe_dat, -- watching live AFE data
-        baseline => baseline
-    );
+    --baseline_inst: baseline256
+    --port map(
+    --    clock => aclk,
+    --    reset => reset,
+    --    din => afe_dat, -- watching live AFE data
+    --    baseline => baseline
+    --);
 
     -- now for dense data packing, we need to access up to last 4 samples at once...
 
@@ -176,18 +258,75 @@ begin
 
     -- trigger algorithm in a separate module. this latency is assumed to be 64 cycles
 
-    trig_inst: trig
+    --trig_inst: trig
+    --port map(
+    --     clock => aclk,
+    --     din => afe_dat, -- watching live AFE data
+    --     baseline => baseline,
+    --     threshold => threshold,
+    --     triggered => triggered,
+    --     trigsample => trigsample, -- the ADC sample that caused the trigger 
+    --     ti_trigger => ti_trigger,
+    --     ti_trigger_stbr => ti_trigger_stbr
+    --);
+
+        ------------------- SELF-TRIGGER AND LOCAL PRIMITIVE CALCULATION DEVELOPED AT CIEMAT ---------
+    trig_inst: Self_Trigger_Primitive_Calculation
     port map(
-         clock => aclk,
-         din => afe_dat, -- watching live AFE data
-         baseline => baseline,
-         adhoc => adhoc,
-         threshold => threshold,
-         triggered => triggered,
-         trigsample => trigsample, -- the ADC sample that caused the trigger 
-         ti_trigger => ti_trigger,
-         ti_trigger_stbr => ti_trigger_stbr
-    );        
+        clock                       => aclk,                           -- AFE clock
+        reset                       => reset,                          -- Reset signal. ACTIVE HIGH
+        din                         => afe_dat,                        -- Data coming from the Filter Block / Raw data from AFEs
+        Config_Param                => st_config,                      -- Configure parameters for filtering & self-trigger bloks
+        Self_trigger                => triggered,                      -- Self-Trigger signal comming from the Self-Trigger block
+        Data_Available              => open,                           -- ACTIVE HIGH when LOCAL primitives are calculated
+        Time_Peak                   => open,                           -- Time in Samples to achieve de Max peak
+        Time_Pulse_UB               => open,                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+        Time_Pulse_OB               => open,                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
+        Max_Peak                    => open,                           -- Amplitude in ADC counts od the peak
+        Charge                      => open,                           -- Charge of the light pulse (without undershoot) in ADC*samples
+        Number_Peaks_UB             => open,                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
+        Number_Peaks_OB             => open,                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+        filtered_dout               => open,                           -- HIGH PASS Filtered signal
+        Baseline                    => Baseline_aux,                   -- Real Time calculated BASELINE
+        Amplitude                   => open,                           -- Real Time calculated AMPLITUDE
+        Peak_Current                => open,                           -- ACTIVE HIGH when a peak is detected
+        Slope_Current               => open,                           -- Real Time calculated SLOPE
+        Slope_Threshold             => open,                           -- Threshold over the slope to detect Peaks
+        Detection                   => open,                           -- ACTIVE HIGH when primitives are being calculated (during light pulse)
+        Sending                     => open,                           -- ACTIVE HIGH when colecting data for self-trigger frame
+        Info_Previous               => Info_Previous_aux,              -- ACTIVE HIGH when self-trigger is produced by a waveform between two frames 
+        Data_Available_Trailer      => Data_Available_Trailer_aux,     -- ACTIVE HIGH when metadata is ready
+        Trailer_Word_0              => Trailer_Word_0_aux,             -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_1              => Trailer_Word_1_aux,             -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_2              => Trailer_Word_2_aux,             -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_3              => Trailer_Word_3_aux,             -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_4              => Trailer_Word_4_aux,             -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_5              => Trailer_Word_5_aux,             -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_6              => Trailer_Word_6_aux,             -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_7              => Trailer_Word_7_aux,             -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_8              => Trailer_Word_8_aux,             -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_9              => Trailer_Word_9_aux,             -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_10             => Trailer_Word_10_aux,            -- TRAILER WORD with metada (Local Trigger Primitives)
+        Trailer_Word_11             => Trailer_Word_11_aux             -- TRAILER WORD with metada (Local Trigger Primitives)
+    ); 
+    -- Prepare data for the data format 
+    Local_primitives_frame: process(aclk,Data_Available_Trailer_aux)
+    begin
+        if (rising_edge(aclk) and (Data_Available_Trailer_aux ='1')) then
+           Trailer_Word_0_reg <= Trailer_Word_0_aux;
+           Trailer_Word_1_reg <= Trailer_Word_1_aux;
+           Trailer_Word_2_reg <= Trailer_Word_2_aux;
+           Trailer_Word_3_reg <= Trailer_Word_3_aux;
+           Trailer_Word_4_reg <= Trailer_Word_4_aux;
+           Trailer_Word_5_reg <= Trailer_Word_5_aux;
+           Trailer_Word_6_reg <= Trailer_Word_6_aux;
+           Trailer_Word_7_reg <= Trailer_Word_7_aux;
+           Trailer_Word_8_reg <= Trailer_Word_8_aux;
+           Trailer_Word_9_reg <= Trailer_Word_9_aux;
+           Trailer_Word_10_reg <= Trailer_Word_10_aux;
+           Trailer_Word_11_reg <= Trailer_Word_11_aux;
+        end if;
+    end process Local_primitives_frame;        
 
     -- FSM waits for trigger condition then assembles output frame and stores into FIFO
 
@@ -300,8 +439,8 @@ begin
          link_id & slot_id & crate_id & detector_id & version_id when (state=hdr0) else
          ts_reg(31 downto 0)  when (state=hdr1) else
          ts_reg(63 downto 32) when (state=hdr2) else
-         ("00" & trigsample & X"00" & "00" & ch_id(5 downto 0)) when (state=hdr3) else  -- trigger sample and channel ID
-         ("00" & baseline & "00" & threshold) when (state=hdr4) else -- average baseline and user-threshold
+         (X"0000" & Info_Previous_aux & "00000" & "0001" & ch_id(5 downto 0)) when (state=hdr3) else  -- trigger sample and channel ID
+         ("00" & baseline_aux(13 downto 0) & "00" & threshold) when (state=hdr4) else -- average baseline and user-threshold
          (afe_dly0( 3 downto 0) & afe_dly1(13 downto 0) & afe_dly2(13 downto  0))                          when (state=dat0) else  -- sample2(3..0) & sample1(13..0) & sample0(13..0) 
          (afe_dly0( 7 downto 0) & afe_dly1(13 downto 0) & afe_dly2(13 downto  4))                          when (state=dat2) else  -- sample4(7..0) & sample3(13..0) & sample2(13..4) 
          (afe_dly0(11 downto 0) & afe_dly1(13 downto 0) & afe_dly2(13 downto  8))                          when (state=dat4) else  -- sample6(11..0) & sample5(13..0) & sample4(13..8) 
@@ -309,18 +448,18 @@ begin
          (afe_dly0( 5 downto 0) & afe_dly1(13 downto 0) & afe_dly2(13 downto  2))                          when (state=dat9) else  -- sample11(5..0) & sample10(13..0) & sample9(13..2)
          (afe_dly0( 9 downto 0) & afe_dly1(13 downto 0) & afe_dly2(13 downto  6))                          when (state=dat11) else -- sample13(9..0) & sample12(13..0) & sample11(13..6)
          (afe_dly0(13 downto 0) & afe_dly1(13 downto 0) & afe_dly2(13 downto 10))                          when (state=dat13) else -- sample15(13..0) & sample14(13..0) & sample13(13..10)
-         X"A8A7A6A5" when (state=trailer1) else -- X"00000000"
-         X"A4A3A2A1" when (state=trailer2) else -- X"00000000"
-         X"B8B7B6B5" when (state=trailer3) else -- X"00000000"
-         X"B4B3B2B1" when (state=trailer4) else -- X"00000000"
-         X"C8C7C6C5" when (state=trailer5) else -- X"00000000"
-         X"C4C3C2C1" when (state=trailer6) else -- X"00000000"
-         X"D8D7D6D5" when (state=trailer7) else -- X"00000000"
-         X"D4D3D2D1" when (state=trailer8) else -- X"00000000"
-         X"E8E7E6E5" when (state=trailer9) else -- X"00000000"
-         X"E4E3E2E1" when (state=trailer10) else -- X"00000000"
-         X"F8F7F6F5" when (state=trailer11) else -- X"00000000"
-         X"F4F3F2F1" when (state=trailer12) else -- X"00000000"
+         Trailer_Word_0_reg(31 downto 0) when (state=trailer1) else -- X"00000000"
+         Trailer_Word_1_reg(31 downto 0) when (state=trailer2) else -- X"00000000"
+         Trailer_Word_2_reg(31 downto 0) when (state=trailer3) else -- X"00000000"
+         Trailer_Word_3_reg(31 downto 0) when (state=trailer4) else -- X"00000000"
+         Trailer_Word_4_reg(31 downto 0) when (state=trailer5) else -- X"00000000"
+         Trailer_Word_5_reg(31 downto 0) when (state=trailer6) else -- X"00000000"
+         Trailer_Word_6_reg(31 downto 0) when (state=trailer7) else -- X"00000000"
+         Trailer_Word_7_reg(31 downto 0) when (state=trailer8) else -- X"00000000"
+         Trailer_Word_8_reg(31 downto 0) when (state=trailer9) else -- X"00000000"
+         Trailer_Word_9_reg(31 downto 0) when (state=trailer10) else -- X"00000000"
+         Trailer_Word_10_reg(31 downto 0) when (state=trailer11) else -- X"00000000"
+         Trailer_Word_11_reg(31 downto 0) when (state=trailer12) else -- X"00000000"
          X"FFFFFFFF" when (state=trailer13) else
          "0000" & crc20 & X"DC" when (state=eof) else -- "0000" & CRC[19..0] & K28.6
          X"00000000"; 
