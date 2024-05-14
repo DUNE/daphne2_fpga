@@ -30,7 +30,12 @@ read_vhdl ../core/core.vhd
   read_vhdl ../core/trig/stc.vhd
    read_vhdl ../core/trig/baseline256.vhd
    read_vhdl ../core/trig/trig.vhd
+read_vhdl ../core/trig/Filter_CIEMAT.vhd
+read_vhdl ../core/trig/LocalPrimitives_CIEMAT.vhd
+read_vhdl ../core/trig/PeakDetector_SelfTrigger_CIEMAT.vhd
+read_vhdl ../core/trig/Self_Trigger_Primitive_Calculation.vhd
  read_vhdl ../core/core_mgt4.vhd
+
 
 read_vhdl ../oei/hdl/burst_traffic_controller.vhd
 read_vhdl ../oei/hdl/ethernet_interface.vhd

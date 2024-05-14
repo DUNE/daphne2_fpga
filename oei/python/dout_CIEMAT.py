@@ -6,7 +6,7 @@ from oei import *
 import numpy
 import matplotlib.pyplot as plt
 
-thing = OEI("10.73.137.110")
+thing = OEI("10.73.137.107")
 
 # write anything to register 0x0000_2000 to trigger all spy buffers
 
