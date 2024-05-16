@@ -121,7 +121,8 @@ COMPONENT LocalPrimitives_CIEMAT IS
     Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
     Baseline:                       out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
-    Amplitude:                      out std_logic_vector(14 downto 0));                            -- TO BE REMOVED AFTER DEBUGGING
+    Amplitude:                      out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
+    High_Freq_Noise:                out std_logic);                                                 -- ACTIVE HIGH when high freq noise is detected 
 END component;
 
 -- Common signals for three blocks
@@ -140,7 +141,11 @@ SIGNAL Config_Param_SELF_aux: std_logic_vector(9 downto 0);
 SIGNAL Interface_LOCAL_Primitves_IN_aux: std_logic_vector(23 downto 0);
 SIGNAL Interface_LOCAL_Primitves_OUT_aux: std_logic_vector(23 downto 0);
 SIGNAL Self_trigger_aux: std_logic;
+SIGNAL Self_trigger_out_aux: std_logic;
 SIGNAL triggered_dly32_i: std_logic;
+SIGNAL Noise_aux: std_logic; 
+SIGNAL Trigger_dly53: bit_vector(53 downto 0):=(others=>'0');
+signal Noise_OR: bit:='0';
 
 -- LOCAL TRIGGER SIGNALS
 SIGNAL Data_Available_aux:                 std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
@@ -238,7 +243,8 @@ UUT3 : LocalPrimitives_CIEMAT
     Number_Peaks_UB=>  Number_Peaks_UB_aux,                             -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     Number_Peaks_OB=>  Number_Peaks_OB_aux,                             -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
     Baseline=>  Baseline_aux,                                           -- TO BE REMOVED AFTER DEBUGGING
-    Amplitude=>  Amplitude_aux);                                        -- TO BE REMOVED AFTER DEBUGGING
+    Amplitude=>  Amplitude_aux,                                        -- TO BE REMOVED AFTER DEBUGGING
+    High_Freq_Noise=> Noise_aux);
 
 ---------------------- GET (Synchronous) AND UPDATE CONFIGURATION PARAMETERS     -----------------------
 
@@ -313,7 +319,7 @@ Allow_Previous_Info <= Config_Param_SELF_aux(1);
 -- This Finite Sate controls when data is being sent 
 --      * Not_Sending Data --> Data is not being sent 
 --      * Sending_Data --> Remeains in this state for Framse_Size tics when a self-trigger event has occured
-Next_State_Sending: process(CurrentState_Data,self_trigger_aux, Data_Sent_Count)
+Next_State_Sending: process(CurrentState_Data,self_trigger_aux, Data_Sent_Count,Noise_aux)
 begin
     case CurrentState_Data is
         when Not_Sending_Data =>
@@ -323,7 +329,7 @@ begin
                 NextState_Data <= Not_Sending_Data; 
             end if;
         when Sending_Data =>
-            if(Data_Sent_Count>1) then
+            if((Data_Sent_Count>1)and (Noise_aux='0')) then
                 NextState_Data <= Sending_Data;
             else
                 NextState_Data <= Not_Sending_Data;
@@ -619,36 +625,50 @@ end process Output_FrameFormat;
 
 ------- add in some fake/synthetic latency, adjust it so total trigger latency is 64 clocks -----------
 
-Select_Delay: process(Config_Param_FILTER_aux (0)) -- While filtering delay is bigger 
+--Select_Delay: process(Config_Param_FILTER_aux (0)) -- While filtering delay is bigger 
+--begin
+--    if (Config_Param_FILTER_aux (0)='0') then
+--        Trigger_Delay <= "10100"; -- 11 clk
+--    else
+--        Trigger_Delay <= "10000"; -- 8 clk
+--    end if;
+--end process Select_Delay;
+
+--srlc32e_0_inst : srlc32e
+--port map(
+--    clk => clock_aux,
+--    ce  => '1',
+--    a   => "11111",
+--    d   => Self_trigger_aux,
+--    q   => open,
+--    q31 => triggered_dly32_i
+--);
+
+--srlc32e_1_inst : srlc32e
+--port map(
+--    clk => clock_aux,
+--    ce  => '1',
+--    a   => Trigger_Delay,  -- adjust this delay to make overall latency = 64
+--    d   => triggered_dly32_i,
+--    q   => Self_trigger_out_aux,
+--    q31 => open
+--);
+
+Trigger_Propagation: process(clock, Noise_aux, Self_trigger_aux)
 begin
-    if (Config_Param_FILTER_aux (0)='0') then
-        Trigger_Delay <= "10100"; -- 11 clk
-    else
-        Trigger_Delay <= "10000"; -- 8 clk
+    if (clock'event and clock='1') then
+        if (Self_trigger_aux = '1') then
+            Trigger_dly53 <= Trigger_dly53 sll 1;
+            Trigger_dly53(0) <= '1';
+        elsif (Noise_aux='1') then
+            Trigger_dly53 <= (others => '0');
+        else
+            Trigger_dly53 <= Trigger_dly53 sll 1;
+        end if;    
     end if;
-end process Select_Delay;
-
-srlc32e_0_inst : srlc32e
-port map(
-    clk => clock_aux,
-    ce  => '1',
-    a   => "11111",
-    d   => Self_trigger_aux,
-    q   => open,
-    q31 => triggered_dly32_i
-);
-
-srlc32e_1_inst : srlc32e
-port map(
-    clk => clock_aux,
-    ce  => '1',
-    a   => Trigger_Delay,  -- adjust this delay to make overall latency = 64
-    d   => triggered_dly32_i,
-    q   => Self_trigger,
-    q31 => open
-);
-
-
+end process Trigger_Propagation;
+--Noise_OR <= Noise_64(0) or Noise_64(1) or Noise_64(2) or Noise_64(3) or Noise_64(4) or Noise_64(5) or Noise_64(6) or Noise_64(7) or Noise_64(8) or Noise_64(9) or Noise_64(10) or Noise_64(11) or Noise_64(12) or Noise_64(13) or Noise_64(14) or Noise_64(15) or Noise_64(16) or Noise_64(17) or Noise_64(18) or Noise_64(19) or Noise_64(20) or Noise_64(21) or Noise_64(22) or Noise_64(23) or Noise_64(24) or Noise_64(25) or Noise_64(26) or Noise_64(27) or Noise_64(28) or Noise_64(29) or Noise_64(30) or Noise_64(31) or Noise_64(32) or Noise_64(33) or Noise_64(34) or Noise_64(35) or Noise_64(36) or Noise_64(37) or Noise_64(38) or Noise_64(39) or Noise_64(40) or Noise_64(41) or Noise_64(42) or Noise_64(43) or Noise_64(44) or Noise_64(45) or Noise_64(46) or Noise_64(47) or Noise_64(48) or Noise_64(49) or Noise_64(50) or Noise_64(51) or Noise_64(52) or Noise_64(53) or Noise_64(54) or Noise_64(55) or Noise_64(56) or Noise_64(57) or Noise_64(58) or Noise_64(59) or Noise_64(60) or Noise_64(61) or Noise_64(62) or Noise_64(63);  
+Self_trigger_out_aux <= to_stdulogic(Trigger_dly53(53)); 
 
 ----------------------- INPUT SIGNALS   -----------------------
 clock_aux           <= clock;
@@ -656,7 +676,7 @@ reset_aux           <= reset;
 din_aux             <= din;
 
 ----------------------- OUTPUT SIGNALS   -----------------------
---Self_trigger        <= Self_trigger_aux;                   
+Self_trigger        <= Self_trigger_out_aux;                   
 Data_Available      <= Data_Available_aux;                 
 Time_Peak           <= Time_Peak_aux;                       
 Time_Pulse_UB       <= Time_Pulse_UB_aux;                   

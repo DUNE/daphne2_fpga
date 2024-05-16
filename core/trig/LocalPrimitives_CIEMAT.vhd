@@ -53,7 +53,8 @@ port(
     Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
     Baseline:                       out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
-    Amplitude:                      out std_logic_vector(14 downto 0)                            -- TO BE REMOVED AFTER DEBUGGING
+    Amplitude:                      out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
+    High_Freq_Noise:                out std_logic                                                 -- ACTIVE HIGH when high freq noise is detected 
 --    Trailer_Word_0:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
 --    Trailer_Word_1:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
 --    Trailer_Word_2:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
@@ -112,11 +113,14 @@ signal Max_Peak_Current:   std_logic_vector(14 downto 0):= (others=>'0');       
 signal Charge_Current:   std_logic_vector(22 downto 0):= (others=>'0');         -- Charge of the light pulse (without undershoot) in ADC*samples
 signal Number_Peaks_UB_Current:   std_logic_vector(3 downto 0):= (others=>'0'); -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
 signal Number_Peaks_OB_Current:   std_logic_vector(3 downto 0):= (others=>'0'); -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+-- NOISE CHECK signals
+signal High_Freq_Noise_aux: std_logic:='0'; -- ACTIVE HIGH when high freq noise is detected  
 
 type Detection_State is   (No_Detection, Detection_UB, Detection_OB,Data);
 signal CurrentState_Detection, NextState_Detection: Detection_State;
 signal Peak_Detection: std_logic :='0';
-CONSTANT Minimum_Time_Undershoot : integer := 300; --  4.8 us (Just in case the signal is really noisy) --> Minumum undershoot is 6us
+CONSTANT Minimum_Time_UB : integer := 30; --  560 ns (Just in case the signal is really noisy) --> Minumum undershoot is 6us
+CONSTANT Minimum_Time_Undershoot: integer := 70; -- 2*Minimum_Time_UB, 1120 ns
 signal Detection_Time: integer:=3072; 
 CONSTANT Max_Detection_Time : integer := 3072; -- Maximun time allowed in detection mode --> 3 frames (3*1024). 
 --signal Data_Available: std_logic :='0';
@@ -248,7 +252,7 @@ begin
             end if;
         when Detection_OB => 
             --if ((signed(Amplitude_Current)<=0) and (signed(Slope_Current)>=-2) and (signed(Slope_Current)<=0)and (unsigned(Time_Pulse_OB_Current)>=Minimum_Time_Undershoot))  then
-            if ((signed(Amplitude_Current)<=0) and (Peak_Current='0') and (Peak_Current_delay1='0')and (Peak_Current_delay2='0')and (Peak_Current_delay3='0')and (Peak_Current_delay4='0')and (Peak_Current_delay5='0')and (Peak_Current_delay6='0')and (Peak_Current_delay7='0')and (Peak_Current_delay8='0')and (Peak_Current_delay9='0')  )then
+            if ((signed(Amplitude_Current)<=0) and (Peak_Current='0') and (Peak_Current_delay1='0')and (Peak_Current_delay2='0')and (Peak_Current_delay3='0')and (Peak_Current_delay4='0')and (Peak_Current_delay5='0')and (Peak_Current_delay6='0')and (Peak_Current_delay7='0')and (Peak_Current_delay8='0')and (Peak_Current_delay9='0') and (unsigned(Time_Pulse_OB_Current)>=Minimum_Time_Undershoot))then
                 NextState_Detection <= Data;
             elsif (Detection_Time<=0) then
                 NextState_Detection <= No_Detection;
@@ -264,9 +268,9 @@ begin
     end case;
 end process Next_State_Detection;
 
-FFs_Detection: process(clock, reset, Amplitude_Current, Peak_Current)
+FFs_Detection: process(clock, reset, Amplitude_Current, Peak_Current, High_Freq_Noise_aux)
 begin
-    if (reset='1')  then
+    if ((reset='1') or (High_Freq_Noise_aux='1'))  then
         CurrentState_Detection      <= No_Detection;                 -- Primitives calculation available. Active HIGH
         Time_Peak_Current           <= (others=>'0');       -- Time in Samples to achieve de Max peak
         Time_Pulse_UB_Current       <= (others=>'0');       -- Time in Samples of the light pulse (without undershoot)
@@ -489,6 +493,21 @@ begin
         end if;
     end if;
 end process Peak_Delay;
+
+----------------------- HIGH FREQUENCY NOISE CHECK    -----------------------
+Noise_Check: process(clock,Time_Pulse_UB_Current, CurrentState_Detection)
+begin
+    if(clock'event and clock='1') then
+        if ((CurrentState_Detection = Detection_OB ) and (unsigned(Time_Pulse_UB_Current)< Minimum_Time_UB)) then
+            High_Freq_Noise_aux <='1'; 
+        else
+            High_Freq_Noise_aux <='0'; 
+        end if;
+    end if;
+end process Noise_Check;
+
+High_Freq_Noise <= High_Freq_Noise_aux;
+
 ----------------------- INTERFACE WITH LOCAL PRIMITIVES CALCULATION BLOCK    -----------------------
 
 -- Data coming from SELF_TRIGGER Block

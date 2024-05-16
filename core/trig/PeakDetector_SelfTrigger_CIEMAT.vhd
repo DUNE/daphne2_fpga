@@ -252,7 +252,6 @@ end process Get_Interface_Params;
 -- Interface_LOCAL_Primitves_IN[0] --> 1 = ENABLE filtering / 0 = DISABLE filtering 
 -- Interface_LOCAL_Primitves_IN[3 downto 1] --> TBD
 Detection <= Interface_LOCAL_Primitves_IN_reg(0);
-
 -- Data being sent to LOCAL PRIMITVE Calculation Block
 Interface_LOCAL_Primitves_OUT(0) <= Peak_Current;
 --Interface_LOCAL_Primitves_OUT(1) <= Sending;

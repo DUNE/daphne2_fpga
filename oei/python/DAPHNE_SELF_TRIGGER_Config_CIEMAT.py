@@ -92,50 +92,51 @@ thing.write(0x00003001, [Config])
 print("Output CONFIGURED")
 
 # ------------ ENABLE SELF-TRIGGER CHANNELS ---------------------
-Chn0=int('1',2) # 1 ENABLE / 0 DISABLE
-Chn1=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn2=int('1',2) # 1 ENABLE / 0 DISABLE
-Chn3=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn4=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn5=int('1',2) # 1 ENABLE / 0 DISABLE
-Chn6=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn7=int('1',2) # 1 ENABLE / 0 DISABLE
-Chn8=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn9=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn10=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn11=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn12=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn13=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn14=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn15=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn16=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn17=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn18=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn19=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn20=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn21=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn22=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn23=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn24=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn25=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn26=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn27=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn28=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn29=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn30=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn31=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn32=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn33=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn34=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn35=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn36=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn37=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn38=int('0',2) # 1 ENABLE / 0 DISABLE
-Chn39=int('0',2) # 1 ENABLE / 0 DISABLE
+Chn0=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 0
+Chn1=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 1
+Chn2=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 2
+Chn3=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 3
+Chn4=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 4
+Chn5=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 5
+Chn6=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 6
+Chn7=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 7
+Chn8=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 10
+Chn9=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 11
+Chn10=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 12
+Chn11=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 13
+Chn12=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 14
+Chn13=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 15
+Chn14=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 16
+Chn15=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 17
+Chn16=int('1',2) # 1 ENABLE / 0 DISABLE, DAQ 20
+Chn17=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 21
+Chn18=int('1',2) # 1 ENABLE / 0 DISABLE, DAQ 22
+Chn19=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 23
+Chn20=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 24
+Chn21=int('1',2) # 1 ENABLE / 0 DISABLE, DAQ 25
+Chn22=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 26
+Chn23=int('1',2) # 1 ENABLE / 0 DISABLE, DAQ 27
+Chn24=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 30
+Chn25=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 31
+Chn26=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 32
+Chn27=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 33
+Chn28=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 34
+Chn29=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 35
+Chn30=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 36
+Chn31=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 37
+Chn32=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 40
+Chn33=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 41
+Chn34=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 42
+Chn35=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 43
+Chn36=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 44
+Chn37=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 45
+Chn38=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 46
+Chn39=int('0',2) # 1 ENABLE / 0 DISABLE, DAQ 47
 
 Channel_Self= Chn0 + (Chn1*(2**1))+ (Chn2*(2**2))+ (Chn3*(2**3))+ (Chn4*(2**4))+ (Chn5*(2**5))+ (Chn6*(2**6))+ (Chn7*(2**7))+ (Chn8*(2**8))+ (Chn9*(2**9))+ (Chn10*(2**10))+ (Chn11*(2**11))+ (Chn12*(2**12))+ (Chn13*(2**13))+ (Chn14*(2**14))+ (Chn15*(2**15))+ (Chn16*(2**16))+ (Chn17*(2**17))+ (Chn18*(2**18))+ (Chn19*(2**19))+ (Chn20*(2**20))+ (Chn21*(2**21))+ (Chn22*(2**22))+ (Chn23*(2**23))+ (Chn24*(2**24))+ (Chn25*(2**25))+ (Chn26*(2**26))+ (Chn27*(2**27))+ (Chn28*(2**28))+ (Chn29*(2**29))+ (Chn30*(2**30))+ (Chn31*(2**31))+ (Chn32*(2**32))+ (Chn33*(2**33))+ (Chn34*(2**34))+ (Chn35*(2**35))+ (Chn36*(2**36))+ (Chn37*(2**37))+ (Chn38*(2**38))+ (Chn39*(2**39))
-
+Hex_Channel_Self=hex(Channel_Self)
 thing.write(0x00006001, [Channel_Self])
+
 
 print("Self-trigger Channel CONFIGURED")
 # ------------ SELF-TRIGGER CONFIG PARAM ---------------------
@@ -154,12 +155,12 @@ Truncated=int('0',2)
 Filtered_Window=int('01',2) 
 Self_Main_Peak=int('1',2)
 Allow_Peak_Between_Frames=int('0',2)
-Slope_Calculation=int('0',2)
-Slope_Threshold=int('1111100',2) # -10
+Slope_Calculation=int('1',2)
+Slope_Threshold=int('1111100',2) # -4
 
 
 Config=Enable_Filt+(Truncated*2)+(Filtered_Window*4)+(Self_Main_Peak*16)+(Allow_Peak_Between_Frames*32)+(Slope_Calculation*64)+(Slope_Threshold*128)
-
+Hex_Config=hex(Config)
 # Amplitude_Threshold=int(0) # (16 bits) 
 # Slope_Threshold=int(65524) # -12 (16 bits)
 # Time_Pulse_OB=int(344) # (11 bits)
