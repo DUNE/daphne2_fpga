@@ -156,11 +156,13 @@ Filtered_Window=int('01',2)
 Self_Main_Peak=int('1',2)
 Allow_Peak_Between_Frames=int('0',2)
 Slope_Calculation=int('1',2)
-Slope_Threshold=int('1111100',2) # -4
+Slope_Threshold=int('1111101',2) # -3
 
 
 Config=Enable_Filt+(Truncated*2)+(Filtered_Window*4)+(Self_Main_Peak*16)+(Allow_Peak_Between_Frames*32)+(Slope_Calculation*64)+(Slope_Threshold*128)
 Hex_Config=hex(Config)
+print(Hex_Config)
+
 # Amplitude_Threshold=int(0) # (16 bits) 
 # Slope_Threshold=int(65524) # -12 (16 bits)
 # Time_Pulse_OB=int(344) # (11 bits)
