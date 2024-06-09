@@ -68,16 +68,30 @@ signal First_Filtered_out: std_logic_vector(13 downto 0); -- First stage silter 
 signal Second_Filtered_delay1, Second_Filtered_delay2, Second_Filtered_delay3, Second_Filtered_delay4, Second_Filtered_delay5, Second_Filtered_delay6: std_logic_vector(13 downto 0); 
 signal Second_Filtered_delay7, Second_Filtered_delay8, Second_Filtered_delay9, Second_Filtered_delay10, Second_Filtered_delay11, Second_Filtered_delay12: std_logic_vector(13 downto 0); 
 signal Second_Filtered_delay13, Second_Filtered_delay14, Second_Filtered_delay15,Second_Filtered_delay16: std_logic_vector(13 downto 0); -- Buffer for Simple moving average filtering
-signal Second_Filtered_out: std_logic_vector(13 downto 0);-- Second stage silter output (real and delayed)
-signal Second_Filtered_add: std_logic_vector(14 downto 0); -- SMA(n-1) + [ [x(n) - x(n-k)] / k ]
+signal Second_Filtered_out, Second_Filtered_out_delay1 : std_logic_vector(13 downto 0);-- Second stage silter output (real and delayed)
+signal Second_Filtered_add, Second_Filtered_add_2: std_logic_vector(14 downto 0); -- SMA(n-1) + [ [x(n) - x(n-k)] / k ]
+signal Second_Filtered_add_reg : std_logic_vector(13 downto 0);
 
-signal Second_Filtered_Dif_aux, Second_Filtered_Err_aux : std_logic_vector(13 downto 0);
+signal Second_Filtered_Dif_aux, Second_Filtered_Dif_reg, Second_Filtered_Err_aux : std_logic_vector(13 downto 0);
 signal Second_Filtered_Select: std_logic_vector(13 downto 0);
 
--- post reset stabilization signals --> 32 clk cylcles so all the delays are properly filled
-signal Reset_Timer: integer:=32; -- 32 clk
+signal Second_Filtered_2_delay1, Second_Filtered_2_delay2, Second_Filtered_2_delay3, Second_Filtered_2_delay4, Second_Filtered_2_delay5, Second_Filtered_2_delay6: std_logic_vector(13 downto 0); 
+signal Second_Filtered_2_delay7, Second_Filtered_2_delay8, Second_Filtered_2_delay9, Second_Filtered_2_delay10, Second_Filtered_2_delay11, Second_Filtered_2_delay12: std_logic_vector(13 downto 0); 
+signal Second_Filtered_2_delay13, Second_Filtered_2_delay14, Second_Filtered_2_delay15,Second_Filtered_2_delay16: std_logic_vector(13 downto 0); -- Buffer for Simple moving average filtering
+signal Second_Filtered_2_out, Second_Filtered_2_out_delay1 : std_logic_vector(13 downto 0);-- Second stage silter output (real and delayed)
+signal Second_Filtered_2_add, Second_Filtered_2_add_2: std_logic_vector(14 downto 0); -- SMA(n-1) + [ [x(n) - x(n-k)] / k ]
+signal Second_Filtered_2_add_reg : std_logic_vector(13 downto 0);
+
+signal Second_Filtered_2_Dif_aux, Second_Filtered_2_Dif_reg, Second_Filtered_2_Err_aux : std_logic_vector(13 downto 0);
+signal Second_Filtered_2_Select: std_logic_vector(13 downto 0);
+
+--signal Third_Filtered_out: std_logic_vector(13 downto 0);-- Third stage filter output (real and delayed)
+--signal Third_Filtered_add: std_logic_vector(14 downto 0);
+
+-- post reset stabilization signals --> 64 clk cylcles so all the delays are properly filled
+signal Reset_Timer: integer:=64; -- 64 clk
 signal Not_allow_Filter: std_logic;
-CONSTANT Reset_Timer_cnt : integer := 32; -- 32 clk
+CONSTANT Reset_Timer_cnt : integer := 64; -- 64 clk
 
 begin
 
@@ -132,14 +146,16 @@ begin
 end process First_Filter_Stage;
 
 
------------------------ SECOND STAGE OF THE FILTER: Simple Moving Average        -----------------------
-Second_Filtered_Dif_aux      <= std_logic_vector(unsigned("0000" & First_Filtered_out(13 downto 4)) - unsigned("0000" & Second_Filtered_Select(13 downto 4)));
-Second_Filtered_Err_aux      <= std_logic_vector(unsigned("00" & First_Filtered_out(13 downto 2)) - unsigned("00" & Second_Filtered_out(13 downto 2)));
-Second_Filtered_add          <= std_logic_vector(signed('0' & Second_Filtered_out) + signed(resize(signed(Second_Filtered_Err_aux ),15)) + signed(resize(signed(Second_Filtered_Dif_aux),15)));
+----------------------- SECOND STAGE OF THE FILTER: Low pass filtering to reduce High Freq noise    -----------------------
+
 ---- Filter Arithmetic Operations for the filter
+Second_Filtered_Dif_aux      <= std_logic_vector(unsigned("000" & First_Filtered_out(13 downto 3)) - unsigned("000" & Second_Filtered_Select(13 downto 3)));
+Second_Filtered_Err_aux      <= std_logic_vector(unsigned("00" & First_Filtered_out(13 downto 2)) - unsigned("00" & Second_Filtered_add_reg(13 downto 2)));
+Second_Filtered_add          <= std_logic_vector(signed('0' & Second_Filtered_add_reg) + signed(resize(signed(Second_Filtered_Err_aux ),15)));-- + signed(resize(signed(Second_Filtered_Dif_aux),15)));
+Second_Filtered_add_2        <= std_logic_vector(signed('0' & Second_Filtered_add_reg) + signed(resize(signed(Second_Filtered_Dif_reg ),15)));
+
 
 ---- Selects which element from the buffer to pick, and the shift (division)
-
 Second_Filter_Stage_Arithmetic: process(Second_Stage_Window_Size, Second_Filtered_delay2, Second_Filtered_delay4, Second_Filtered_delay8, Second_Filtered_delay16)
 begin
     if (Second_Stage_Window_Size = "00") then
@@ -174,7 +190,10 @@ begin
             Second_Filtered_delay14     <= (others =>'0'); 
             Second_Filtered_delay15     <= (others =>'0');
             Second_Filtered_delay16     <= (others =>'0');
+            Second_Filtered_add_reg     <= (others =>'0');
+            Second_Filtered_Dif_reg     <= (others =>'0');
             Second_Filtered_out         <= (others =>'0');
+            --Second_Filtered_out_delay1   <= (others =>'0');
         else
             Second_Filtered_delay1      <= First_Filtered_out;
             Second_Filtered_delay2      <= Second_Filtered_delay1; 
@@ -192,10 +211,85 @@ begin
             Second_Filtered_delay14     <= Second_Filtered_delay13; 
             Second_Filtered_delay15     <= Second_Filtered_delay14;
             Second_Filtered_delay16     <= Second_Filtered_delay15; 
-            Second_Filtered_out         <= Second_Filtered_add(13 downto 0);   
+            Second_Filtered_add_reg     <= Second_Filtered_add(13 downto 0);
+            Second_Filtered_Dif_reg     <= Second_Filtered_Dif_aux;
+            --Second_Filtered_out_delay1   <= Second_Filtered_out;
+            Second_Filtered_out         <= Second_Filtered_add_2(13 downto 0);   
         end if;
     end if;
 end process Second_Filter_Stage;
+
+-- Filter Arithmetic Operations for the filter
+Second_Filtered_2_Dif_aux      <= std_logic_vector(unsigned("000" & Second_Filtered_out(13 downto 3)) - unsigned("000" & Second_Filtered_2_Select(13 downto 3)));
+Second_Filtered_2_Err_aux      <= std_logic_vector(unsigned("00" & Second_Filtered_out(13 downto 2)) - unsigned("00" & Second_Filtered_2_add_reg(13 downto 2)));
+Second_Filtered_2_add          <= std_logic_vector(signed('0' & Second_Filtered_2_add_reg) + signed(resize(signed(Second_Filtered_2_Err_aux ),15)));-- + signed(resize(signed(Second_Filtered_Dif_aux),15)));
+Second_Filtered_2_add_2        <= std_logic_vector(signed('0' & Second_Filtered_2_add_reg) + signed(resize(signed(Second_Filtered_2_Dif_reg ),15)));
+
+
+---- Selects which element from the buffer to pick, and the shift (division)
+Second_Filter_2_Stage_Arithmetic: process(Second_Stage_Window_Size, Second_Filtered_2_delay2, Second_Filtered_2_delay4, Second_Filtered_2_delay8, Second_Filtered_2_delay16)
+begin
+    if (Second_Stage_Window_Size = "00") then
+        Second_Filtered_2_Select <= Second_Filtered_2_delay2;
+    elsif (Second_Stage_Window_Size = "01") then
+        Second_Filtered_2_Select <= Second_Filtered_2_delay4;               
+    elsif (Second_Stage_Window_Size = "10") then 
+        Second_Filtered_2_Select <= Second_Filtered_2_delay8;         
+    else
+        Second_Filtered_2_Select <= Second_Filtered_2_delay16;    
+    end if;
+end process Second_Filter_2_Stage_Arithmetic;
+
+-- synchronous buffering data and filter output
+Second_Filter_2_Stage: process(clock, reset)
+begin
+    if (clock'event and clock='1') then
+        if(reset='1')then
+            Second_Filtered_2_delay1      <= (others =>'0');
+            Second_Filtered_2_delay2      <= (others =>'0'); 
+            Second_Filtered_2_delay3      <= (others =>'0'); 
+            Second_Filtered_2_delay4      <= (others =>'0'); 
+            Second_Filtered_2_delay5      <= (others =>'0'); 
+            Second_Filtered_2_delay6      <= (others =>'0'); 
+            Second_Filtered_2_delay7      <= (others =>'0'); 
+            Second_Filtered_2_delay8      <= (others =>'0'); 
+            Second_Filtered_2_delay9      <= (others =>'0');
+            Second_Filtered_2_delay10     <= (others =>'0'); 
+            Second_Filtered_2_delay11     <= (others =>'0');
+            Second_Filtered_2_delay12     <= (others =>'0'); 
+            Second_Filtered_2_delay13     <= (others =>'0'); 
+            Second_Filtered_2_delay14     <= (others =>'0'); 
+            Second_Filtered_2_delay15     <= (others =>'0');
+            Second_Filtered_2_delay16     <= (others =>'0');
+            Second_Filtered_2_add_reg     <= (others =>'0');
+            Second_Filtered_2_Dif_reg     <= (others =>'0');
+            Second_Filtered_2_out         <= (others =>'0');
+            --Second_Filtered_2_out_delay1  <= (others =>'0');
+        else
+            Second_Filtered_2_delay1      <= Second_Filtered_out;
+            Second_Filtered_2_delay2      <= Second_Filtered_2_delay1; 
+            Second_Filtered_2_delay3      <= Second_Filtered_2_delay2; 
+            Second_Filtered_2_delay4      <= Second_Filtered_2_delay3; 
+            Second_Filtered_2_delay5      <= Second_Filtered_2_delay4; 
+            Second_Filtered_2_delay6      <= Second_Filtered_2_delay5; 
+            Second_Filtered_2_delay7      <= Second_Filtered_2_delay6; 
+            Second_Filtered_2_delay8      <= Second_Filtered_2_delay7; 
+            Second_Filtered_2_delay9      <= Second_Filtered_2_delay8; 
+            Second_Filtered_2_delay10     <= Second_Filtered_2_delay9; 
+            Second_Filtered_2_delay11     <= Second_Filtered_2_delay10; 
+            Second_Filtered_2_delay12     <= Second_Filtered_2_delay11; 
+            Second_Filtered_2_delay13     <= Second_Filtered_2_delay12; 
+            Second_Filtered_2_delay14     <= Second_Filtered_2_delay13; 
+            Second_Filtered_2_delay15     <= Second_Filtered_2_delay14;
+            Second_Filtered_2_delay16     <= Second_Filtered_2_delay15; 
+            Second_Filtered_2_add_reg     <= Second_Filtered_2_add(13 downto 0);
+            Second_Filtered_2_Dif_reg     <= Second_Filtered_2_Dif_aux;
+            --Second_Filtered_2_out_delay1  <= Second_Filtered_2_out;
+            Second_Filtered_2_out         <= Second_Filtered_2_add_2(13 downto 0);   
+        end if;
+    end if;
+end process Second_Filter_2_Stage;
+
 
 
 ----------------------- TIMER AFTER RESET       -----------------------
@@ -218,13 +312,28 @@ begin
     end if;
 end process Timer_Reset_Stage;
 
+------------------------- THIRD STAGE OF THE FILTER: DC BLOCKER (High - Pass Filter) -----------------------
 
+------ Filter Arithmetic Operations for the filter
+--Third_Filtered_add          <= std_logic_vector(signed('0' & Second_Filtered_2_out) - signed('0' & Second_Filtered_2_out_delay1) + signed(resize(signed(Third_Filtered_out(13 downto 1) ),15))+ signed(resize(signed(Third_Filtered_out(13 downto 2) ),15))+ signed(resize(signed(Third_Filtered_out(13 downto 3) ),15))+ signed(resize(signed(Third_Filtered_out(13 downto 4) ),15)));
+
+---- synchronous buffering data and filter output
+--Third_Filter_Stage: process(clock, reset)
+--begin
+--    if (clock'event and clock='1') then
+--        if(reset='1')then
+--            Third_Filtered_out         <= (others =>'0');
+--        else
+--            Third_Filtered_out         <= Third_Filtered_add(13 downto 0);  
+--        end if;
+--    end if;
+--end process Third_Filter_Stage;
 ----------------------- OUTPUT SELECTION: Filtered / Not Filtered                -----------------------
 
-Output: process(Enable, Second_Filtered_out, din_Delay3, Not_allow_Filter)
+Output: process(Enable, Second_Filtered_2_out, din_Delay3, Not_allow_Filter)
 begin
     if((Enable='1') and (Not_allow_Filter='0'))then
-        filtered_dout <= Second_Filtered_out;
+        filtered_dout <= Second_Filtered_2_out;
     else
         filtered_dout <= din_Delay3; 
     end if;
