@@ -88,10 +88,10 @@ signal Allow_Peak: std_logic :='0';
 -- SELF-TRIGGER signals
 signal self_trigger_aux: std_logic := '0'; -- Self-Trigger signal. ACTIVE HIGH
 
--- post reset stabilization signals --> 32 clk cylcles so all the delays are properly filled
-signal Reset_Timer: integer:=32; -- 32 clk
+-- post reset stabilization signals --> 64 clk cylcles so all the delays are properly filled
+signal Reset_Timer: integer:=64; -- 64 clk
 signal Not_allow_Trigger: std_logic;
-CONSTANT Reset_Timer_cnt : integer := 32; -- 32 clk
+CONSTANT Reset_Timer_cnt : integer := 64; -- 64 clk
 
 begin
 
