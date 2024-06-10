@@ -299,6 +299,8 @@ architecture DAPHNE2_arch of DAPHNE2 is
         outmode: in std_logic_vector(7 downto 0); -- choose streaming or self-trig sender for each output
         adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
         threshold: in std_logic_vector(13 downto 0); -- for self-trig senders, threshold relative to average baseline
+        threshold_xc: in std_logic_vector(41 downto 0); -- for self-trig senders, cross correlation matching filter output threshold values (SP-DP-TP)
+        st_config: in std_logic_vector(13 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
         --
         ti_trigger: in std_logic_vector(7 downto 0); -- WARNING
         ti_trigger_stbr: in std_logic; -- WARNING
@@ -390,9 +392,16 @@ architecture DAPHNE2_arch of DAPHNE2 is
 
     signal threshold_reg: std_logic_vector(13 downto 0);
     signal threshold_we: std_logic;
+
+    signal threshold_xc_reg: std_logic_vector(41 downto 0);
+    signal threshold_xc_we: std_logic;
     
     signal adhoc_reg: std_logic_vector(7 downto 0);
     signal adhoc_we: std_logic;
+
+    -- Self_Trigger config CIEMAT (Nacho)
+    signal st_config_reg: std_logic_vector(13 downto 0);
+    signal st_config_we: std_logic;
 
     --
     signal ti_trigger_reg: std_logic_vector(7 downto 0); ------------------
@@ -769,7 +778,9 @@ begin
                (X"000000000000" & mclk_ctrl_reg) when std_match(rx_addr_reg, MCLK_CTRL_ADDR) else 
                (X"00000000000000" & spi_res_fifo_data) when std_match(rx_addr_reg, SPI_FIFO_ADDR) else 
                (X"000000000000" & "00" & threshold_reg(13 downto 0)) when std_match(rx_addr_reg, THRESHOLD_BASEADDR) else 
+               (X"00000" & "00" & threshold_xc_reg(41 downto 0)) when std_match(rx_addr_reg, THRESHOLD_XC_BASEADDR) else
                (X"00000000000000" & adhoc_reg(7 downto 0)) when std_match(rx_addr_reg, ST_ADHOC_BASEADDR) else 
+               (X"000000000000" & "00" & st_config_reg(13 downto 0))  when std_match(rx_addr_reg, ST_CONFIG_ADDR) else
                (X"00000000000000" & outmode_reg(7 downto 0)) when std_match(rx_addr_reg, DAQ_OUTMODE_BASEADDR) else 
                (X"00000000000000" & "00" & inmux_dout(5 downto 0)) when std_match(rx_addr_reg, CORE_INMUX_ADDR) else
                (X"000000" & st_enable_reg) when std_match(rx_addr_reg, ST_ENABLE_ADDR) else
@@ -932,6 +943,22 @@ begin
         end if;
     end process thresh_proc;
 
+    -- register for setting threshold (related to cross correlation matching filter output) and trigger enabler threshold for self triggered senders
+    -- register is 42 bits, R/W from GBE
+
+    threshold_xc_we <= '1' when (std_match(rx_addr,THRESHOLD_XC_BASEADDR) and rx_wren='1') else '0';
+
+    thresh_xc_proc: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            if (reset_async='1') then
+                threshold_xc_reg <= DEFAULT_THRESHOLD_XC;
+            elsif (threshold_xc_we='1') then
+                threshold_xc_reg <= rx_data(41 downto 0);
+            end if;
+        end if;
+    end process thresh_xc_proc;
+
     -- register for setting the adhoc trigger command for the self triggered senders
     -- register is 8 bits, R/W from GBE
 
@@ -965,6 +992,29 @@ begin
         end if;
     end process st_enable_proc;
 
+       -- CONFIGURATION FOR SELF-TRIGGER & LOCAL PRIMITIVE CALCULATION
+    -- Config_Param[0] --> 1 = ENABLE filtering / 0 = DISABLE filtering 
+    -- Config_Param[1] --> '0' = 1 LSB truncated / '1' = 2 LSBs truncated 
+    -- Config_Param[3 downto 2] --> '00' = 4 Samples Window / '01' = 8 Samples Window / '10' = 16 Samples Window / '11' = 32 Samples Window
+    -- Config_Param[4] --> '0' = Peak detector as self-trigger  / '1' = Main detection as Self-Trigger (Undershoot peaks will not trigger)
+    -- Config_Param[5] --> '0' = NOT ALLOWED  Self-Trigger with light pulse between 2 data adquisition frames   
+    --                 --> '1' = ALLOWED Self-Trigger with light pulse between 2 data adquisition frames
+    -- Config_Param[6] --> '0' = Slope calculation with 2 consecutive samples --> x(n) - x(n-1)  / '1' = Slope calculation with 3 consecutive samples --> [x(n) - x(n-2)] / 2 
+    -- Config_Param[13 downto 7] --> Slope_Threshold (signed) 1(sign) + 6 bits, must be negative.
+
+    st_config_we <= '1' when (std_match(rx_addr,ST_CONFIG_ADDR) and rx_wren='1') else '0';
+
+    st_config_proc: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            if (reset_async='1') then
+                st_config_reg <= DEFAULT_ST_CONFIG;
+            elsif (st_config_we='1') then
+                st_config_reg <= rx_data(13 downto 0);
+            end if;
+        end if;
+    end process st_config_proc;    
+
     -- decode write enable for core inmux control register block of 40 6-bit registers
 
     inmux_we <= '1' when (std_match(rx_addr,CORE_INMUX_ADDR) and rx_wren='1') else '0';
@@ -983,6 +1033,8 @@ begin
         outmode => outmode_reg,
         adhoc => adhoc_reg,
         threshold => threshold_reg,
+        threshold_xc => threshold_xc_reg,
+        st_config => st_config_reg, -- Self-Trigger Config CIEMAT (Nacho)
         --
         ti_trigger => ti_trigger_reg, --------------------
         ti_trigger_stbr => ti_trigger_stbr_reg, -------------------
