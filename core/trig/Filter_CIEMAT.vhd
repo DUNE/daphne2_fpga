@@ -72,7 +72,8 @@ signal Second_Filtered_out, Second_Filtered_out_delay1 : std_logic_vector(13 dow
 signal Second_Filtered_add, Second_Filtered_add_2: std_logic_vector(14 downto 0); -- SMA(n-1) + [ [x(n) - x(n-k)] / k ]
 signal Second_Filtered_add_reg : std_logic_vector(13 downto 0);
 
-signal Second_Filtered_Dif_aux, Second_Filtered_Dif_reg, Second_Filtered_Err_aux : std_logic_vector(13 downto 0);
+signal Second_Filtered_Dif_aux, Second_Filtered_Dif_reg: std_logic_vector(13 downto 0);
+signal Second_Filtered_Err_aux : std_logic_vector(12 downto 0);
 signal Second_Filtered_Select: std_logic_vector(13 downto 0);
 
 signal Second_Filtered_2_delay1, Second_Filtered_2_delay2, Second_Filtered_2_delay3, Second_Filtered_2_delay4, Second_Filtered_2_delay5, Second_Filtered_2_delay6: std_logic_vector(13 downto 0); 
@@ -82,7 +83,8 @@ signal Second_Filtered_2_out, Second_Filtered_2_out_delay1 : std_logic_vector(13
 signal Second_Filtered_2_add, Second_Filtered_2_add_2: std_logic_vector(14 downto 0); -- SMA(n-1) + [ [x(n) - x(n-k)] / k ]
 signal Second_Filtered_2_add_reg : std_logic_vector(13 downto 0);
 
-signal Second_Filtered_2_Dif_aux, Second_Filtered_2_Dif_reg, Second_Filtered_2_Err_aux : std_logic_vector(13 downto 0);
+signal Second_Filtered_2_Dif_aux, Second_Filtered_2_Dif_reg: std_logic_vector(13 downto 0);
+signal Second_Filtered_2_Err_aux : std_logic_vector(12 downto 0);
 signal Second_Filtered_2_Select: std_logic_vector(13 downto 0);
 
 --signal Third_Filtered_out: std_logic_vector(13 downto 0);-- Third stage filter output (real and delayed)
@@ -150,7 +152,7 @@ end process First_Filter_Stage;
 
 ---- Filter Arithmetic Operations for the filter
 Second_Filtered_Dif_aux      <= std_logic_vector(unsigned("000" & First_Filtered_out(13 downto 3)) - unsigned("000" & Second_Filtered_Select(13 downto 3)));
-Second_Filtered_Err_aux      <= std_logic_vector(unsigned("00" & First_Filtered_out(13 downto 2)) - unsigned("00" & Second_Filtered_add_reg(13 downto 2)));
+Second_Filtered_Err_aux      <= std_logic_vector(unsigned('0' & First_Filtered_out(13 downto 2)) - unsigned('0' & Second_Filtered_add_reg(13 downto 2)));
 Second_Filtered_add          <= std_logic_vector(signed('0' & Second_Filtered_add_reg) + signed(resize(signed(Second_Filtered_Err_aux ),15)));-- + signed(resize(signed(Second_Filtered_Dif_aux),15)));
 Second_Filtered_add_2        <= std_logic_vector(signed('0' & Second_Filtered_add_reg) + signed(resize(signed(Second_Filtered_Dif_reg ),15)));
 
@@ -221,7 +223,7 @@ end process Second_Filter_Stage;
 
 -- Filter Arithmetic Operations for the filter
 Second_Filtered_2_Dif_aux      <= std_logic_vector(unsigned("000" & Second_Filtered_out(13 downto 3)) - unsigned("000" & Second_Filtered_2_Select(13 downto 3)));
-Second_Filtered_2_Err_aux      <= std_logic_vector(unsigned("00" & Second_Filtered_out(13 downto 2)) - unsigned("00" & Second_Filtered_2_add_reg(13 downto 2)));
+Second_Filtered_2_Err_aux      <= std_logic_vector(unsigned('0' & Second_Filtered_out(13 downto 2)) - unsigned('0' & Second_Filtered_2_add_reg(13 downto 2)));
 Second_Filtered_2_add          <= std_logic_vector(signed('0' & Second_Filtered_2_add_reg) + signed(resize(signed(Second_Filtered_2_Err_aux ),15)));-- + signed(resize(signed(Second_Filtered_Dif_aux),15)));
 Second_Filtered_2_add_2        <= std_logic_vector(signed('0' & Second_Filtered_2_add_reg) + signed(resize(signed(Second_Filtered_2_Dif_reg ),15)));
 
