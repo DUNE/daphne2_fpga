@@ -661,7 +661,7 @@ begin
         if (Self_trigger_aux = '1') then
             Trigger_dly53 <= Trigger_dly53 sll 1;
             Trigger_dly53(0) <= '1';
-        elsif (Noise_aux='1') then
+        elsif ((Noise_aux='1') and (Config_Param_SELF_aux(0)='1')) then -- only main detections use the noise check 
             Trigger_dly53 <= (others => '0');
         else
             Trigger_dly53 <= Trigger_dly53 sll 1;

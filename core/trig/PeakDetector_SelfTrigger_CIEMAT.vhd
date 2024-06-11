@@ -216,7 +216,7 @@ begin
             end if;
         when Not_Allow_Peak_Detection =>
             --if((Slope_Sign_Previous='1') and (Slope_Sign_Current='0')) then
-            if(signed(Slope_Current)>(signed(std_logic_vector(resize(signed(Slope_Threshold),14)))+2)) then
+            if(signed(Slope_Current)>(signed(std_logic_vector(resize(signed(Slope_Threshold),14)))+5)) then
                 NextState_Peak <= Allow_Peak_Detection;
             else
                 NextState_Peak <= Not_Allow_Peak_Detection;
