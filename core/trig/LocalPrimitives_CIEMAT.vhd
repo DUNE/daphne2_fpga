@@ -296,6 +296,10 @@ FFs_Detection: process(clock, reset, NextState_Detection, event_length, detectio
 begin
     if ((reset='1')) then -- or (High_Freq_Noise_aux='1'))  then
         CurrentState_Detection      <= No_Detection;                 -- Primitives calculation available. Active HIGH
+        event_length <= (others => '0');
+        Last_Positive_Time <= (others => '0');
+        Last_Known_Positive_Charge <= (others => '0');
+        Time_Peak_Aux <= (others => '0');    
         Time_Peak_Current           <= (others=>'0');       -- Time in Samples to achieve de Max peak
         Time_Pulse_UB_Current       <= (others=>'0');       -- Time in Samples of the light pulse (without undershoot)
         Time_Pulse_OB_Current       <= (others=>'0');
@@ -365,6 +369,7 @@ begin
                 Number_Peaks_OB_Current <= Number_Peaks_OB_Current; 
             end if;
          elsif(CurrentState_Detection=Detection_UB_2) then
+            event_length <= (others => '0');
             Time_Pulse_UB_2_Current <= std_logic_vector(unsigned(Time_Pulse_UB_2_Current) + to_unsigned(1,10));
             Detection_Time <= Detection_Time - 1;
         end if;
