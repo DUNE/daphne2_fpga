@@ -119,6 +119,56 @@
 	0x0000500E  StreamSender3 input2 channel select, default = 32 (AFE3 ch2)
 	0x0000500F  StreamSender3 input3 channel select, default = 33 (AFE3 ch3)
 
+	The following registers are used to determine which physical input channels 
+	    (which are numbered decimal 0-7, 10-17, 20-27, 30-37, and 40-47)
+	are connected to which core SELF TRIGGER sender inputs. These registers are read/write.
+	Each register must contain a valid input number (as listed above) otherwise it will 
+	set the corresponding mux output bus to all zeros. Applies only to SELF TRIGGER senders
+
+	0x00015000  SelfTrigSender0 input0 channel select, default = 0  (AFE0 ch0)
+	0x00015001  SelfTrigSender0 input1 channel select, default = 1  (AFE0 ch1)
+	0x00015002  SelfTrigSender0 input2 channel select, default = 2  (AFE0 ch2)
+	0x00015003  SelfTrigSender0 input3 channel select, default = 3  (AFE0 ch3)
+	0x00015004  SelfTrigSender0 input4 channel select, default = 4  (AFE0 ch4)
+	0x00015005  SelfTrigSender0 input5 channel select, default = 5  (AFE0 ch5)
+	0x00015006  SelfTrigSender0 input6 channel select, default = 6  (AFE0 ch6)
+	0x00015007  SelfTrigSender0 input7 channel select, default = 7  (AFE0 ch7)
+	0x00015008  SelfTrigSender0 input8 channel select, default = 10 (AFE1 ch0)
+	0x00015009  SelfTrigSender0 input9 channel select, default = 11 (AFE1 ch1)
+
+	0x0001500A  SelfTrigSender1 input0 channel select, default = 12 (AFE1 ch2)
+	0x0001500B  SelfTrigSender1 input1 channel select, default = 13 (AFE1 ch3)
+	0x0001500C  SelfTrigSender1 input2 channel select, default = 14 (AFE1 ch4)
+	0x0001500D  SelfTrigSender1 input3 channel select, default = 15 (AFE1 ch5)
+	0x0001500E  SelfTrigSender1 input4 channel select, default = 16 (AFE1 ch6)
+	0x0001500F  SelfTrigSender1 input5 channel select, default = 17 (AFE1 ch7)
+	0x00015010  SelfTrigSender1 input6 channel select, default = 20 (AFE2 ch0)
+	0x00015011  SelfTrigSender1 input7 channel select, default = 21 (AFE2 ch1)
+	0x00015012  SelfTrigSender1 input8 channel select, default = 22 (AFE2 ch2)
+	0x00015013  SelfTrigSender1 input9 channel select, default = 23 (AFE2 ch3)
+
+	0x00015014  SelfTrigSender2 input0 channel select, default = 24 (AFE2 ch4)
+	0x00015015  SelfTrigSender2 input1 channel select, default = 25 (AFE2 ch5)
+	0x00015016  SelfTrigSender2 input2 channel select, default = 26 (AFE2 ch6)
+	0x00015017  SelfTrigSender2 input3 channel select, default = 27 (AFE2 ch7)
+	0x00015018  SelfTrigSender2 input4 channel select, default = 30 (AFE3 ch0)
+	0x00015019  SelfTrigSender2 input5 channel select, default = 31 (AFE3 ch1)
+	0x0001501A  SelfTrigSender2 input6 channel select, default = 32 (AFE3 ch2)
+	0x0001501B  SelfTrigSender2 input7 channel select, default = 33 (AFE3 ch3)
+	0x0001501C  SelfTrigSender2 input8 channel select, default = 34 (AFE3 ch4)
+	0x0001501D  SelfTrigSender2 input9 channel select, default = 35 (AFE3 ch5)
+
+	0x0001501E  SelfTrigSender3 input0 channel select, default = 36 (AFE3 ch6)
+	0x0001501F  SelfTrigSender3 input1 channel select, default = 37 (AFE3 ch7)
+	0x00015020  SelfTrigSender3 input2 channel select, default = 40 (AFE4 ch0)
+	0x00015021  SelfTrigSender3 input3 channel select, default = 41 (AFE4 ch1)
+	0x00015022  SelfTrigSender3 input4 channel select, default = 42 (AFE4 ch2)
+	0x00015023  SelfTrigSender3 input5 channel select, default = 43 (AFE4 ch3)
+	0x00015024  SelfTrigSender3 input6 channel select, default = 44 (AFE4 ch4)
+	0x00015025  SelfTrigSender3 input7 channel select, default = 45 (AFE4 ch5)
+	0x00015026  SelfTrigSender3 input8 channel select, default = 46 (AFE4 ch6)
+	0x00015027  SelfTrigSender3 input9 channel select, default = 47 (AFE4 ch7)
+
 	Specify the threshold value to be used for all self-triggered mode senders.
 	Note this value is relative to the automatic baseline value calculated 
 	for each input channel. Default is 256. This register is read/write.

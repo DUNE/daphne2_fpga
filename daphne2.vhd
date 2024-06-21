@@ -307,10 +307,14 @@ architecture DAPHNE2_arch of DAPHNE2 is
         oeiclk: in std_logic; -- interface used to read output spy buffer and to r/w input mux control regs
         trig: in std_logic;
         addr: in std_logic_vector(11 downto 0);
+        addr_st: in std_logic_vector(5 downto 0);
         din: in std_logic_vector(5 downto 0);
+        din_st: in std_logic_vector(5 downto 0);
         spy_dout: out std_logic_vector(31 downto 0);
         inmux_we: in std_logic;
+        inmux_st_we: in std_logic;
         inmux_dout: out std_logic_vector(5 downto 0);
+        inmux_st_dout: out std_logic_vector(5 downto 0);
 
         daq_refclk_p, daq_refclk_n: in std_logic; -- MGT REFCLK for DAQ, LVDS, quad 213, refclk0, 120.237MHz
         daq0_tx_p, daq0_tx_n: out std_logic;
@@ -384,6 +388,9 @@ architecture DAPHNE2_arch of DAPHNE2 is
 
     signal inmux_we: std_logic;
     signal inmux_dout: std_logic_vector(5 downto 0);
+
+    signal inmux_st_we: std_logic;
+    signal inmux_st_dout: std_logic_vector(5 downto 0);
 
     signal outmode_reg: std_logic_vector(7 downto 0);
     signal outmode_we: std_logic;
@@ -772,6 +779,7 @@ begin
                (X"00000000000000" & adhoc_reg(7 downto 0)) when std_match(rx_addr_reg, ST_ADHOC_BASEADDR) else 
                (X"00000000000000" & outmode_reg(7 downto 0)) when std_match(rx_addr_reg, DAQ_OUTMODE_BASEADDR) else 
                (X"00000000000000" & "00" & inmux_dout(5 downto 0)) when std_match(rx_addr_reg, CORE_INMUX_ADDR) else
+               (X"00000000000000" & "00" & inmux_st_dout(5 downto 0)) when std_match(rx_addr_reg, CORE_INMUX_ST_ADDR) else
                (X"000000" & st_enable_reg) when std_match(rx_addr_reg, ST_ENABLE_ADDR) else
 
                (others=>'0');
@@ -969,6 +977,10 @@ begin
 
     inmux_we <= '1' when (std_match(rx_addr,CORE_INMUX_ADDR) and rx_wren='1') else '0';
 
+    -- decode write enable for core self trigger inmux control register block of 40 6-bit registers
+
+    inmux_st_we <= '1' when (std_match(rx_addr,CORE_INMUX_ST_ADDR) and rx_wren='1') else '0';
+
     -- combo core logic, streaming and self-trig
 
     core_inst: core
@@ -996,10 +1008,14 @@ begin
         oeiclk => oeiclk,
         trig => trig_sync,
         addr => rx_addr(11 downto 0),
+        addr_st => rx_addr(5 downto 0),
         din => rx_data(5 downto 0),
+        din_st => rx_data(5 downto 0),
         inmux_we => inmux_we,
+        inmux_st_we => inmux_st_we,
         spy_dout => core_spy_data(31 downto 0),
         inmux_dout => inmux_dout,
+        inmux_st_dout => inmux_st_dout,
         
         daq_refclk_p => daq_refclk_p, daq_refclk_n => daq_refclk_n,
         daq0_tx_p => daq0_tx_p, daq0_tx_n => daq0_tx_n,

@@ -24,6 +24,7 @@ package daphne2_package is
 
     type array_4x4_type is array (3 downto 0) of std_logic_vector(3 downto 0);
     type array_4x6_type is array (3 downto 0) of std_logic_vector(5 downto 0);
+    type array_4x10_type is array (3 downto 0) of std_logic_vector(9 downto 0);
     type array_4x14_type is array (3 downto 0) of std_logic_vector(13 downto 0);
     type array_4x32_type is array (3 downto 0) of std_logic_vector(31 downto 0);
     type array_5x8_type is array (4 downto 0) of std_logic_vector(7 downto 0);
@@ -33,8 +34,10 @@ package daphne2_package is
     type array_8x32_type is array (7 downto 0) of std_logic_vector(31 downto 0);
     type array_9x14_type is array (8 downto 0) of std_logic_vector(13 downto 0);
     type array_9x16_type is array (8 downto 0) of std_logic_vector(15 downto 0);
+    type array_10x4_type is array (9 downto 0) of std_logic_vector(3 downto 0);
     type array_10x6_type is array (9 downto 0) of std_logic_vector(5 downto 0);
     type array_10x14_type is array (9 downto 0) of std_logic_vector(13 downto 0);
+    type array_10x32_type is array (9 downto 0) of std_logic_vector(31 downto 0);
 
     type array_4x4x6_type is array (3 downto 0) of array_4x6_type;
     type array_4x4x14_type is array (3 downto 0) of array_4x14_type;
@@ -105,6 +108,11 @@ package daphne2_package is
     -- This is a block of 16 registers and is R/W 0x5000 - 0x500F  
 
     constant CORE_INMUX_ADDR: std_logic_vector(31 downto 0) := "0000000000000000010100000000----";
+
+    -- choose which inputs are connected to each self trigger core sender.
+    -- This is a block of 40 registers and is R/W 0x15000 - 0x1503F  
+
+    constant CORE_INMUX_ST_ADDR: std_logic_vector(31 downto 0) := "00000000000000010101000000------";
 
     -- address of the threshold register for the self trig senders
 
