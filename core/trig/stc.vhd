@@ -45,7 +45,7 @@ end stc;
 
 architecture stc_arch of stc is
 
-    signal afe_dly32_i, afe_dly64_i, afe_dly96_i, afe_dly: std_logic_vector(13 downto 0);
+    signal afe_dly32_i, afe_dly64_i, afe_dly96_i, afe_dly128_i, afe_dly160_i, afe_dly: std_logic_vector(13 downto 0);
     signal afe_dly0, afe_dly1, afe_dly2: std_logic_vector(13 downto 0);
     signal block_count: std_logic_vector(5 downto 0);
 
@@ -97,8 +97,9 @@ architecture stc_arch of stc is
         reset: in std_logic;
         clock: in std_logic;
         din: in std_logic_vector(13 downto 0);
+        din_delayed: in std_logic_vector(13 downto 0);
         threshold: in std_logic_vector(41 downto 0); 
-        baseline: out std_logic_vector(13 downto 0); 
+        --baseline: out std_logic_vector(13 downto 0); 
         triggered: out std_logic;
         trigsample: out std_logic_vector(13 downto 0));
     end component;
@@ -119,7 +120,7 @@ architecture stc_arch of stc is
 
 begin
 
-    -- delay input data by 128 clocks to compensate for 64 clock trigger latency 
+    -- delay input data by 170 clocks to compensate for 106 clock trigger latency 
     -- and also for capturing 64 pre-trigger samples
 
     gendelay: for i in 13 downto 0 generate
@@ -160,8 +161,28 @@ begin
             ce => '1',
             a => "11111",
             d => afe_dly96_i(i),
+            q => afe_dly128_i(i), -- AFE data 128 clocks ago
+            q31 => open
+        );
+
+        srlc32e_4_inst : srlc32e
+        port map(
+            clk => aclk,
+            ce => '1',
+            a => "11111",
+            d => afe_dly128_i(i),
+            q => afe_dly160_i(i),
+            q31 => open -- AFE data 160 clocks ago
+        );
+
+        srlc32e_5_inst : srlc32e
+        port map(
+            clk => aclk,
+            ce => '1',
+            a => "01001",
+            d => afe_dly160_i(i),
             q => open,
-            q31 => afe_dly(i) -- AFE data 128 clocks ago
+            q31 => afe_dly(i) -- AFE data 170 clocks ago
         );
 
     end generate gendelay;
@@ -209,7 +230,8 @@ begin
         reset => reset,
         clock => aclk,
         din => afe_dat, -- watching live AFE data
-        baseline => open,
+        din_delayed => afe_dly,
+        -- baseline => open,
         threshold => threshold_xc,
         triggered => triggered_xc,
         trigsample => trigsample_xc -- the ADC sample that caused the trigger
@@ -220,6 +242,23 @@ begin
     triggered <= '1' when ( triggered_th='1' or triggered_xc='1' ) else '0';
 
     -- choose the right trigger sample
+
+    -- trigsample_proc: process(aclk, reset, triggered_th, trigsample_th, triggered_xc, trigsample_xc)
+    -- begin
+    --     if rising_edge(aclk) then
+    --         if (reset='1') then
+    --             trigsample <= (others => '0');
+    --         else
+    --             if ( triggered_th='1' and triggered_xc='0' ) then
+    --                 trigsample <= trigsample_th;
+    --             elsif ( triggered_th='0' and triggered_xc='1' ) then
+    --                 trigsample <= trigsample_xc;
+    --             elsif ( triggered_th='1' and triggered_xc='1' ) then
+    --                 trigsample <= trigsample_th;
+    --             end if;
+    --         end if;
+    --     end if;
+    -- end process trigsample_proc;      
 
     trigsample_proc: process(triggered_th, triggered_xc, trigsample_th, trigsample_xc)
     begin
@@ -232,7 +271,7 @@ begin
         else
             trigsample <= (others => '0'); 
         end if;
-    end process trigsample_proc;      
+    end process trigsample_proc; 
 
     -- FSM waits for trigger condition then assembles output frame and stores into FIFO
 

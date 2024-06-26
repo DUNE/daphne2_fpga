@@ -31,6 +31,7 @@ read_vhdl ../core/core.vhd
    read_vhdl ../core/trig/baseline256.vhd
    read_vhdl ../core/trig/trig.vhd
    read_vhdl ../core/trig/trig_xc.vhd
+	read_vhdl ../core/trig/st_mm.vhd
     read_vhdl ../core/trig/st_xc.vhd
 	read_vhdl ../core/trig/st_xc_filt.vhd
  read_vhdl ../core/core_mgt4.vhd
