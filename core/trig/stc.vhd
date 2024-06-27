@@ -446,7 +446,7 @@ begin
             DO     => DO(i), -- must be 64 bit vector, only lower byte is used
             DOP    => DOP(i), -- must be 8 bit vector, only lower bit is used
             ALMOSTEMPTY => almostempty(i),
-            ALMOSTFULL => almostfull(i),
+            ALMOSTFULL => almostfull(i)
         );
 
     end generate genfifo;
