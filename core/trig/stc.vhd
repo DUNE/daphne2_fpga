@@ -294,7 +294,7 @@ begin
 
     -- now based on the FSM state, form the output stream
     -- 1024 samples densely packed into (1024/16*7) = 448 words
-    -- total frame lenth = SOF + 5 header + 448 data + trailer + EOF = 456 words
+    -- total frame lenth = SOF + 5 header + 448 data + trailer + EOF = 466 words
 
     d <= X"0000003C" when (state=sof) else -- sof of frame word = D0.0 & D0.0 & D0.0 & K28.1
          link_id & slot_id & crate_id & detector_id & version_id when (state=hdr0) else
@@ -398,14 +398,14 @@ begin
          din => d,
          crc => crc20);
 
-    -- output FIFO is 4096 deep, so we can store up to ~8.9 output frames before overflow occurs
+    -- output FIFO is 4096 deep, so we can store up to ~8.78 output frames before overflow occurs
     -- now check the FIFO filling and draining rates so we avoid under-run...
     --
-    -- BUT BE CAREFUL HERE... while it is true one complete frame is 456 words long, it takes LONGER
-    -- than 456 ACLKs to write it into the FIFO because 7 data words written requires 16 clocks to receive
-    -- That means that it takes: SOF + (5 Header) + (1024 data) + trailer + EOF = 1032 clocks. 
+    -- BUT BE CAREFUL HERE... while it is true one complete frame is 466 words long, it takes LONGER
+    -- than 466 ACLKs to write it into the FIFO because 7 data words written requires 16 clocks to receive
+    -- That means that it takes: SOF + (5 Header) + (1024 data) + (13 trailer) + EOF = 1044 clocks. 
     -- At 62.5MHz this is ~16.5us. Once selected for readout, however, the event will be read from the FIFO
-    -- in 456 FCLK cycles, or 3.79us. So once triggered this FIFO will fill relatively slowly, but once 
+    -- in 466 FCLK cycles, or 3.88us. So once triggered this FIFO will fill relatively slowly, but once 
     -- selected for readout it will drain pretty fast. Adjust the almost empty offset so that AE is not released
     -- until MOST of the frame is in the FIFO
 
@@ -416,8 +416,8 @@ begin
 
         fifo_inst: FIFO36E1 -- 9 bit wide x 4096 deep
         generic map(
-            ALMOST_EMPTY_OFFSET => X"0180", -- this requires the careful tuning
-            ALMOST_FULL_OFFSET => X"0080",
+            ALMOST_EMPTY_OFFSET => X"02BB", -- this requires the careful tuning
+            ALMOST_FULL_OFFSET => X"0D66",
             DATA_WIDTH => 9,                 
             DO_REG => 1,
             EN_SYN => FALSE,                  
