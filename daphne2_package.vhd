@@ -106,12 +106,6 @@ package daphne2_package is
 
     constant CORE_INMUX_ADDR: std_logic_vector(31 downto 0) := "0000000000000000010100000000----";
 
-    -- address of the threshold register for the self trig senders
-
-    constant THRESHOLD_BASEADDR: std_logic_vector(31 downto 0) := X"00006000";
-
-    constant DEFAULT_THRESHOLD: std_logic_vector(13 downto 0) := "00000100000000";
-
     -- enable disable individual input channels for self triggered sender only
 
     constant ST_ENABLE_ADDR: std_logic_vector(31 downto 0) := X"00006001";
@@ -130,11 +124,11 @@ package daphne2_package is
     
     constant DEFAULT_THRESHOLD_XC: std_logic_vector(41 downto 0) := "111111101100000000000000000000000100101100";
 
-    -- Self-Trigger CONFIGURATION Address (Trigger Primitives)
+    -- address of the trigger local primitives calculator for the self trig sender
 
-    constant ST_CONFIG_ADDR: std_logic_vector(31 downto 0) := X"00007001";
+    constant ST_PRIM_CONFIG_ADDR: std_logic_vector(31 downto 0) := X"00007001";
     
-    constant DEFAULT_ST_CONFIG: std_logic_vector(13 downto 0) :="11101100110001";
+    constant DEFAULT_ST_PRIM_CONFIG: std_logic_vector(1 downto 0) :="11"; --5 downto--0001";
     
     -- spy buffers are 4k deep
 

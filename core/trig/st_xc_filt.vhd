@@ -6,7 +6,7 @@
 -- this channel works as intended. An IIR filter implemented is a connection of a FIR forward 
 -- and a feedback FIR
 --
--- Daniel Avila Gomez <daniel.avila.gomez@cern.ch> 
+-- Daniel Avila Gomez <daniel.avila@eia.edu.co> 
 
 library ieee;
 use ieee.std_logic_1164.all;

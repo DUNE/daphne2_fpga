@@ -5,7 +5,7 @@
 
 # general setup stuff...
 
-set_param general.maxThreads 12
+set_param general.maxThreads 4
 set outputDir ./output
 file mkdir $outputDir
 set_part xc7a200t-fbg676-2
@@ -28,15 +28,14 @@ read_vhdl ../core/core.vhd
   read_vhdl ../core/crc20_update.vhd
  read_vhdl ../core/trig/st40_top.vhd
   read_vhdl ../core/trig/stc.vhd
-   read_vhdl ../core/trig/baseline256.vhd
-   read_vhdl ../core/trig/trig.vhd
-   read_vhdl ../core/trig/Self_Trigger_Primitive_Calculation.vhd
-    read_vhdl ../core/trig/Filter_CIEMAT.vhd
-    read_vhdl ../core/trig/LocalPrimitives_CIEMAT.vhd
-    read_vhdl ../core/trig/PeakDetector_SelfTrigger_CIEMAT.vhd
+   read_vhdl ../core/trig/trig_prim.vhd
+	read_verilog ../core/trig/k_low_pass_filter.v
+    read_vhdl ../core/trig/trig_prim_calc.vhd
+    read_vhdl ../core/trig/trig_prim_peak.vhd
 	 read_vhdl ../core/trig/trig_xc.vhd
 	  read_vhdl ../core/trig/st_xc.vhd
 	  read_vhdl ../core/trig/st_xc_filt.vhd
+	  read_vhdl ../core/trig/st_xc_mm.vhd
  read_vhdl ../core/core_mgt4.vhd
 
 read_vhdl ../oei/hdl/burst_traffic_controller.vhd

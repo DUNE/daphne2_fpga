@@ -19,8 +19,7 @@ port(
     reset: in std_logic;
 
     adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
-    st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
-    threshold: in std_logic_vector(13 downto 0); -- user defined threshold relative to avg baseline
+    st_prim_config: in std_logic_vector(1 downto 0); -- 5 downto-- configuration parameters for local primitive calculator
     threshold_xc: in std_logic_vector(41 downto 0); -- user defined cross correlation matching filter output trigger threshold
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
     ti_trigger_stbr: in std_logic;  -------------------------
@@ -61,9 +60,8 @@ architecture st40_top_arch of st40_top is
         reset: in std_logic;
 
         adhoc: in std_logic_vector(7 downto 0);
-        st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
-        threshold: std_logic_vector(13 downto 0);
-        threshold_xc: std_logic_vector(41 downto 0);
+        st_prim_config: in std_logic_vector(1 downto 0); -- 5 downto-- local primitives calculator configuration
+        threshold_xc: std_logic_vector(41 downto 0); -- matching filter configuration
         slot_id: std_logic_vector(3 downto 0);
         crate_id: std_logic_vector(9 downto 0);
         detector_id: std_logic_vector(5 downto 0);
@@ -96,9 +94,8 @@ begin
                 reset => reset,
     
                 adhoc => adhoc,
-                threshold => threshold,
                 threshold_xc => threshold_xc,
-                st_config => st_config, -- CIEMAT (Nacho)
+                st_prim_config => st_prim_config, 
                 ti_trigger => ti_trigger, -------------------------
                 ti_trigger_stbr => ti_trigger_stbr,  -------------------------
                 slot_id => slot_id,

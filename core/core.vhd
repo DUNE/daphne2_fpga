@@ -36,9 +36,8 @@ port(
 
     outmode: in std_logic_vector(7 downto 0); -- output link mode control
     adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
-    threshold: in std_logic_vector(13 downto 0); -- for self-triggered mode, relative to average baseline
     threshold_xc: in std_logic_vector(41 downto 0); -- for self-triggered mode, cross correlation matching filter output threshold values (SP-DP-TP)
-    st_config: in std_logic_vector(13 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
+    st_prim_config: in std_logic_vector(1 downto 0); --5 downto-- for self-trig senders, local primitive calculator configuration
 
     ti_trigger: in std_logic_vector(7 downto 0); ------------------------
     ti_trigger_stbr: in std_logic; -------------------------------------
@@ -102,9 +101,8 @@ architecture core_arch of core is
     generic( link_id: std_logic_vector(5 downto 0)  := "000000" );
     port(
         reset: in std_logic;    
-        st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation CIEMAT (Nacho)     
+        st_prim_config: in std_logic_vector(1 downto 0); --5 downto-- configuration parameters for local primitive calculator  
         adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
-        threshold: in std_logic_vector(13 downto 0); -- user defined threshold relative to baseline
         threshold_xc: in std_logic_vector(41 downto 0); -- user defined threshold values for cross correlation matching filter 
         ti_trigger: in std_logic_vector(7 downto 0); -------------------------
         ti_trigger_stbr: in std_logic;  -------------------------
@@ -229,9 +227,8 @@ begin
     generic map( link_id => "000000" )
     port map(
         reset => reset,
-        st_config => st_config, -- CIEMAT (Nacho) 
+        st_prim_config => st_prim_config, 
         adhoc => adhoc,
-        threshold => threshold,
         threshold_xc => threshold_xc,
         slot_id => slot_id,
         crate_id => crate_id,
