@@ -269,7 +269,7 @@ begin
     gen_selftrig_sender: for i in 3 downto 0 generate
 
         st10_sender_inst: st10_new_top 
-        generic map( link_id => "000000" )
+        generic map( link_id => std_logic_vector( to_unsigned(i,6)) )
         port map(
             reset => reset,
             adhoc => adhoc,
