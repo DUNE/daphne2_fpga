@@ -263,7 +263,7 @@ begin
 --         fifo_ko(9) when (sel_reg="001001" and state=dump) else
 --         "0001"; -- idle word
 
-    outmux_proc: process(fifo_do, fifo_ko, sela, selc, state)
+    outmux_proc: process(fifo_do, fifo_ko, sela_rden, selc_rden, state)
     begin
         d <= X"000000BC"; -- default
         k <= "0001"; -- default
