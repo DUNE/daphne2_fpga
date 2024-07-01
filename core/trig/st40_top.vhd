@@ -40,7 +40,7 @@ end st40_top;
 
 architecture st40_top_arch of st40_top is
  
-    type state_type is (rst, scan, dump, idle);
+    type state_type is (rst, scan, dump);
     signal state: state_type;
 
     signal sela: integer range 0 to 4;
@@ -50,7 +50,6 @@ architecture st40_top_arch of st40_top is
     signal fifo_ae: array_5x8_type;
     signal fifo_rden: array_5x8_type;
     signal fifo_ready: std_logic;
-    --signal next_fifo_ready: std_logic;
     signal fifo_do: array_5x8x32_type;
     signal fifo_ko: array_5x8x4_type;
     signal d, dout_reg: std_logic_vector(31 downto 0);
@@ -166,14 +165,13 @@ begin
                     when rst =>
                         sela <= 0;
                         selc <= 0;
-                        --next_fifo_ready <= 0;
                         state <= scan;
 
                     when scan => 
                         if (fifo_ready='1') then
                             state <= dump;
-                            sela_rden <= sela; -- this avoids to have an idle state 
-                            selc_rden <= selc; -- this avoids to have an idle state
+                            sela_rden <= sela; 
+                            selc_rden <= selc; 
                         else
                             state <= scan;
                         end if;
@@ -190,13 +188,7 @@ begin
                         end if;
                     when dump =>
                         if (k="0001" and d(7 downto 0)=X"DC") then -- this the EOF word, done reading from this STC
-                            if (fifo_ready='1') then
-                                sela_rden <= sela; -- this avoids to have an idle state 
-                                selc_rden <= selc; -- this avoids to have an idle state
-                                state <= dump;
-                            else
-                                state <= scan;
-                            end if;
+                            state <= scan;
                         else
                             state <= dump; -- in this state I can continue to search for the next fifo_ready_flag
                             ----------------------------------------------------
@@ -215,20 +207,6 @@ begin
                             end if;
                             -------------------------------------------------------
                         end if;
-
-                    --when idle => -- send one idle word and resume scanning...
-                    --    if (selc = 7) then
-                    --        if (sela = 4) then -- loop around when sel = 4 7
-                    --            sela <= 0;
-                    --            selc <= 0;
-                    --        else
-                    --            sela <= sela + 1;
-                    --            selc <= 0;
-                    --        end if;
-                    --    else
-                    --        selc <= selc + 1;
-                    --    end if;
-                    --    state <= scan;
 
                     when others => 
                         state <= rst;
