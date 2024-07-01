@@ -416,8 +416,8 @@ begin
 
         fifo_inst: FIFO36E1 -- 9 bit wide x 4096 deep
         generic map(
-            ALMOST_EMPTY_OFFSET => X"02BB", -- this requires the careful tuning
-            ALMOST_FULL_OFFSET => X"0D66",
+            ALMOST_EMPTY_OFFSET => X"0180", -- this requires the careful tuning
+            ALMOST_FULL_OFFSET => X"01D4",
             DATA_WIDTH => 9,                 
             DO_REG => 1,
             EN_SYN => FALSE,                  
