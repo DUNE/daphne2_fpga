@@ -45,9 +45,12 @@ architecture st40_top_arch of st40_top is
 
     signal sela: integer range 0 to 4;
     signal selc: integer range 0 to 7;
+    signal sela_rden: integer range 0 to 4;
+    signal selc_rden: integer range 0 to 7;
     signal fifo_ae: array_5x8_type;
     signal fifo_rden: array_5x8_type;
     signal fifo_ready: std_logic;
+    --signal next_fifo_ready: std_logic;
     signal fifo_do: array_5x8x32_type;
     signal fifo_ko: array_5x8x4_type;
     signal d, dout_reg: std_logic_vector(31 downto 0);
@@ -145,7 +148,7 @@ begin
 
     gen_rden_a: for a in 4 downto 0 generate
         gen_rden_c: for c in 7 downto 0 generate
-            fifo_rden(a)(c) <= '1' when (sela=a and selc=c and state=dump) else '0';
+            fifo_rden(a)(c) <= '1' when (sela_rden=a and selc_rden=c and state=dump) else '0';
         end generate gen_rden_c;
     end generate gen_rden_a;
 
@@ -163,36 +166,19 @@ begin
                     when rst =>
                         sela <= 0;
                         selc <= 0;
+                        --next_fifo_ready <= 0;
                         state <= scan;
 
                     when scan => 
                         if (fifo_ready='1') then
                             state <= dump;
+                            sela_rden <= sela; -- this avoids to have an idle state 
+                            selc_rden <= selc; -- this avoids to have an idle state
                         else
-                            if (selc=7) then
-                                if (sela=4) then -- loop around when sel = 4 7
-                                    sela <= 0;
-                                    selc <= 0;
-                                else
-                                    sela <= sela + 1;
-                                    selc <= 0;
-                                end if;
-                            else
-                                selc <= selc + 1;
-                            end if;
                             state <= scan;
                         end if;
-
-                    when dump =>
-                        if (k="0001" and d(7 downto 0)=X"DC") then -- this the EOF word, done reading from this STC
-                            state <= idle;
-                        else
-                            state <= dump;
-                        end if;
-
-                    when idle => -- send one idle word and resume scanning...
-                        if (selc = 7) then
-                            if (sela = 4) then -- loop around when sel = 4 7
+                        if (selc=7) then
+                            if (sela=4) then -- loop around when sel = 4 7
                                 sela <= 0;
                                 selc <= 0;
                             else
@@ -202,7 +188,47 @@ begin
                         else
                             selc <= selc + 1;
                         end if;
-                        state <= scan;
+                    when dump =>
+                        if (k="0001" and d(7 downto 0)=X"DC") then -- this the EOF word, done reading from this STC
+                            if (fifo_ready='1') then
+                                sela_rden <= sela; -- this avoids to have an idle state 
+                                selc_rden <= selc; -- this avoids to have an idle state
+                                state <= dump;
+                            else
+                                state <= scan;
+                            end if;
+                        else
+                            state <= dump; -- in this state I can continue to search for the next fifo_ready_flag
+                            ----------------------------------------------------
+                            if (fifo_ready='0') then
+                                if (selc=7) then
+                                    if (sela=4) then -- loop around when sel = 4 7
+                                        sela <= 0;
+                                        selc <= 0;
+                                    else
+                                        sela <= sela + 1;
+                                        selc <= 0;
+                                    end if;
+                                else
+                                    selc <= selc + 1;
+                                end if;   
+                            end if;
+                            -------------------------------------------------------
+                        end if;
+
+                    --when idle => -- send one idle word and resume scanning...
+                    --    if (selc = 7) then
+                    --        if (sela = 4) then -- loop around when sel = 4 7
+                    --            sela <= 0;
+                    --            selc <= 0;
+                    --        else
+                    --            sela <= sela + 1;
+                    --            selc <= 0;
+                    --        end if;
+                    --    else
+                    --        selc <= selc + 1;
+                    --    end if;
+                    --    state <= scan;
 
                     when others => 
                         state <= rst;
@@ -243,7 +269,7 @@ begin
         k <= "0001"; -- default
         loop_a: for a in 4 downto 0 loop
         loop_c: for c in 7 downto 0 loop
-            if ( sela=a and selc=c and state=dump ) then
+            if ( sela_rden=a and selc_rden=c and state=dump ) then
                 d <= fifo_do(a)(c);
                 k <= fifo_ko(a)(c);
             end if;
