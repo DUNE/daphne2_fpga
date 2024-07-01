@@ -189,7 +189,7 @@ begin
                         end if;
                         packet_size_counter <= 0;
                     when dump =>
-                        if (k="0001" and d(7 downto 0)=X"DC" or packet_size_counter=467) then -- this the EOF word, done reading from this STC
+                        if ((k="0001" and d(7 downto 0)=X"DC") or packet_size_counter=467) then -- this the EOF word, done reading from this STC
                             state <= scan;
                         else
                             state <= dump; -- in this state I can continue to search for the next fifo_ready_flag
