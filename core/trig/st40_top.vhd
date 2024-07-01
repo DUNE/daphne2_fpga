@@ -52,6 +52,7 @@ architecture st40_top_arch of st40_top is
     signal fifo_ko: array_5x8x4_type;
     signal d, dout_reg: std_logic_vector(31 downto 0);
     signal k, kout_reg: std_logic_vector( 3 downto 0);
+    signal aux: integer range 0 to 467;  --/////////////////////
 
     component stc is
     generic( link_id: std_logic_vector(5 downto 0) := "000000"; ch_id: std_logic_vector(5 downto 0) := "000000" );
@@ -114,22 +115,6 @@ begin
     end generate gen_stc_c;
     end generate gen_stc_a;
 
-    -- fifo read enable and fifo flag selection
-
---    fifo_ready <= '1' when (sel_reg="000000" and fifo_ae(0)='1') else 
---                  '1' when (sel_reg="000001" and fifo_ae(1)='1') else 
---                  '1' when (sel_reg="000010" and fifo_ae(2)='1') else 
---                  '1' when (sel_reg="000011" and fifo_ae(3)='1') else 
---                  '1' when (sel_reg="000100" and fifo_ae(4)='1') else 
---                  '1' when (sel_reg="000101" and fifo_ae(5)='1') else 
---                  '1' when (sel_reg="000110" and fifo_ae(6)='1') else 
---                  '1' when (sel_reg="000111" and fifo_ae(7)='1') else 
---                  '1' when (sel_reg="001000" and fifo_ae(8)='1') else 
---                  '1' when (sel_reg="001001" and fifo_ae(9)='1') else 
---                  '0';
-
-    -- sel_reg is a straight 6 bit register, but it is encoded with values 0-7, 10-17, 20-27, 30-37, 40-47
-    -- there are gaps, so be careful when incrementing and looping...
 
     fifo_ready_proc: process(sela, selc, fifo_ae)
     begin
@@ -163,11 +148,12 @@ begin
                     when rst =>
                         sela <= 0;
                         selc <= 0;
-                        state <= scan;
+                        state <= scan; 
 
                     when scan => 
                         if (fifo_ready='1') then
                             state <= dump;
+                            aux <= 0; --/////////////////////
                         else
                             if (selc=7) then
                                 if (sela=4) then -- loop around when sel = 4 7
@@ -181,13 +167,15 @@ begin
                                 selc <= selc + 1;
                             end if;
                             state <= scan;
+                            aux <= 0; --/////////////////////
                         end if;
 
                     when dump =>
-                        if (k="0001" and d(7 downto 0)=X"DC") then -- this the EOF word, done reading from this STC
+                        if ((k="0001" and d(7 downto 0)=X"DC") or aux=467 ) then -- this the EOF word, done reading from this STC
                             state <= idle;
                         else
                             state <= dump;
+                            aux <= aux + 1;
                         end if;
 
                     when idle => -- send one idle word and resume scanning...
@@ -213,39 +201,21 @@ begin
 
     -- output muxes
      
---    d <= fifo_do(0) when (sel_reg="000000" and state=dump) else
---         fifo_do(1) when (sel_reg="000001" and state=dump) else
---         fifo_do(2) when (sel_reg="000010" and state=dump) else
---         fifo_do(3) when (sel_reg="000011" and state=dump) else
---         fifo_do(4) when (sel_reg="000100" and state=dump) else
---         fifo_do(5) when (sel_reg="000101" and state=dump) else
---         fifo_do(6) when (sel_reg="000110" and state=dump) else
---         fifo_do(7) when (sel_reg="000111" and state=dump) else
---         fifo_do(8) when (sel_reg="001000" and state=dump) else
---         fifo_do(9) when (sel_reg="001001" and state=dump) else
---         X"000000BC"; -- idle word
---
---    k <= fifo_ko(0) when (sel_reg="000000" and state=dump) else
---         fifo_ko(1) when (sel_reg="000001" and state=dump) else
---         fifo_ko(2) when (sel_reg="000010" and state=dump) else
---         fifo_ko(3) when (sel_reg="000011" and state=dump) else
---         fifo_ko(4) when (sel_reg="000100" and state=dump) else
---         fifo_ko(5) when (sel_reg="000101" and state=dump) else
---         fifo_ko(6) when (sel_reg="000110" and state=dump) else
---         fifo_ko(7) when (sel_reg="000111" and state=dump) else
---         fifo_ko(8) when (sel_reg="001000" and state=dump) else
---         fifo_ko(9) when (sel_reg="001001" and state=dump) else
---         "0001"; -- idle word
 
-    outmux_proc: process(fifo_do, fifo_ko, sela, selc, state)
+    outmux_proc: process(fifo_do, fifo_ko, sela, selc, state, aux) --/////////////////////
     begin
         d <= X"000000BC"; -- default
         k <= "0001"; -- default
         loop_a: for a in 4 downto 0 loop
         loop_c: for c in 7 downto 0 loop
             if ( sela=a and selc=c and state=dump ) then
-                d <= fifo_do(a)(c);
-                k <= fifo_ko(a)(c);
+                if (aux=467 and fifo_ko(a)(c) /= "0001" and fifo_do(a)(c) /= X"DC") then
+                    d <= X"011223DC";     --/////////////////////
+                    k <= "0001";          --/////////////////////
+                else                      --/////////////////////
+                    d <= fifo_do(a)(c);   --/////////////////////
+                    k <= fifo_ko(a)(c);   --/////////////////////
+                end if;
             end if;
         end loop loop_c;
         end loop loop_a;
