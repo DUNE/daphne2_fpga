@@ -61,6 +61,8 @@ architecture stc_arch of stc is
     signal k: std_logic_vector(3 downto 0);
     signal fifo_wren: std_logic;
     signal almostempty: std_logic_vector(3 downto 0);
+    signal almostfull: std_logic_vector(3 downto 0);
+    signal fifo_af: std_logic;
 
     type array_4x64_type is array(3 downto 0) of std_logic_vector(63 downto 0);
     signal DI, DO: array_4x64_type;
@@ -211,7 +213,7 @@ begin
                     when rst =>
                         state <= wait4trig;
                     when wait4trig => 
-                        if (triggered='1' and enable='1') then -- start assembling the output frame
+                        if (triggered='1' and enable='1' and fifo_af='1') then -- start assembling the output frame
                             block_count <= "000000";
                             ts_reg <= std_logic_vector( unsigned(timestamp) - 124 );
                             state <= sof; 
@@ -304,7 +306,7 @@ begin
 
     -- now based on the FSM state, form the output stream
     -- 1024 samples densely packed into (1024/16*7) = 448 words
-    -- total frame lenth = SOF + 5 header + 448 data + trailer + EOF = 456 words
+    -- total frame lenth = SOF + 5 header + 448 data + trailer + EOF = 466 words
 
     d <= X"0000003C" when (state=sof) else -- sof of frame word = D0.0 & D0.0 & D0.0 & K28.1
          link_id & slot_id & crate_id & detector_id & version_id when (state=hdr0) else
@@ -408,14 +410,14 @@ begin
          din => d,
          crc => crc20);
 
-    -- output FIFO is 4096 deep, so we can store up to ~8.9 output frames before overflow occurs
+    -- output FIFO is 4096 deep, so we can store up to ~8.78 output frames before overflow occurs
     -- now check the FIFO filling and draining rates so we avoid under-run...
     --
-    -- BUT BE CAREFUL HERE... while it is true one complete frame is 456 words long, it takes LONGER
-    -- than 456 ACLKs to write it into the FIFO because 7 data words written requires 16 clocks to receive
-    -- That means that it takes: SOF + (5 Header) + (1024 data) + trailer + EOF = 1032 clocks. 
+    -- BUT BE CAREFUL HERE... while it is true one complete frame is 466 words long, it takes LONGER
+    -- than 466 ACLKs to write it into the FIFO because 7 data words written requires 16 clocks to receive
+    -- That means that it takes: SOF + (5 Header) + (1024 data) + (13 trailer) + EOF = 1044 clocks. 
     -- At 62.5MHz this is ~16.5us. Once selected for readout, however, the event will be read from the FIFO
-    -- in 456 FCLK cycles, or 3.79us. So once triggered this FIFO will fill relatively slowly, but once 
+    -- in 466 FCLK cycles, or 3.88us. So once triggered this FIFO will fill relatively slowly, but once 
     -- selected for readout it will drain pretty fast. Adjust the almost empty offset so that AE is not released
     -- until MOST of the frame is in the FIFO
 
@@ -427,7 +429,7 @@ begin
         fifo_inst: FIFO36E1 -- 9 bit wide x 4096 deep
         generic map(
             ALMOST_EMPTY_OFFSET => X"0180", -- this requires the careful tuning
-            ALMOST_FULL_OFFSET => X"0080",
+            ALMOST_FULL_OFFSET => X"01D4",
             DATA_WIDTH => 9,                 
             DO_REG => 1,
             EN_SYN => FALSE,                  
@@ -453,12 +455,14 @@ begin
             RDEN   => fifo_rden,
             DO     => DO(i), -- must be 64 bit vector, only lower byte is used
             DOP    => DOP(i), -- must be 8 bit vector, only lower bit is used
-            ALMOSTEMPTY => almostempty(i)
+            ALMOSTEMPTY => almostempty(i),
+            ALMOSTFULL => almostfull(i)
         );
 
     end generate genfifo;
 
     fifo_ae <= '1' when (almostempty="0000") else '0';
+    fifo_af <= '1' when (almostfull="0000") else '0';
 
     fifo_do(31 downto 0) <= DO(3)(7 downto 0) & DO(2)(7 downto 0) & DO(1)(7 downto 0) & DO(0)(7 downto 0);
     fifo_ko( 3 downto 0) <= DOP(3)(0) & DOP(2)(0) & DOP(1)(0) & DOP(0)(0);
