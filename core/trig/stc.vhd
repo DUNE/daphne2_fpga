@@ -420,16 +420,14 @@ begin
          din => d,
          crc => crc20);
 
-    -- output FIFO is 4096 deep, so we can store up to ~8.9 output frames before overflow occurs
-    -- now check the FIFO filling and draining rates so we avoid under-run...
-    --
-    -- BUT BE CAREFUL HERE... while it is true one complete frame is 456 words long, it takes LONGER
-    -- than 456 ACLKs to write it into the FIFO because 7 data words written requires 16 clocks to receive
-    -- That means that it takes: SOF + (5 Header) + (1024 data) + trailer + EOF = 1032 clocks. 
-    -- At 62.5MHz this is ~16.5us. Once selected for readout, however, the event will be read from the FIFO
-    -- in 456 FCLK cycles, or 3.79us. So once triggered this FIFO will fill relatively slowly, but once 
-    -- selected for readout it will drain pretty fast. Adjust the almost empty offset so that AE is not released
-    -- until MOST of the frame is in the FIFO
+     -- output FIFO is 4096 deep, so we can store up to ~8.78 output frames before overflow occurs
+     -- now check the FIFO filling and draining rates so we avoid under-run...
+     --
+     -- BUT BE CAREFUL HERE... while it is true one complete frame is 466 words long, it takes LONGER
+     -- than 466 ACLKs to write it into the FIFO because 7 data words written requires 16 clocks to receive
+     -- That means that it takes: SOF + (5 Header) + (1024 data) + (13 trailer) + EOF = 1044 clocks. 
+     -- At 62.5MHz this is ~16.5us. Once selected for readout, however, the event will be read from the FIFO
+     -- in 466 FCLK cycles, or 3.88us. So once triggered this FIFO will fill relatively slowly, but once 
 
     genfifo: for i in 3 downto 0 generate
 
