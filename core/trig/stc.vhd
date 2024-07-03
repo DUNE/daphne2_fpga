@@ -38,7 +38,9 @@ port(
     fifo_rden: in std_logic;
     fifo_ae: out std_logic;
     fifo_do: out std_logic_vector(31 downto 0);
-    fifo_ko: out std_logic_vector( 3 downto 0)
+    fifo_ko: out std_logic_vector( 3 downto 0);
+    TCount: out std_logic_vector(63 downto 0);
+    Pcount: out std_logic_vector(63 downto 0)
   );
 end stc;
 
@@ -62,6 +64,9 @@ architecture stc_arch of stc is
     signal almostempty: std_logic_vector(3 downto 0);
     signal almostfull: std_logic_vector(3 downto 0);
     signal fifo_af: std_logic;
+    signal trigCount: unsigned(63 downto 0) := (others => '0');
+    signal packCount: unsigned(63 downto 0) := (others => '0');
+
 
     type array_4x64_type is array(3 downto 0) of std_logic_vector(63 downto 0);
     signal DI, DO: array_4x64_type;
@@ -193,11 +198,24 @@ begin
 
     -- FSM waits for trigger condition then assembles output frame and stores into FIFO
 
+    count_proc: process(triggered, reset)
+    begin
+        if reset = '1' then
+        trigCount <= (others => '0'); 
+        elsif rising_edge(triggered) then
+            if enable = '1' then
+                trigCount <= trigCount + 1; 
+            end if;
+        end if;
+    end process;
+
     builder_fsm_proc: process(aclk)
     begin
         if rising_edge(aclk) then
             if (reset='1') then
                 state <= rst;
+                --trigCount <= (others => '0');
+                packCount <= (others => '0');
             else
                 case(state) is
                     when rst =>
@@ -205,6 +223,8 @@ begin
                     when wait4trig => 
                         if (triggered='1' and enable='1' and fifo_af='1') then -- start assembling the output frame
                             block_count <= "000000";
+                            packCount <= packCount+1;
+                           -- trigCount <= trigCount+1;
                             ts_reg <= std_logic_vector( unsigned(timestamp) - 124 );
                             state <= sof; 
                         else
@@ -400,14 +420,14 @@ begin
          din => d,
          crc => crc20);
 
-    -- output FIFO is 4096 deep, so we can store up to ~8.78 output frames before overflow occurs
+    -- output FIFO is 4096 deep, so we can store up to ~8.9 output frames before overflow occurs
     -- now check the FIFO filling and draining rates so we avoid under-run...
     --
-    -- BUT BE CAREFUL HERE... while it is true one complete frame is 466 words long, it takes LONGER
-    -- than 466 ACLKs to write it into the FIFO because 7 data words written requires 16 clocks to receive
-    -- That means that it takes: SOF + (5 Header) + (1024 data) + (13 trailer) + EOF = 1044 clocks. 
+    -- BUT BE CAREFUL HERE... while it is true one complete frame is 456 words long, it takes LONGER
+    -- than 456 ACLKs to write it into the FIFO because 7 data words written requires 16 clocks to receive
+    -- That means that it takes: SOF + (5 Header) + (1024 data) + trailer + EOF = 1032 clocks. 
     -- At 62.5MHz this is ~16.5us. Once selected for readout, however, the event will be read from the FIFO
-    -- in 466 FCLK cycles, or 3.88us. So once triggered this FIFO will fill relatively slowly, but once 
+    -- in 456 FCLK cycles, or 3.79us. So once triggered this FIFO will fill relatively slowly, but once 
     -- selected for readout it will drain pretty fast. Adjust the almost empty offset so that AE is not released
     -- until MOST of the frame is in the FIFO
 
@@ -455,5 +475,8 @@ begin
     fifo_af <= '1' when (almostfull="0000") else '0';
     fifo_do(31 downto 0) <= DO(3)(7 downto 0) & DO(2)(7 downto 0) & DO(1)(7 downto 0) & DO(0)(7 downto 0);
     fifo_ko( 3 downto 0) <= DOP(3)(0) & DOP(2)(0) & DOP(1)(0) & DOP(0)(0);
+    TCount <= std_logic_vector(trigCount); 
+    Pcount <= std_logic_vector(packCount); 
+
 
 end stc_arch;

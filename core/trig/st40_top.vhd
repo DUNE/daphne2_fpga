@@ -34,7 +34,11 @@ port(
 
     fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
     dout: out std_logic_vector(31 downto 0);
-    kout: out std_logic_vector(3 downto 0)
+    kout: out std_logic_vector(3 downto 0);
+    Tcount: out array_5x8x64_type;
+    Pcount: out array_5x8x64_type;
+    Scount: out std_logic_vector(63 downto 0)
+    
 );
 end st40_top;
 
@@ -53,6 +57,9 @@ architecture st40_top_arch of st40_top is
     signal d, dout_reg: std_logic_vector(31 downto 0);
     signal k, kout_reg: std_logic_vector( 3 downto 0);
     signal aux: integer range 0 to 467;  --/////////////////////
+    signal trigcount: array_5x8x64_type;
+    signal packcount: array_5x8x64_type;
+    signal sendCount: unsigned(63 downto 0) := (others => '0');
 
     component stc is
     generic( link_id: std_logic_vector(5 downto 0) := "000000"; ch_id: std_logic_vector(5 downto 0) := "000000" );
@@ -76,7 +83,9 @@ architecture st40_top_arch of st40_top is
         fifo_rden: in std_logic;
         fifo_ae: out std_logic;
         fifo_do: out std_logic_vector(31 downto 0);
-        fifo_ko: out std_logic_vector( 3 downto 0)
+        fifo_ko: out std_logic_vector( 3 downto 0);
+        Tcount: out std_logic_vector(63 downto 0);
+        Pcount: out std_logic_vector(63 downto 0)
       );
     end component;
 
@@ -109,12 +118,30 @@ begin
                 fifo_rden => fifo_rden(a)(c),
                 fifo_ae => fifo_ae(a)(c),
                 fifo_do => fifo_do(a)(c),
-                fifo_ko => fifo_ko(a)(c)
+                fifo_ko => fifo_ko(a)(c),
+                Tcount => trigcount(a)(c),
+                Pcount => packcount(a)(c)
               );
 
     end generate gen_stc_c;
     end generate gen_stc_a;
 
+    -- fifo read enable and fifo flag selection
+
+--    fifo_ready <= '1' when (sel_reg="000000" and fifo_ae(0)='1') else 
+--                  '1' when (sel_reg="000001" and fifo_ae(1)='1') else 
+--                  '1' when (sel_reg="000010" and fifo_ae(2)='1') else 
+--                  '1' when (sel_reg="000011" and fifo_ae(3)='1') else 
+--                  '1' when (sel_reg="000100" and fifo_ae(4)='1') else 
+--                  '1' when (sel_reg="000101" and fifo_ae(5)='1') else 
+--                  '1' when (sel_reg="000110" and fifo_ae(6)='1') else 
+--                  '1' when (sel_reg="000111" and fifo_ae(7)='1') else 
+--                  '1' when (sel_reg="001000" and fifo_ae(8)='1') else 
+--                  '1' when (sel_reg="001001" and fifo_ae(9)='1') else 
+--                  '0';
+
+    -- sel_reg is a straight 6 bit register, but it is encoded with values 0-7, 10-17, 20-27, 30-37, 40-47
+    -- there are gaps, so be careful when incrementing and looping...
 
     fifo_ready_proc: process(sela, selc, fifo_ae)
     begin
@@ -142,6 +169,7 @@ begin
         if rising_edge(fclk) then
             if (reset='1') then
                 state <= rst;
+                sendCount <= (others => '0');
             else
                 case(state) is
 
@@ -173,6 +201,7 @@ begin
                     when dump =>
                         if ((k="0001" and d(7 downto 0)=X"DC") or aux=467 ) then -- this the EOF word, done reading from this STC
                             state <= idle;
+                            sendCount <= sendCount + 1;
                         else
                             state <= dump;
                             aux <= aux + 1;
@@ -201,6 +230,29 @@ begin
 
     -- output muxes
      
+--    d <= fifo_do(0) when (sel_reg="000000" and state=dump) else
+--         fifo_do(1) when (sel_reg="000001" and state=dump) else
+--         fifo_do(2) when (sel_reg="000010" and state=dump) else
+--         fifo_do(3) when (sel_reg="000011" and state=dump) else
+--         fifo_do(4) when (sel_reg="000100" and state=dump) else
+--         fifo_do(5) when (sel_reg="000101" and state=dump) else
+--         fifo_do(6) when (sel_reg="000110" and state=dump) else
+--         fifo_do(7) when (sel_reg="000111" and state=dump) else
+--         fifo_do(8) when (sel_reg="001000" and state=dump) else
+--         fifo_do(9) when (sel_reg="001001" and state=dump) else
+--         X"000000BC"; -- idle word
+--
+--    k <= fifo_ko(0) when (sel_reg="000000" and state=dump) else
+--         fifo_ko(1) when (sel_reg="000001" and state=dump) else
+--         fifo_ko(2) when (sel_reg="000010" and state=dump) else
+--         fifo_ko(3) when (sel_reg="000011" and state=dump) else
+--         fifo_ko(4) when (sel_reg="000100" and state=dump) else
+--         fifo_ko(5) when (sel_reg="000101" and state=dump) else
+--         fifo_ko(6) when (sel_reg="000110" and state=dump) else
+--         fifo_ko(7) when (sel_reg="000111" and state=dump) else
+--         fifo_ko(8) when (sel_reg="001000" and state=dump) else
+--         fifo_ko(9) when (sel_reg="001001" and state=dump) else
+--         "0001"; -- idle word
 
     outmux_proc: process(fifo_do, fifo_ko, sela, selc, state, aux) --/////////////////////
     begin
@@ -233,5 +285,8 @@ begin
 
     dout <= dout_reg;
     kout <= kout_reg;
+    Scount <= std_logic_vector(sendCount);
+    Tcount <= trigcount;
+    Pcount <= packcount;
 
 end st40_top_arch;

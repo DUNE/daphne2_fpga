@@ -55,6 +55,10 @@ port(
     inmux_we: in std_logic; -- write enable for inmux control regs
     inmux_dout: out std_logic_vector(5 downto 0); -- read inmux control regs
 
+    Tcount: out array_5x8x64_type;
+    Pcount: out array_5x8x64_type;
+    Scount: out std_logic_vector(63 downto 0);
+
     daq_refclk_p, daq_refclk_n: in std_logic; -- MGT REFCLK for DAQ, LVDS, quad 213, refclk0, 120.237MHz
     daq0_tx_p, daq0_tx_n: out std_logic;
     daq1_tx_p, daq1_tx_n: out std_logic;
@@ -114,7 +118,10 @@ architecture core_arch of core is
     	afe_dat: in array_5x9x14_type; -- ADC data all 40 input streams
         fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
         dout: out std_logic_vector(31 downto 0);
-        kout: out std_logic_vector(3 downto 0)
+        kout: out std_logic_vector(3 downto 0);
+        Tcount: out array_5x8x64_type;
+        Pcount: out array_5x8x64_type;
+        Scount: out std_logic_vector(63 downto 0)
     );
     end component;
 
@@ -239,7 +246,10 @@ begin
     	afe_dat => afe_dat, -- AFE raw data after alignment all 40 channels
         fclk => fclk(0), 
         dout => selftrig_sender_dout,
-        kout => selftrig_sender_kout
+        kout => selftrig_sender_kout,
+        Tcount => Tcount,
+        Pcount => Pcount,
+        Scount => Scount
     );
 
     -- there are four outputs (sender_kout and sender_dout) and these muxes 
