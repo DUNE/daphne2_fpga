@@ -74,7 +74,7 @@ begin
     -- our super basic trigger condition is this: one sample ABOVE trig_thresh followed by two samples
     -- BELOW trig_thresh.
 
-    filter_trigger_inst: hpf_pedestal_recovery_filter_trigger
+    bicocca_filter_trigger_inst: hpf_pedestal_recovery_filter_trigger
     port map(
         clk => clock,
         reset => reset,

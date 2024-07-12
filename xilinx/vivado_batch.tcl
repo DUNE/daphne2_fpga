@@ -5,7 +5,7 @@
 
 # general setup stuff...
 
-set_param general.maxThreads 8
+set_param general.maxThreads 4
 set outputDir ./output
 file mkdir $outputDir
 set_part xc7a200t-fbg676-2
@@ -33,10 +33,21 @@ read_vhdl ../core/core.vhd
  read_vhdl ../core/core_mgt4.vhd
 
 # trigger modules ----
+# bicocca
 read_verilog ../core/trig/bicocca_selftrigger_filters/hpf_pedestal_recovery_filter_trigger.v
 read_verilog ../core/trig/bicocca_selftrigger_filters/IIRFilter_afe_integrator_optimized.v
 read_verilog ../core/trig/bicocca_selftrigger_filters/k_low_pass_filter.v
 read_verilog ../core/trig/bicocca_selftrigger_filters/IIRfilter_movmean25_cfd_trigger.v
+# eia
+read_vhdl ../core/trig/eia_selftrigger/st_mm.vhd
+read_vhdl ../core/trig/eia_selftrigger/st_xc.vhd
+read_vhdl ../core/trig/eia_selftrigger/st_xc_filt.vhd
+read_vhdl ../core/trig/eia_selftrigger/trig_xc.vhd
+# ciemat
+#read_vhdl ../core/trig/ciemat_selftrigger/Filter_CIEMAT.vhd
+read_vhdl ../core/trig/ciemat_selftrigger/LocalPrimitives_CIEMAT.vhd
+read_vhdl ../core/trig/ciemat_selftrigger/PeakDetector_SelfTrigger_CIEMAT.vhd
+read_vhdl ../core/trig/ciemat_selftrigger/Self_Trigger_Primitive_Calculation.vhd
 # --------------------
 
 read_vhdl ../oei/hdl/burst_traffic_controller.vhd

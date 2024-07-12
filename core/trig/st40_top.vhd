@@ -19,6 +19,7 @@ port(
     reset: in std_logic;
 
     adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
+    st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
     threshold: in std_logic_vector(13 downto 0); -- user defined threshold relative to avg baseline
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
     ti_trigger_stbr: in std_logic;  -------------------------
@@ -61,7 +62,7 @@ architecture st40_top_arch of st40_top is
     generic( link_id: std_logic_vector(5 downto 0) := "000000"; ch_id: std_logic_vector(5 downto 0) := "000000" );
     port(
         reset: in std_logic;
-
+        st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
         adhoc: in std_logic_vector(7 downto 0);
         threshold: std_logic_vector(13 downto 0);
         slot_id: std_logic_vector(3 downto 0);
@@ -103,6 +104,7 @@ begin
                 detector_id => detector_id,
                 version_id => version_id,
                 enable => enable(8*a+c),
+                st_config => st_config, -- CIEMAT (Nacho)
                 filter_output_selector => filter_output_selector,
                 aclk => aclk,
                 timestamp => timestamp,

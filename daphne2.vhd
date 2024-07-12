@@ -296,6 +296,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
         detector_id: in std_logic_vector(5 downto 0);
         version_id: in std_logic_vector(5 downto 0);
         st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
+        st_config: in std_logic_vector(13 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
         filter_output_selector: in std_logic_vector(1 downto 0); -- filter signal type selector
         outmode: in std_logic_vector(7 downto 0); -- choose streaming or self-trig sender for each output
         adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
@@ -406,7 +407,6 @@ architecture DAPHNE2_arch of DAPHNE2 is
     
     signal st_enable_reg: std_logic_vector(39 downto 0);
     signal st_config_reg: std_logic_vector(31 downto 0);
-    signal filter_output_selector_reg: std_logic_vector(1 downto 0);
     signal st_enable_we, st_config_we: std_logic;
 
 begin
@@ -978,10 +978,8 @@ begin
         if rising_edge(oeiclk) then
             if (reset_async='1') then
                 st_config_reg <= DEFAULT_ST_CONFIG;
-                filter_output_selector_reg <= DEFAULT_ST_CONFIG(1 downto 0);
             elsif (st_config_we='1') then
                 st_config_reg <= rx_data(31 downto 0);
-                filter_output_selector_reg <= rx_data(1 downto 0);
             end if;
         end if;
     end process st_config_proc;
@@ -1004,6 +1002,7 @@ begin
         outmode => outmode_reg,
         adhoc => adhoc_reg,
         threshold => threshold_reg,
+        st_config => st_config_reg(15 downto 2), -- Self-Trigger Config CIEMAT (Nacho)
         --
         ti_trigger => ti_trigger_reg, --------------------
         ti_trigger_stbr => ti_trigger_stbr_reg, -------------------
@@ -1013,7 +1012,7 @@ begin
         detector_id => daq_out_param_reg(11 downto 6), -- 6 bits
         version_id => daq_out_param_reg(5 downto 0), -- 6 bits
         st_enable => st_enable_reg,
-        filter_output_selector => filter_output_selector_reg, -- filter type selector
+        filter_output_selector => st_config_reg(1 downto 0), -- filter type selector
    
         oeiclk => oeiclk,
         trig => trig_sync,
