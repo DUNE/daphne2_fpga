@@ -596,7 +596,7 @@ begin
 
     end generate genfifo;
 
-    triggered <= triggered_ciemat and triggered_bicocca;
+    triggered <= triggered_bicocca;
 
     fifo_ae <= '1' when (almostempty="0000") else '0';
     fifo_af <= '1' when (almostfull="0000") else '0';
