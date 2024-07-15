@@ -40,6 +40,7 @@ port(
 
     ti_trigger: in std_logic_vector(7 downto 0); ------------------------
     ti_trigger_stbr: in std_logic; -------------------------------------
+    trig_rst_count: in std_logic;
     
     slot_id: in std_logic_vector(3 downto 0); -- used in output header
     crate_id: in std_logic_vector(9 downto 0); -- used in output header
@@ -108,6 +109,7 @@ architecture core_arch of core is
         threshold: in std_logic_vector(13 downto 0); -- user defined threshold relative to baseline
         ti_trigger: in std_logic_vector(7 downto 0); -------------------------
         ti_trigger_stbr: in std_logic;  -------------------------
+        trig_rst_count: in std_logic;
         slot_id: in std_logic_vector(3 downto 0);
         crate_id: in std_logic_vector(9 downto 0);
         detector_id: in std_logic_vector(5 downto 0);
@@ -243,6 +245,7 @@ begin
         timestamp => timestamp,
         ti_trigger => ti_trigger, ------------------------------
         ti_trigger_stbr => ti_trigger_stbr, -------------------------
+        trig_rst_count => trig_rst_count,
     	afe_dat => afe_dat, -- AFE raw data after alignment all 40 channels
         fclk => fclk(0), 
         dout => selftrig_sender_dout,
