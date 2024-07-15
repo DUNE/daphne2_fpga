@@ -209,6 +209,90 @@
 
 	0x40600000 - 0x406003FF Spy Buffer for Core Sender0 OUTPUT (32 bits)
 
+	0x40800000   Trig Counter0, read-write, 64 bit
+	0x40800008   Trig Counter1, read-write, 64 bit
+	0x40800010   Trig Counter2, read-write, 64 bit
+	0x40800018   Trig Counter3, read-write, 64 bit
+	0x40800020   Trig Counter4, read-write, 64 bit
+	0x40800028   Trig Counter5, read-write, 64 bit
+	0x40800030   Trig Counter6, read-write, 64 bit
+	0x40800038   Trig Counter7, read-write, 64 bit
+	0x40800040   Trig Counter8, read-write, 64 bit
+	0x40800048   Trig Counter9, read-write, 64 bit
+	0x40800050   Trig Counter10, read-write, 64 bit
+	0x40800058   Trig Counter11, read-write, 64 bit
+	0x40800060   Trig Counter12, read-write, 64 bit
+	0x40800068   Trig Counter13, read-write, 64 bit
+	0x40800070   Trig Counter14, read-write, 64 bit
+	0x40800078   Trig Counter15, read-write, 64 bit
+	0x40800080   Trig Counter16, read-write, 64 bit
+	0x40800088   Trig Counter17, read-write, 64 bit
+	0x40800090   Trig Counter18, read-write, 64 bit
+	0x40800098   Trig Counter19, read-write, 64 bit
+	0x408000A0   Trig Counter20, read-write, 64 bit
+	0x408000A8   Trig Counter21, read-write, 64 bit
+	0x408000B0   Trig Counter22, read-write, 64 bit
+	0x408000B8   Trig Counter23, read-write, 64 bit
+	0x408000C0   Trig Counter24, read-write, 64 bit
+	0x408000C8   Trig Counter25, read-write, 64 bit
+	0x408000D0   Trig Counter26, read-write, 64 bit
+	0x408000D8   Trig Counter27, read-write, 64 bit
+	0x408000E0   Trig Counter28, read-write, 64 bit
+	0x408000E8   Trig Counter29, read-write, 64 bit
+	0x408000F0   Trig Counter30, read-write, 64 bit
+	0x408000F8   Trig Counter31, read-write, 64 bit
+	0x40800100   Trig Counter32, read-write, 64 bit
+	0x40800108   Trig Counter33, read-write, 64 bit
+	0x40800110   Trig Counter34, read-write, 64 bit
+	0x40800118   Trig Counter35, read-write, 64 bit
+	0x40800120   Trig Counter36, read-write, 64 bit
+	0x40800128   Trig Counter37, read-write, 64 bit
+	0x40800130   Trig Counter38, read-write, 64 bit
+	0x40800138   Trig Counter39, read-write, 64 bit
+
+	0x40800140   Pack Counter0, read-write, 64 bit
+	0x40800148   Pack Counter1, read-write, 64 bit
+	0x40800150   Pack Counter2, read-write, 64 bit
+	0x40800158   Pack Counter3, read-write, 64 bit
+	0x40800160   Pack Counter4, read-write, 64 bit
+	0x40800168   Pack Counter5, read-write, 64 bit
+	0x40800170   Pack Counter6, read-write, 64 bit
+	0x40800178   Pack Counter7, read-write, 64 bit
+	0x40800180   Pack Counter8, read-write, 64 bit
+	0x40800188   Pack Counter9, read-write, 64 bit
+	0x40800190   Pack Counter10, read-write, 64 bit
+	0x40800198   Pack Counter11, read-write, 64 bit
+	0x408001A0   Pack Counter12, read-write, 64 bit
+	0x408001A8   Pack Counter13, read-write, 64 bit
+	0x408001B0   Pack Counter14, read-write, 64 bit
+	0x408001B8   Pack Counter15, read-write, 64 bit
+	0x408001C0   Pack Counter16, read-write, 64 bit
+	0x408001C8   Pack Counter17, read-write, 64 bit
+	0x408001D0   Pack Counter18, read-write, 64 bit
+	0x408001D8   Pack Counter19, read-write, 64 bit
+	0x408001E0   Pack Counter20, read-write, 64 bit
+	0x408001E8   Pack Counter21, read-write, 64 bit
+	0x408001F0   Pack Counter22, read-write, 64 bit
+	0x408001F8   Pack Counter23, read-write, 64 bit
+	0x40800200   Pack Counter24, read-write, 64 bit
+	0x40800208   Pack Counter25, read-write, 64 bit
+	0x40800210   Pack Counter26, read-write, 64 bit
+	0x40800218   Pack Counter27, read-write, 64 bit
+	0x40800220   Pack Counter28, read-write, 64 bit
+	0x40800228   Pack Counter29, read-write, 64 bit
+	0x40800230   Pack Counter30, read-write, 64 bit
+	0x40800238   Pack Counter31, read-write, 64 bit
+	0x40800240   Pack Counter32, read-write, 64 bit
+	0x40800248   Pack Counter33, read-write, 64 bit
+	0x40800250   Pack Counter34, read-write, 64 bit
+	0x40800258   Pack Counter35, read-write, 64 bit
+	0x40800260   Pack Counter36, read-write, 64 bit
+	0x40800268   Pack Counter37, read-write, 64 bit
+	0x40800270   Pack Counter38, read-write, 64 bit
+	0x40800278   Pack Counter39, read-write, 64 bit
+
+	0x40800280   Send Counter, read-write, 64 bit
+
 	0x80000000   Test FIFO, 512 x 64, read-write (64-bit)
 
 	0x90000000   Micocontroller Access via SPI FIFO, 2k x 8, read-write (8-bit ASCII strings )

@@ -30,6 +30,7 @@ port(
     st_prim_config: std_logic_vector(1 downto 0); -- 5 downto-- local primitives calculation configuration
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
     ti_trigger_stbr: in std_logic;  -------------------------
+    trig_rst_count: in std_logic;
     aclk: in std_logic; -- AFE clock 62.500 MHz
     timestamp: in std_logic_vector(63 downto 0);
 	afe_dat: in std_logic_vector(13 downto 0); -- aligned AFE data
@@ -39,7 +40,9 @@ port(
     fifo_rden: in std_logic;
     fifo_ae: out std_logic;
     fifo_do: out std_logic_vector(31 downto 0);
-    fifo_ko: out std_logic_vector( 3 downto 0)
+    fifo_ko: out std_logic_vector( 3 downto 0);
+    TCount: out std_logic_vector(63 downto 0);
+    Pcount: out std_logic_vector(63 downto 0)
   );
 end stc;
 
@@ -61,6 +64,11 @@ architecture stc_arch of stc is
     signal k: std_logic_vector(3 downto 0);
     signal fifo_wren: std_logic;
     signal almostempty: std_logic_vector(3 downto 0);
+    signal almostfull: std_logic_vector(3 downto 0);
+    signal fifo_af: std_logic;
+    signal trigCount: unsigned(63 downto 0) := (others => '0');
+    signal packCount: unsigned(63 downto 0) := (others => '0');
+
 
     type array_4x64_type is array(3 downto 0) of std_logic_vector(63 downto 0);
     signal DI, DO: array_4x64_type;
@@ -272,66 +280,150 @@ begin
 
     -- FSM waits for trigger condition then assembles output frame and stores into FIFO
 
+    count_proc: process(triggered, reset, trig_rst_count)
+    begin
+        if (reset = '1' or trig_rst_count = '1') then
+        trigCount <= (others => '0'); 
+        elsif rising_edge(triggered) then
+            if enable = '1' then
+                trigCount <= trigCount + 1; 
+            end if;
+        end if;
+    end process;
+
     builder_fsm_proc: process(aclk)
     begin
         if rising_edge(aclk) then
-            if (reset='1') then
+            if (reset='1' or trig_rst_count='1') then ---------------////
                 state <= rst;
+                --trigCount <= (others => '0');
+                packCount <= (others => '0');
             else
                 case(state) is
                     when rst =>
                         state <= wait4trig;
                     when wait4trig => 
-                        if (triggered='1' and enable='1') then -- start assembling the output frame
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
+                        if (triggered='1' and enable='1' and fifo_af='1') then -- start assembling the output frame
                             block_count <= "000000";
+                            packCount <= packCount+1;
+                           -- trigCount <= trigCount+1;
                             ts_reg <= std_logic_vector( unsigned(timestamp) - 124 );
                             state <= sof; 
                         else
-                            state <= wait4trig;
+                            state <= wait4trig; --962 760 410 El de las naranjas
                         end if;
                     when sof =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= hdr0;
                     when hdr0 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= hdr1;
                     when hdr1 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= hdr2;
                     when hdr2 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= hdr3;
                     when hdr3 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= hdr4;
                     when hdr4 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat0;
                     when dat0 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat1;
                     when dat1 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat2;
                     when dat2 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat3;
                     when dat3 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat4;
                     when dat4 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat5;
                     when dat5 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat6;
                     when dat6 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat7;
                     when dat7 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat8;
                     when dat8 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat9;
                     when dat9 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat10;
                     when dat10 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat11;
                     when dat11 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat12;
                     when dat12 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');  
+                        end if;
                         state <= dat13;
                     when dat13 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat14;
                     when dat14 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= dat15;
                     when dat15 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         if (block_count="111111") then -- we have cycled through the data block (16 samples per block) 64 times, done
                             state <= trailer1;
                         else
@@ -339,34 +431,79 @@ begin
                             state <= dat0;
                         end if;
                     when trailer1 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer2;
                     when trailer2 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer3;
                     when trailer3 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer4;
                     when trailer4 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer5;
                     when trailer5 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer6;
                     when trailer6 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer7;
                     when trailer7 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer8;
                     when trailer8 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer9;
                     when trailer9 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer10;
                     when trailer10 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer11;
                     when trailer11 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer12;
                     when trailer12 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= trailer13;
                     when trailer13 =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= eof;
                     when eof =>
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= wait4trig;
                     when others => 
+                        if (trig_rst_count = '1') then
+                            packCount <= (others => '0');
+                        end if;
                         state <= rst;
                 end case;
             end if;
@@ -375,7 +512,7 @@ begin
 
     -- now based on the FSM state, form the output stream
     -- 1024 samples densely packed into (1024/16*7) = 448 words
-    -- total frame lenth = SOF + 5 header + 448 data + trailer + EOF = 456 words
+    -- total frame lenth = SOF + 5 header + 448 data + trailer + EOF = 456 words 
 
     d <= X"0000003C" when (state=sof) else -- sof of frame word = D0.0 & D0.0 & D0.0 & K28.1
          link_id & slot_id & crate_id & detector_id & version_id when (state=hdr0) else
@@ -479,16 +616,14 @@ begin
          din => d,
          crc => crc20);
 
-    -- output FIFO is 4096 deep, so we can store up to ~8.9 output frames before overflow occurs
-    -- now check the FIFO filling and draining rates so we avoid under-run...
-    --
-    -- BUT BE CAREFUL HERE... while it is true one complete frame is 456 words long, it takes LONGER
-    -- than 456 ACLKs to write it into the FIFO because 7 data words written requires 16 clocks to receive
-    -- That means that it takes: SOF + (5 Header) + (1024 data) + trailer + EOF = 1032 clocks. 
-    -- At 62.5MHz this is ~16.5us. Once selected for readout, however, the event will be read from the FIFO
-    -- in 456 FCLK cycles, or 3.79us. So once triggered this FIFO will fill relatively slowly, but once 
-    -- selected for readout it will drain pretty fast. Adjust the almost empty offset so that AE is not released
-    -- until MOST of the frame is in the FIFO
+     -- output FIFO is 4096 deep, so we can store up to ~8.78 output frames before overflow occurs
+     -- now check the FIFO filling and draining rates so we avoid under-run...
+     --
+     -- BUT BE CAREFUL HERE... while it is true one complete frame is 466 words long, it takes LONGER
+     -- than 466 ACLKs to write it into the FIFO because 7 data words written requires 16 clocks to receive
+     -- That means that it takes: SOF + (5 Header) + (1024 data) + (13 trailer) + EOF = 1044 clocks. 
+     -- At 62.5MHz this is ~16.5us. Once selected for readout, however, the event will be read from the FIFO
+     -- in 466 FCLK cycles, or 3.88us. So once triggered this FIFO will fill relatively slowly, but once 
 
     genfifo: for i in 3 downto 0 generate
 
@@ -498,7 +633,7 @@ begin
         fifo_inst: FIFO36E1 -- 9 bit wide x 4096 deep
         generic map(
             ALMOST_EMPTY_OFFSET => X"0180", -- this requires the careful tuning
-            ALMOST_FULL_OFFSET => X"0080",
+            ALMOST_FULL_OFFSET => X"01D4", -- ORIGINAL X'0080' 
             DATA_WIDTH => 9,                 
             DO_REG => 1,
             EN_SYN => FALSE,                  
@@ -524,14 +659,18 @@ begin
             RDEN   => fifo_rden,
             DO     => DO(i), -- must be 64 bit vector, only lower byte is used
             DOP    => DOP(i), -- must be 8 bit vector, only lower bit is used
-            ALMOSTEMPTY => almostempty(i)
+            ALMOSTEMPTY => almostempty(i),
+            ALMOSTFULL => almostfull(i)
         );
 
     end generate genfifo;
 
     fifo_ae <= '1' when (almostempty="0000") else '0';
-
+    fifo_af <= '1' when (almostfull="0000") else '0';
     fifo_do(31 downto 0) <= DO(3)(7 downto 0) & DO(2)(7 downto 0) & DO(1)(7 downto 0) & DO(0)(7 downto 0);
     fifo_ko( 3 downto 0) <= DOP(3)(0) & DOP(2)(0) & DOP(1)(0) & DOP(0)(0);
+    TCount <= std_logic_vector(trigCount); 
+    Pcount <= std_logic_vector(packCount); 
+
 
 end stc_arch;
