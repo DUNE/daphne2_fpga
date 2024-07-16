@@ -41,6 +41,7 @@ port(
 
     ti_trigger: in std_logic_vector(7 downto 0); ------------------------
     ti_trigger_stbr: in std_logic; -------------------------------------
+    trig_rst_count: in std_logic;
     
     slot_id: in std_logic_vector(3 downto 0); -- used in output header
     crate_id: in std_logic_vector(9 downto 0); -- used in output header
@@ -56,6 +57,10 @@ port(
     spy_dout: out std_logic_vector(31 downto 0); -- spy buffer data for reading
     inmux_we: in std_logic; -- write enable for inmux control regs
     inmux_dout: out std_logic_vector(5 downto 0); -- read inmux control regs
+
+    Tcount: out array_5x8x64_type;
+    Pcount: out array_5x8x64_type;
+    Scount: out std_logic_vector(63 downto 0);
 
     daq_refclk_p, daq_refclk_n: in std_logic; -- MGT REFCLK for DAQ, LVDS, quad 213, refclk0, 120.237MHz
     daq0_tx_p, daq0_tx_n: out std_logic;
@@ -107,6 +112,7 @@ architecture core_arch of core is
         threshold: in std_logic_vector(13 downto 0); -- user defined threshold relative to baseline
         ti_trigger: in std_logic_vector(7 downto 0); -------------------------
         ti_trigger_stbr: in std_logic;  -------------------------
+        trig_rst_count: in std_logic;
         slot_id: in std_logic_vector(3 downto 0);
         crate_id: in std_logic_vector(9 downto 0);
         detector_id: in std_logic_vector(5 downto 0);
@@ -118,7 +124,10 @@ architecture core_arch of core is
     	afe_dat: in array_5x9x14_type; -- ADC data all 40 input streams
         fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
         dout: out std_logic_vector(31 downto 0);
-        kout: out std_logic_vector(3 downto 0)
+        kout: out std_logic_vector(3 downto 0);
+        Tcount: out array_5x8x64_type;
+        Pcount: out array_5x8x64_type;
+        Scount: out std_logic_vector(63 downto 0)
     );
     end component;
 
@@ -242,10 +251,14 @@ begin
         timestamp => timestamp,
         ti_trigger => ti_trigger, ------------------------------
         ti_trigger_stbr => ti_trigger_stbr, -------------------------
+        trig_rst_count => trig_rst_count,
     	afe_dat => afe_dat, -- AFE raw data after alignment all 40 channels
         fclk => fclk(0), 
         dout => selftrig_sender_dout,
-        kout => selftrig_sender_kout
+        kout => selftrig_sender_kout,
+        Tcount => Tcount,
+        Pcount => Pcount,
+        Scount => Scount
     );
 
     -- there are four outputs (sender_kout and sender_dout) and these muxes 
