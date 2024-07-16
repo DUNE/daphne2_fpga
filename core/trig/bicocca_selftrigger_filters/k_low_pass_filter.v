@@ -29,7 +29,7 @@ module k_low_pass_filter(
 	initial begin 
 		reset_reg <= 1'b0;
 	    enable_reg <= 1'b0;
-	    x_1 <= 48'b0;;
+	    x_1 <= 48'b0;
 		y_1 <= 48'b0;
 		in_reg <= 16'b0;
 		out_reg <= 16'b0;
