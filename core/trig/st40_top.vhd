@@ -23,6 +23,7 @@ port(
     threshold_xc: in std_logic_vector(41 downto 0); -- user defined cross correlation matching filter output trigger threshold
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
     ti_trigger_stbr: in std_logic;  -------------------------
+    trig_rst_count: in std_logic;
     slot_id: in std_logic_vector(3 downto 0);
     crate_id: in std_logic_vector(9 downto 0);
     detector_id: in std_logic_vector(5 downto 0);
@@ -35,17 +36,23 @@ port(
 
     fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
     dout: out std_logic_vector(31 downto 0);
-    kout: out std_logic_vector(3 downto 0)
+    kout: out std_logic_vector(3 downto 0);
+    Tcount: out array_5x8x64_type;
+    Pcount: out array_5x8x64_type;
+    Scount: out std_logic_vector(63 downto 0)
+    
 );
 end st40_top;
 
 architecture st40_top_arch of st40_top is
  
-    type state_type is (rst, scan, dump, idle);
+    type state_type is (rst, scan, dump);
     signal state: state_type;
 
     signal sela: integer range 0 to 4;
     signal selc: integer range 0 to 7;
+    signal sela_rden: integer range 0 to 4;
+    signal selc_rden: integer range 0 to 7;
     signal fifo_ae: array_5x8_type;
     signal fifo_rden: array_5x8_type;
     signal fifo_ready: std_logic;
@@ -53,6 +60,10 @@ architecture st40_top_arch of st40_top is
     signal fifo_ko: array_5x8x4_type;
     signal d, dout_reg: std_logic_vector(31 downto 0);
     signal k, kout_reg: std_logic_vector( 3 downto 0);
+    signal packet_size_counter: integer range 0 to 467;
+    signal trigcount: array_5x8x64_type;
+    signal packcount: array_5x8x64_type;
+    signal sendCount: unsigned(63 downto 0) := (others => '0');
 
     component stc is
     generic( link_id: std_logic_vector(5 downto 0) := "000000"; ch_id: std_logic_vector(5 downto 0) := "000000" );
@@ -72,12 +83,15 @@ architecture st40_top_arch of st40_top is
         timestamp: in std_logic_vector(63 downto 0);
     	ti_trigger: in std_logic_vector(7 downto 0); -------------------------
         ti_trigger_stbr: in std_logic;  -------------------------
+        trig_rst_count: in std_logic;
         afe_dat: in std_logic_vector(13 downto 0);
         fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
         fifo_rden: in std_logic;
         fifo_ae: out std_logic;
         fifo_do: out std_logic_vector(31 downto 0);
-        fifo_ko: out std_logic_vector( 3 downto 0)
+        fifo_ko: out std_logic_vector( 3 downto 0);
+        Tcount: out std_logic_vector(63 downto 0);
+        Pcount: out std_logic_vector(63 downto 0)
       );
     end component;
 
@@ -98,6 +112,7 @@ begin
                 threshold_xc => threshold_xc,
                 ti_trigger => ti_trigger, -------------------------
                 ti_trigger_stbr => ti_trigger_stbr,  -------------------------
+                trig_rst_count => trig_rst_count,
                 slot_id => slot_id,
                 crate_id => crate_id,
                 detector_id => detector_id,
@@ -111,7 +126,9 @@ begin
                 fifo_rden => fifo_rden(a)(c),
                 fifo_ae => fifo_ae(a)(c),
                 fifo_do => fifo_do(a)(c),
-                fifo_ko => fifo_ko(a)(c)
+                fifo_ko => fifo_ko(a)(c),
+                Tcount => trigcount(a)(c),
+                Pcount => packcount(a)(c)
               );
 
     end generate gen_stc_c;
@@ -148,7 +165,7 @@ begin
 
     gen_rden_a: for a in 4 downto 0 generate
         gen_rden_c: for c in 7 downto 0 generate
-            fifo_rden(a)(c) <= '1' when (sela=a and selc=c and state=dump) else '0';
+            fifo_rden(a)(c) <= '1' when (sela_rden=a and selc_rden=c and state=dump) else '0';
         end generate gen_rden_c;
     end generate gen_rden_a;
 
@@ -158,8 +175,9 @@ begin
     fsm_proc: process(fclk)
     begin
         if rising_edge(fclk) then
-            if (reset='1') then
+            if (reset='1' or trig_rst_count='1') then 
                 state <= rst;
+                sendCount <= (others => '0');
             else
                 case(state) is
 
@@ -169,33 +187,18 @@ begin
                         state <= scan;
 
                     when scan => 
+                        if (trig_rst_count = '1') then
+                            sendCount <= (others => '0');
+                        end if;
                         if (fifo_ready='1') then
                             state <= dump;
+                            sela_rden <= sela; 
+                            selc_rden <= selc; 
                         else
-                            if (selc=7) then
-                                if (sela=4) then -- loop around when sel = 4 7
-                                    sela <= 0;
-                                    selc <= 0;
-                                else
-                                    sela <= sela + 1;
-                                    selc <= 0;
-                                end if;
-                            else
-                                selc <= selc + 1;
-                            end if;
                             state <= scan;
                         end if;
-
-                    when dump =>
-                        if (k="0001" and d(7 downto 0)=X"DC") then -- this the EOF word, done reading from this STC
-                            state <= idle;
-                        else
-                            state <= dump;
-                        end if;
-
-                    when idle => -- send one idle word and resume scanning...
-                        if (selc = 7) then
-                            if (sela = 4) then -- loop around when sel = 4 7
+                        if (selc=7) then
+                            if (sela=4) then -- loop around when sel = 4 7
                                 sela <= 0;
                                 selc <= 0;
                             else
@@ -205,8 +208,31 @@ begin
                         else
                             selc <= selc + 1;
                         end if;
-                        state <= scan;
-
+                        packet_size_counter <= 0;
+                    when dump =>
+                        if (trig_rst_count = '1') then
+                            sendCount <= (others => '0');
+                        end if;
+                        if ((k="0001" and d(7 downto 0)=X"DC") or packet_size_counter=467) then -- this the EOF word, done reading from this STC
+                            state <= scan;
+                            sendCount <= sendCount + 1;
+                        else
+                            state <= dump; -- in this state I can continue to search for the next fifo_ready_flag
+                            packet_size_counter <= packet_size_counter + 1;
+                            if (fifo_ready='0') then
+                                if (selc=7) then
+                                    if (sela=4) then -- loop around when sel = 4 7
+                                        sela <= 0;
+                                        selc <= 0;
+                                    else
+                                        sela <= sela + 1;
+                                        selc <= 0;
+                                    end if;
+                                else
+                                    selc <= selc + 1;
+                                end if;   
+                            end if;
+                        end if;
                     when others => 
                         state <= rst;
                 end case;
@@ -240,15 +266,20 @@ begin
 --         fifo_ko(9) when (sel_reg="001001" and state=dump) else
 --         "0001"; -- idle word
 
-    outmux_proc: process(fifo_do, fifo_ko, sela, selc, state)
+    outmux_proc: process(fifo_do, fifo_ko, sela_rden, selc_rden, state, packet_size_counter)
     begin
         d <= X"000000BC"; -- default
         k <= "0001"; -- default
         loop_a: for a in 4 downto 0 loop
         loop_c: for c in 7 downto 0 loop
-            if ( sela=a and selc=c and state=dump ) then
-                d <= fifo_do(a)(c);
-                k <= fifo_ko(a)(c);
+            if ( sela_rden=a and selc_rden=c and state=dump ) then
+                if (packet_size_counter=467 and fifo_ko(a)(c) /= "0001" and fifo_do(a)(c) /= X"DC") then
+                    d <= X"011223DC";     
+                    k <= "0001";
+                else
+                    d <= fifo_do(a)(c);
+                    k <= fifo_ko(a)(c);
+                end if;
             end if;
         end loop loop_c;
         end loop loop_a;
@@ -266,5 +297,8 @@ begin
 
     dout <= dout_reg;
     kout <= kout_reg;
+    Scount <= std_logic_vector(sendCount);
+    Tcount <= trigcount;
+    Pcount <= packcount;
 
 end st40_top_arch;
