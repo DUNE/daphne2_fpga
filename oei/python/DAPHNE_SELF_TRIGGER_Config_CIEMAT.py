@@ -152,8 +152,8 @@ print("Self-trigger Channel CONFIGURED")
 
 Enable_Filt=int('1',2) 
 Truncated=int('0',2) 
-Filtered_Window=int('01',2) 
-Self_Main_Peak=int('1',2)
+Filtered_Window=int('11',2) 
+Self_Main_Peak=int('0',2)
 Allow_Peak_Between_Frames=int('0',2)
 Slope_Calculation=int('1',2)
 Slope_Threshold=int('1111101',2) # -3
