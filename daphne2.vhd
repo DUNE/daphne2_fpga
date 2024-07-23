@@ -313,9 +313,8 @@ architecture DAPHNE2_arch of DAPHNE2 is
         inmux_we: in std_logic;
         inmux_dout: out std_logic_vector(5 downto 0);
 
-        Tcount: out array_5x8x64_type;
-        Pcount: out array_5x8x64_type;
-        Scount: out std_logic_vector(63 downto 0);
+        Rcount_addr: in std_logic_vector(6 downto 0);
+        Rcount: out std_logic_vector(63 downto 0);
 
         daq_refclk_p, daq_refclk_n: in std_logic; -- MGT REFCLK for DAQ, LVDS, quad 213, refclk0, 120.237MHz
         daq0_tx_p, daq0_tx_n: out std_logic;
@@ -410,9 +409,9 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal st_enable_reg: std_logic_vector(39 downto 0);
     signal st_enable_we: std_logic;
 
-    signal Tcount: array_5x8x64_type;
-    signal Pcount: array_5x8x64_type;
-    signal Scount: std_logic_vector(63 downto 0);
+    signal Rcount_reg: std_logic_vector(63 downto 0);
+    signal Rcount_addr_reg: std_logic_vector(6 downto 0);
+    signal rcount_we: std_logic;
     signal trig_rst_count: std_logic;
 
 begin
@@ -783,88 +782,7 @@ begin
                (X"00000000000000" & outmode_reg(7 downto 0)) when std_match(rx_addr_reg, DAQ_OUTMODE_BASEADDR) else 
                (X"00000000000000" & "00" & inmux_dout(5 downto 0)) when std_match(rx_addr_reg, CORE_INMUX_ADDR) else
                (X"000000" & st_enable_reg) when std_match(rx_addr_reg, ST_ENABLE_ADDR) else
-               Tcount(0)(0) when std_match(rx_addr_reg, TRIG0_COUNT_ADDR) else
-               Tcount(0)(1) when std_match(rx_addr_reg, TRIG1_COUNT_ADDR) else
-               Tcount(0)(2) when std_match(rx_addr_reg, TRIG2_COUNT_ADDR) else
-               Tcount(0)(3) when std_match(rx_addr_reg, TRIG3_COUNT_ADDR) else
-               Tcount(0)(4) when std_match(rx_addr_reg, TRIG4_COUNT_ADDR) else
-               Tcount(0)(5) when std_match(rx_addr_reg, TRIG5_COUNT_ADDR) else
-               Tcount(0)(6) when std_match(rx_addr_reg, TRIG6_COUNT_ADDR) else
-               Tcount(0)(7) when std_match(rx_addr_reg, TRIG7_COUNT_ADDR) else
-               Tcount(1)(0) when std_match(rx_addr_reg, TRIG8_COUNT_ADDR) else
-               Tcount(1)(1) when std_match(rx_addr_reg, TRIG9_COUNT_ADDR) else
-               Tcount(1)(2) when std_match(rx_addr_reg, TRIG10_COUNT_ADDR) else
-               Tcount(1)(3) when std_match(rx_addr_reg, TRIG11_COUNT_ADDR) else
-               Tcount(1)(4) when std_match(rx_addr_reg, TRIG12_COUNT_ADDR) else
-               Tcount(1)(5) when std_match(rx_addr_reg, TRIG13_COUNT_ADDR) else
-               Tcount(1)(6) when std_match(rx_addr_reg, TRIG14_COUNT_ADDR) else
-               Tcount(1)(7) when std_match(rx_addr_reg, TRIG15_COUNT_ADDR) else
-               Tcount(2)(0) when std_match(rx_addr_reg, TRIG16_COUNT_ADDR) else
-               Tcount(2)(1) when std_match(rx_addr_reg, TRIG17_COUNT_ADDR) else
-               Tcount(2)(2) when std_match(rx_addr_reg, TRIG18_COUNT_ADDR) else
-               Tcount(2)(3) when std_match(rx_addr_reg, TRIG19_COUNT_ADDR) else
-               Tcount(2)(4) when std_match(rx_addr_reg, TRIG20_COUNT_ADDR) else
-               Tcount(2)(5) when std_match(rx_addr_reg, TRIG21_COUNT_ADDR) else
-               Tcount(2)(6) when std_match(rx_addr_reg, TRIG22_COUNT_ADDR) else
-               Tcount(2)(7) when std_match(rx_addr_reg, TRIG23_COUNT_ADDR) else
-               Tcount(3)(0) when std_match(rx_addr_reg, TRIG24_COUNT_ADDR) else
-               Tcount(3)(1) when std_match(rx_addr_reg, TRIG25_COUNT_ADDR) else
-               Tcount(3)(2) when std_match(rx_addr_reg, TRIG26_COUNT_ADDR) else
-               Tcount(3)(3) when std_match(rx_addr_reg, TRIG27_COUNT_ADDR) else
-               Tcount(3)(4) when std_match(rx_addr_reg, TRIG28_COUNT_ADDR) else
-               Tcount(3)(5) when std_match(rx_addr_reg, TRIG29_COUNT_ADDR) else
-               Tcount(3)(6) when std_match(rx_addr_reg, TRIG30_COUNT_ADDR) else
-               Tcount(3)(7) when std_match(rx_addr_reg, TRIG31_COUNT_ADDR) else
-               Tcount(4)(0) when std_match(rx_addr_reg, TRIG32_COUNT_ADDR) else
-               Tcount(4)(1) when std_match(rx_addr_reg, TRIG33_COUNT_ADDR) else
-               Tcount(4)(2) when std_match(rx_addr_reg, TRIG34_COUNT_ADDR) else
-               Tcount(4)(3) when std_match(rx_addr_reg, TRIG35_COUNT_ADDR) else
-               Tcount(4)(4) when std_match(rx_addr_reg, TRIG36_COUNT_ADDR) else
-               Tcount(4)(5) when std_match(rx_addr_reg, TRIG37_COUNT_ADDR) else
-               Tcount(4)(6) when std_match(rx_addr_reg, TRIG38_COUNT_ADDR) else
-               Tcount(4)(7) when std_match(rx_addr_reg, TRIG39_COUNT_ADDR) else
-               Pcount(0)(0) when std_match(rx_addr_reg, PACK0_COUNT_ADDR) else
-               Pcount(0)(1) when std_match(rx_addr_reg, PACK1_COUNT_ADDR) else
-               Pcount(0)(2) when std_match(rx_addr_reg, PACK2_COUNT_ADDR) else
-               Pcount(0)(3) when std_match(rx_addr_reg, PACK3_COUNT_ADDR) else
-               Pcount(0)(4) when std_match(rx_addr_reg, PACK4_COUNT_ADDR) else
-               Pcount(0)(5) when std_match(rx_addr_reg, PACK5_COUNT_ADDR) else
-               Pcount(0)(6) when std_match(rx_addr_reg, PACK6_COUNT_ADDR) else
-               Pcount(0)(7) when std_match(rx_addr_reg, PACK7_COUNT_ADDR) else
-               Pcount(1)(0) when std_match(rx_addr_reg, PACK8_COUNT_ADDR) else
-               Pcount(1)(1) when std_match(rx_addr_reg, PACK9_COUNT_ADDR) else
-               Pcount(1)(2) when std_match(rx_addr_reg, PACK10_COUNT_ADDR) else
-               Pcount(1)(3) when std_match(rx_addr_reg, PACK11_COUNT_ADDR) else
-               Pcount(1)(4) when std_match(rx_addr_reg, PACK12_COUNT_ADDR) else
-               Pcount(1)(5) when std_match(rx_addr_reg, PACK13_COUNT_ADDR) else
-               Pcount(1)(6) when std_match(rx_addr_reg, PACK14_COUNT_ADDR) else
-               Pcount(1)(7) when std_match(rx_addr_reg, PACK15_COUNT_ADDR) else
-               Pcount(2)(0) when std_match(rx_addr_reg, PACK16_COUNT_ADDR) else
-               Pcount(2)(1) when std_match(rx_addr_reg, PACK17_COUNT_ADDR) else
-               Pcount(2)(2) when std_match(rx_addr_reg, PACK18_COUNT_ADDR) else
-               Pcount(2)(3) when std_match(rx_addr_reg, PACK19_COUNT_ADDR) else
-               Pcount(2)(4) when std_match(rx_addr_reg, PACK20_COUNT_ADDR) else
-               Pcount(2)(5) when std_match(rx_addr_reg, PACK21_COUNT_ADDR) else
-               Pcount(2)(6) when std_match(rx_addr_reg, PACK22_COUNT_ADDR) else
-               Pcount(2)(7) when std_match(rx_addr_reg, PACK23_COUNT_ADDR) else
-               Pcount(3)(0) when std_match(rx_addr_reg, PACK24_COUNT_ADDR) else
-               Pcount(3)(1) when std_match(rx_addr_reg, PACK25_COUNT_ADDR) else
-               Pcount(3)(2) when std_match(rx_addr_reg, PACK26_COUNT_ADDR) else
-               Pcount(3)(3) when std_match(rx_addr_reg, PACK27_COUNT_ADDR) else
-               Pcount(3)(4) when std_match(rx_addr_reg, PACK28_COUNT_ADDR) else
-               Pcount(3)(5) when std_match(rx_addr_reg, PACK29_COUNT_ADDR) else
-               Pcount(3)(6) when std_match(rx_addr_reg, PACK30_COUNT_ADDR) else
-               Pcount(3)(7) when std_match(rx_addr_reg, PACK31_COUNT_ADDR) else
-               Pcount(4)(0) when std_match(rx_addr_reg, PACK32_COUNT_ADDR) else
-               Pcount(4)(1) when std_match(rx_addr_reg, PACK33_COUNT_ADDR) else
-               Pcount(4)(2) when std_match(rx_addr_reg, PACK34_COUNT_ADDR) else
-               Pcount(4)(3) when std_match(rx_addr_reg, PACK35_COUNT_ADDR) else
-               Pcount(4)(4) when std_match(rx_addr_reg, PACK36_COUNT_ADDR) else
-               Pcount(4)(5) when std_match(rx_addr_reg, PACK37_COUNT_ADDR) else
-               Pcount(4)(6) when std_match(rx_addr_reg, PACK38_COUNT_ADDR) else
-               Pcount(4)(7) when std_match(rx_addr_reg, PACK39_COUNT_ADDR) else
-               Scount       when std_match(rx_addr_reg, SEND_COUNT_ADDR) else
-
+               Rcount_reg when std_match(rx_addr_reg, RCOUNT_ADDR) else
 
                (others=>'0');
 
@@ -1058,6 +976,19 @@ begin
             end if;
         end if;
     end process st_enable_proc;
+    
+    rcount_we <= '1' when (std_match(rx_addr,RCOUNT_ADDR) and rx_wren='1') else '0';
+
+    rcount_proc: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            if (reset_async='1') then
+                Rcount_addr_reg <= (others => '0');
+            elsif (rcount_we='1') then
+                Rcount_addr_reg <= rx_data(6 downto 0);
+            end if;
+        end if;
+    end process rcount_proc;
 
     -- decode write enable for core inmux control register block of 40 6-bit registers
 
@@ -1096,9 +1027,8 @@ begin
         spy_dout => core_spy_data(31 downto 0),
         inmux_dout => inmux_dout,
 
-        Tcount => Tcount,
-        Pcount => Pcount,
-        Scount => Scount,
+        Rcount_addr => Rcount_addr_reg,
+        Rcount => Rcount_reg,
         
         daq_refclk_p => daq_refclk_p, daq_refclk_n => daq_refclk_n,
         daq0_tx_p => daq0_tx_p, daq0_tx_n => daq0_tx_n,
