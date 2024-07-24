@@ -36,9 +36,8 @@ port(
     fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
     dout: out std_logic_vector(31 downto 0);
     kout: out std_logic_vector(3 downto 0);
-    Tcount: out array_5x8x64_type;
-    Pcount: out array_5x8x64_type;
-    Scount: out std_logic_vector(63 downto 0)
+    Rcount_addr: in std_logic_vector(6 downto 0);
+    Rcount: out std_logic_vector(63 downto 0)
     
 );
 end st40_top;
@@ -294,8 +293,177 @@ begin
 
     dout <= dout_reg;
     kout <= kout_reg;
-    Scount <= std_logic_vector(sendCount);
-    Tcount <= trigcount;
-    Pcount <= packcount;
+    
+    rcount_mux_proc: process(fclk)
+    begin 
+        if rising_edge(fclk) then
+            case Rcount_addr is
+                when std_logic_vector(to_unsigned(0,7)) =>
+                    Rcount <= trigcount(0)(0);
+                when std_logic_vector(to_unsigned(1,7)) =>
+                    Rcount <= trigcount(0)(1);
+                when std_logic_vector(to_unsigned(2,7)) =>
+                    Rcount <= trigcount(0)(2);
+                when std_logic_vector(to_unsigned(3,7)) =>
+                    Rcount <= trigcount(0)(3);
+                when std_logic_vector(to_unsigned(4,7)) =>
+                    Rcount <= trigcount(0)(4);
+                when std_logic_vector(to_unsigned(5,7)) =>
+                    Rcount <= trigcount(0)(5);
+                when std_logic_vector(to_unsigned(6,7)) =>
+                    Rcount <= trigcount(0)(6);
+                when std_logic_vector(to_unsigned(7,7)) =>
+                    Rcount <= trigcount(0)(7);
+                when std_logic_vector(to_unsigned(8,7)) =>
+                    Rcount <= trigcount(1)(0);
+                when std_logic_vector(to_unsigned(9,7)) =>
+                    Rcount <= trigcount(1)(1);
+                when std_logic_vector(to_unsigned(10,7)) =>
+                    Rcount <= trigcount(1)(2);
+                when std_logic_vector(to_unsigned(11,7)) =>
+                    Rcount <= trigcount(1)(3);
+                when std_logic_vector(to_unsigned(12,7)) =>
+                    Rcount <= trigcount(1)(4);
+                when std_logic_vector(to_unsigned(13,7)) =>
+                    Rcount <= trigcount(1)(5);
+                when std_logic_vector(to_unsigned(14,7)) =>
+                    Rcount <= trigcount(1)(6);
+                when std_logic_vector(to_unsigned(15,7)) =>
+                    Rcount <= trigcount(1)(7);
+                when std_logic_vector(to_unsigned(16,7)) =>
+                    Rcount <= trigcount(2)(0);
+                when std_logic_vector(to_unsigned(17,7)) =>
+                    Rcount <= trigcount(2)(1);
+                when std_logic_vector(to_unsigned(18,7)) =>
+                    Rcount <= trigcount(2)(2);
+                when std_logic_vector(to_unsigned(19,7)) =>
+                    Rcount <= trigcount(2)(3);
+                when std_logic_vector(to_unsigned(20,7)) =>
+                    Rcount <= trigcount(2)(4);
+                when std_logic_vector(to_unsigned(21,7)) =>
+                    Rcount <= trigcount(2)(5);
+                when std_logic_vector(to_unsigned(22,7)) =>
+                    Rcount <= trigcount(2)(6);
+                when std_logic_vector(to_unsigned(23,7)) =>
+                    Rcount <= trigcount(2)(7);
+                when std_logic_vector(to_unsigned(24,7)) =>
+                    Rcount <= trigcount(3)(0);
+                when std_logic_vector(to_unsigned(25,7)) =>
+                    Rcount <= trigcount(3)(1);
+                when std_logic_vector(to_unsigned(26,7)) =>
+                    Rcount <= trigcount(3)(2);
+                when std_logic_vector(to_unsigned(27,7)) =>
+                    Rcount <= trigcount(3)(3);
+                when std_logic_vector(to_unsigned(28,7)) =>
+                    Rcount <= trigcount(3)(4);
+                when std_logic_vector(to_unsigned(29,7)) =>
+                    Rcount <= trigcount(3)(5);
+                when std_logic_vector(to_unsigned(30,7)) =>
+                    Rcount <= trigcount(3)(6);
+                when std_logic_vector(to_unsigned(31,7)) =>
+                    Rcount <= trigcount(3)(7);
+                when std_logic_vector(to_unsigned(32,7)) =>
+                    Rcount <= trigcount(4)(0);
+                when std_logic_vector(to_unsigned(33,7)) =>
+                    Rcount <= trigcount(4)(1);
+                when std_logic_vector(to_unsigned(34,7)) =>
+                    Rcount <= trigcount(4)(2);
+                when std_logic_vector(to_unsigned(35,7)) =>
+                    Rcount <= trigcount(4)(3);
+                when std_logic_vector(to_unsigned(36,7)) =>
+                    Rcount <= trigcount(4)(4);
+                when std_logic_vector(to_unsigned(37,7)) =>
+                    Rcount <= trigcount(4)(5);
+                when std_logic_vector(to_unsigned(38,7)) =>
+                    Rcount <= trigcount(4)(6);
+                when std_logic_vector(to_unsigned(39,7)) =>
+                    Rcount <= trigcount(4)(7);
+                when std_logic_vector(to_unsigned(40,7)) =>
+                    Rcount <= packcount(0)(0);
+                when std_logic_vector(to_unsigned(41,7)) =>
+                    Rcount <= packcount(0)(1);
+                when std_logic_vector(to_unsigned(42,7)) =>
+                    Rcount <= packcount(0)(2);
+                when std_logic_vector(to_unsigned(43,7)) =>
+                    Rcount <= packcount(0)(3);
+                when std_logic_vector(to_unsigned(44,7)) =>
+                    Rcount <= packcount(0)(4);
+                when std_logic_vector(to_unsigned(45,7)) =>
+                    Rcount <= packcount(0)(5);
+                when std_logic_vector(to_unsigned(46,7)) =>
+                    Rcount <= packcount(0)(6);
+                when std_logic_vector(to_unsigned(47,7)) =>
+                    Rcount <= packcount(0)(7);
+                when std_logic_vector(to_unsigned(48,7)) =>
+                    Rcount <= packcount(1)(0);
+                when std_logic_vector(to_unsigned(49,7)) =>
+                    Rcount <= packcount(1)(1);
+                when std_logic_vector(to_unsigned(50,7)) =>
+                    Rcount <= packcount(1)(2);
+                when std_logic_vector(to_unsigned(51,7)) =>
+                    Rcount <= packcount(1)(3);
+                when std_logic_vector(to_unsigned(52,7)) =>
+                    Rcount <= packcount(1)(4);
+                when std_logic_vector(to_unsigned(53,7)) =>
+                    Rcount <= packcount(1)(5);
+                when std_logic_vector(to_unsigned(54,7)) =>
+                    Rcount <= packcount(1)(6);
+                when std_logic_vector(to_unsigned(55,7)) =>
+                    Rcount <= packcount(1)(7);
+                when std_logic_vector(to_unsigned(56,7)) =>
+                    Rcount <= packcount(2)(0);
+                when std_logic_vector(to_unsigned(57,7)) =>
+                    Rcount <= packcount(2)(1);
+                when std_logic_vector(to_unsigned(58,7)) =>
+                    Rcount <= packcount(2)(2);
+                when std_logic_vector(to_unsigned(59,7)) =>
+                    Rcount <= packcount(2)(3);
+                when std_logic_vector(to_unsigned(60,7)) =>
+                    Rcount <= packcount(2)(4);
+                when std_logic_vector(to_unsigned(61,7)) =>
+                    Rcount <= packcount(2)(5);
+                when std_logic_vector(to_unsigned(62,7)) =>
+                    Rcount <= packcount(2)(6);
+                when std_logic_vector(to_unsigned(63,7)) =>
+                    Rcount <= packcount(2)(7);
+                when std_logic_vector(to_unsigned(64,7)) =>
+                    Rcount <= packcount(3)(0);
+                when std_logic_vector(to_unsigned(65,7)) =>
+                    Rcount <= packcount(3)(1);
+                when std_logic_vector(to_unsigned(66,7)) =>
+                    Rcount <= packcount(3)(2);
+                when std_logic_vector(to_unsigned(67,7)) =>
+                    Rcount <= packcount(3)(3);
+                when std_logic_vector(to_unsigned(68,7)) =>
+                    Rcount <= packcount(3)(4);
+                when std_logic_vector(to_unsigned(69,7)) =>
+                    Rcount <= packcount(3)(5);
+                when std_logic_vector(to_unsigned(70,7)) =>
+                    Rcount <= packcount(3)(6);
+                when std_logic_vector(to_unsigned(71,7)) =>
+                    Rcount <= packcount(3)(7);
+                when std_logic_vector(to_unsigned(72,7)) =>
+                    Rcount <= packcount(4)(0);
+                when std_logic_vector(to_unsigned(73,7)) =>
+                    Rcount <= packcount(4)(1);
+                when std_logic_vector(to_unsigned(74,7)) =>
+                    Rcount <= packcount(4)(2);
+                when std_logic_vector(to_unsigned(75,7)) =>
+                    Rcount <= packcount(4)(3);
+                when std_logic_vector(to_unsigned(76,7)) =>
+                    Rcount <= packcount(4)(4);
+                when std_logic_vector(to_unsigned(77,7)) =>
+                    Rcount <= packcount(4)(5);
+                when std_logic_vector(to_unsigned(78,7)) =>
+                    Rcount <= packcount(4)(6);
+                when std_logic_vector(to_unsigned(79,7)) =>
+                    Rcount <= packcount(4)(7);
+                when std_logic_vector(to_unsigned(80,7)) =>
+                    Rcount <= std_logic_vector(sendCount);
+                when others => 
+                    Rcount <= (others => '1');
+            end case;
+        end if;
+    end process rcount_mux_proc;
 
 end st40_top_arch;

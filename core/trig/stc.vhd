@@ -199,13 +199,15 @@ begin
 
     -- FSM waits for trigger condition then assembles output frame and stores into FIFO
 
-    count_proc: process(triggered, reset, trig_rst_count)
+    count_proc: process(aclk, reset, enable, triggered, trig_rst_count)
     begin
-        if (reset = '1' or trig_rst_count = '1') then
-        trigCount <= (others => '0'); 
-        elsif rising_edge(triggered) then
-            if enable = '1' then
-                trigCount <= trigCount + 1; 
+        if ( reset='1' or trig_rst_count='1' ) then
+            trigCount <= (others => '0'); 
+        else 
+            if rising_edge(aclk) then
+                if ( enable='1' and triggered='1') then
+                    trigCount <= trigCount + 1; 
+                end if;
             end if;
         end if;
     end process;
