@@ -6,7 +6,7 @@
 # general setup stuff...
 
 set_param general.maxThreads 4
-set outputDir ./output_bugfix
+set outputDir ./output
 file mkdir $outputDir
 set_part xc7a200t-fbg676-2
 
