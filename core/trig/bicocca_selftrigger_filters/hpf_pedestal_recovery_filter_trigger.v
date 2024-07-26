@@ -27,7 +27,7 @@ module hpf_pedestal_recovery_filter_trigger(
 	wire signed [15:0] x_i;
     //wire signed [15:0] w_resta_out [4:0][7:0];
     wire signed [15:0] w_out;
-	wire signed [15:0] resta_out, lpf_out;
+	wire signed [15:0] resta_out, lpf_out, cfd_out;
 	wire signed [15:0] suma_out;
     wire tm_output_selector;
 
@@ -62,16 +62,34 @@ module hpf_pedestal_recovery_filter_trigger(
         .y(hpf_out)
     );
 
-    IIRfilter_movmean25_cfd_trigger mov_mean_cfd(
+    //IIRfilter_movmean25_cfd_trigger mov_mean_cfd(
+    //    .clk(clk),
+    //    .reset(reset),
+    //    .enable(enable),
+    //    .output_selector(tm_output_selector),
+    //    .threshold(threshold_level),
+    //    .x(hpf_out),
+    //    .trigger(trigger_output),
+    //    .y(movmean_out)
+    //);
+
+    moving_integrator_filter movmean_25(
         .clk(clk),
         .reset(reset),
         .enable(enable),
-        .output_selector(tm_output_selector),
-        .threshold(threshold_level),
         .x(hpf_out),
-        .trigger(trigger_output),
         .y(movmean_out)
-    );
+        );
+
+    constant_fraction_discriminator cfd(
+        .clk(clk),
+        .reset(reset),
+        .enable(enable),
+        .x(movmean_out),
+        .threshold(threshold_level),
+        .trigger(trigger_output),
+        .y(cfd_out)
+        );
 
     assign resta_out =  (enable==0) ?   x_i : 
                         (enable==1) ?   (x_i - lpf_out) : 
@@ -84,7 +102,7 @@ module hpf_pedestal_recovery_filter_trigger(
 
     assign w_out = (output_selector == 2'b00) ?   suma_out : 
                    (output_selector == 2'b01) ?   lpf_out + movmean_out : //movmean
-                   (output_selector == 2'b10) ?   lpf_out + movmean_out : //movmean cfd
+                   (output_selector == 2'b10) ?   lpf_out + cfd_out : //movmean cfd
                    (output_selector == 2'b11) ?   x_i :
                    16'bx;
    

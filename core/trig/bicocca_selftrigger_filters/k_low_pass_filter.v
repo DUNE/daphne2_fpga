@@ -20,9 +20,9 @@ module k_low_pass_filter(
     
     parameter k = 26;
     
-    (* dont_touch = "true" *) reg reset_reg, enable_reg;
-    (* dont_touch = "true" *) reg signed [15:0] in_reg, out_reg;
-	(* dont_touch = "true" *) reg signed [47:0] x_1, y_1;
+    reg reset_reg, enable_reg;
+    reg signed [15:0] in_reg, out_reg;
+	reg signed [47:0] x_1, y_1;
 
 	wire signed [47:0] w1, w2, w3, w4, w5, w6, w7;
 

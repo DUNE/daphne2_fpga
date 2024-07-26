@@ -20,10 +20,10 @@ module IIRFilter_afe_integrator_optimized(
     output wire signed[15:0] y
     );
 
-    (* dont_touch = "true" *) reg signed [17:0] n1, n2, n3, d1, d2;
-    (* dont_touch = "true" *) reg signed [24:0] x_1, x_2, y_1, y_2;
-  	(* dont_touch = "true" *) reg signed[15:0] x_i, en_mux;
-  	(* dont_touch = "true" *) reg enable_reg, reset_reg;
+    reg signed [17:0] n1, n2, n3, d1, d2;
+    reg signed [24:0] x_1, x_2, y_1, y_2;
+  	reg signed[15:0] x_i, en_mux;
+  	reg enable_reg, reset_reg;
 
   	wire signed[24:0] w1, w4, w7, w12, w13, w15;
   	wire signed [17:0] w2, w20, w8, w14, w16;
