@@ -304,6 +304,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
         ti_trigger: in std_logic_vector(7 downto 0); -- WARNING
         ti_trigger_stbr: in std_logic; -- WARNING
         --
+        trig_rst_count:in std_logic;
 
         oeiclk: in std_logic; -- interface used to read output spy buffer and to r/w input mux control regs
         trig: in std_logic;
@@ -419,6 +420,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal Tcount: array_5x8x64_type;
     signal Pcount: array_5x8x64_type;
     signal Scount: std_logic_vector(63 downto 0);
+    signal trig_rst_count: std_logic;
 
 begin
 
@@ -878,6 +880,8 @@ begin
              '1' when (tx_rden='1') else  -- no wait for reads
              '0';
 
+    trig_rst_count <= '1' when (std_match(rx_addr,FE_RST_ADDR) and rx_wren='1') else '0';
+
     -- 64-bit R/W dummy register for testing reads and writes
 
     testreg_we <= '1' when (std_match(rx_addr,TESTREG_ADDR) and rx_wren='1') else '0';
@@ -1106,6 +1110,7 @@ begin
         --
         ti_trigger => ti_trigger_reg, --------------------
         ti_trigger_stbr => ti_trigger_stbr_reg, -------------------
+        trig_rst_count => trig_rst_count,
 
         slot_id => daq_out_param_reg(25 downto 22),  -- 4 bits
         crate_id => daq_out_param_reg(21 downto 12), -- 10 bits
