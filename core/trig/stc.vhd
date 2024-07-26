@@ -58,6 +58,9 @@ architecture stc_arch of stc is
                         trailer7, trailer8, trailer9, trailer10, trailer11, trailer12, trailer13, eof);
     signal state: state_type;
 
+    type trig_state_type is (rst_trggr, wait4trig_trggr, rising_triggered);
+    signal trigger_counter_state: trig_state_type;
+
     signal d: std_logic_vector(31 downto 0);
     signal ts_reg: std_logic_vector(63 downto 0);
     signal k: std_logic_vector(3 downto 0);
@@ -199,18 +202,39 @@ begin
 
     -- FSM waits for trigger condition then assembles output frame and stores into FIFO
 
-    count_proc: process(aclk, reset, enable, triggered, trig_rst_count)
+    count_proc: process(aclk, reset, enable, triggered, trig_rst_count, trigger_counter_state, trigCount)
     begin
-        if ( reset='1' or trig_rst_count='1' ) then
-            trigCount <= (others => '0'); 
-        else 
-            if rising_edge(aclk) then
-                if ( enable='1' and triggered='1') then
-                    trigCount <= trigCount + 1; 
-                end if;
+        if rising_edge(aclk) then
+            if ( reset='1' or trig_rst_count='1' ) then
+                trigCount <= (others => '0');
+                trigger_counter_state <= rst_trggr;
+            else
+                case(trigger_counter_state) is
+                    when rst_trggr =>
+                        trigger_counter_state <= wait4trig_trggr;
+                    when wait4trig_trggr =>
+                        if ( enable='1' and triggered='1') then
+                            trigCount <= trigCount + 1;
+                            trigger_counter_state <= rising_triggered;
+                        elsif ( enable='1' and triggered='0') then
+                            trigger_counter_state <= wait4trig_trggr;
+                        else
+                            trigger_counter_state <= rst_trggr;
+                        end if;
+                    when rising_triggered =>
+                        if ( enable='1' and triggered='1') then
+                            trigger_counter_state <= rising_triggered;
+                        elsif ( enable='1' and triggered='0') then
+                            trigger_counter_state <= wait4trig_trggr;
+                        else
+                            trigger_counter_state <= rst_trggr;
+                        end if;
+                    when others =>
+                        trigger_counter_state <= rst_trggr;
+                    end case; 
             end if;
         end if;
-    end process;
+    end process count_proc;
 
     builder_fsm_proc: process(aclk)
     begin
