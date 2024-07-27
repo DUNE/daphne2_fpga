@@ -20,20 +20,20 @@ module constant_fraction_discriminator(
     output wire signed[15:0] y
 );
     
-	parameter shift_delay = 15;
+	parameter shift_delay = 19;
     
     reg reset_reg, enable_reg;
     reg trigger_threshold, trigger_crossover, trigger_reg, increment_trigger_duration;
 
     reg signed [15:0] in_reg;
     reg signed [15:0] y_1, y_2;
-    reg signed [47:0] in_mult;
+    reg signed [17:0] in_mult;
     reg [11:0] counter_crossover, counter_threshold;
 
 	wire signed [15:0] w1;
 
-	wire signed [24:0] mult1;
-	wire signed [17:0] mult2;
+	wire signed [17:0] mult1;
+	//wire signed [17:0] mult2;
 	wire counter_crossover_signal;
 
 	always @(posedge clk) begin
@@ -46,8 +46,8 @@ module constant_fraction_discriminator(
 			in_reg <= 0;
 		end else if(enable_reg) begin
 			in_reg <= x;
-            in_mult <= mult1>>>2;
-			y_1 <= in_mult[41:26] - w1;
+            in_mult <= mult1>>>1;
+			y_1 <= in_mult[17:2] - w1;
 			y_2 <= y_1;
 			trigger_reg <= (trigger_threshold && trigger_crossover);
 		end
@@ -120,7 +120,7 @@ module constant_fraction_discriminator(
              1'bx;
 
     assign y = y_1;
-    assign mult1 = {in_reg,9'b0};
+    assign mult1 = {in_reg,2'b0};
     //assign mult2 = 18'b010011001100110011;
     assign trigger = trigger_reg;
 

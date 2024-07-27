@@ -22,7 +22,7 @@ module moving_integrator_filter(
     
     reg reset_reg, enable_reg;
     reg signed [15:0] in_reg;
-	reg signed [15:0] y_1;
+	reg signed [15:0] y_1, y_out;
 	reg signed [47:0] wm;
 
 	wire signed [15:0] w1, w2;
@@ -49,6 +49,7 @@ module moving_integrator_filter(
 			in_reg <= 0;
 		end else if(enable_reg) begin
 			wm <= mult1*mult2;
+			y_out <= wm[41:26] + $signed(4);
 			y_1 <= w1;
 			in_reg <= x;
 		end
@@ -74,6 +75,6 @@ module moving_integrator_filter(
 	assign w1 = in_reg + y_1 - w2;
 	assign mult1 = {w1,9'b0};
 	assign mult2 = 18'b000010100011110110;
-    assign y = wm[41:26];
+    assign y = y_out;
 
 endmodule
