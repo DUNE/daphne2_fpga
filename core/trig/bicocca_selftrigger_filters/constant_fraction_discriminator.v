@@ -23,29 +23,22 @@ module constant_fraction_discriminator(
 	parameter shift_delay = 15;
     
     reg reset_reg, enable_reg;
-    reg trigger_reg, trigger_threshold, trigger_crossover;
+    reg trigger_threshold, trigger_crossover, trigger_reg, increment_trigger_duration;
 
     reg signed [15:0] in_reg;
     reg signed [15:0] y_1, y_2;
     reg signed [47:0] in_mult;
-    reg [7:0] counter_threshold;
+    reg [11:0] counter_crossover, counter_threshold;
 
 	wire signed [15:0] w1;
 
 	wire signed [24:0] mult1;
 	wire signed [17:0] mult2;
+	wire counter_crossover_signal;
 
-	always @(posedge clk) begin 
-		if(reset) begin
-			reset_reg <= 1'b1;
-			enable_reg <= 1'b0;
-		end else if (enable) begin
-			reset_reg <= 1'b0;
-			enable_reg <= 1'b1;
-		end else begin 
-			reset_reg <= 1'b0;
-			enable_reg <= 1'b0;
-		end
+	always @(posedge clk) begin
+	   reset_reg <= reset;
+	   enable_reg <= enable;
 	end
 
 	always @(posedge clk) begin
@@ -79,11 +72,15 @@ module constant_fraction_discriminator(
 	//////////////////// TRIGGER CONDITIONS. ///////////////////////
     // threshold condition. DAPHNE signals have negative rising edge.
 	always @(posedge clk) begin
-	    if (reset_reg || counter_threshold[7]) begin
+	    if (reset_reg || counter_crossover_signal || counter_threshold[11]) begin
 			trigger_threshold <= 1'b0;
+			increment_trigger_duration <= 1'b0;
 		end else if(enable_reg) begin
 			if (($signed(in_reg) < -($signed(threshold))) || trigger_threshold) begin
-			     trigger_threshold <= 1'b1;
+				trigger_threshold <= 1'b1;
+				if (($signed(in_reg) < -($signed(threshold<<3)))) begin 
+			     	increment_trigger_duration <= 1'b1;
+			    end
 			end
 		end
 	end
@@ -92,27 +89,35 @@ module constant_fraction_discriminator(
     // currently fixed at 128 cycles or samples.
     // Verified according to simulations.
 	always @(posedge clk) begin
-	    if (reset_reg || counter_threshold[7]) begin
-	        counter_threshold <= 8'b0;
+	    if (reset_reg || counter_crossover_signal) begin
+	        counter_crossover <= 12'b0;
 		end else if(enable_reg && trigger_crossover) begin
+			counter_crossover <= counter_crossover + 1'b1;
+		end
+	end
+
+	always @(posedge clk) begin
+	    if (reset_reg || ~trigger_threshold) begin
+	        counter_threshold <= 12'b0;
+		end else if(enable_reg && trigger_threshold) begin
 			counter_threshold <= counter_threshold + 1'b1;
 		end
 	end
 
     // zero crossing condition. 
 	always @(posedge clk) begin
-	    if (reset_reg || counter_threshold[7]) begin
+	    if (reset_reg || counter_crossover_signal) begin
 	        trigger_crossover <= 1'b0;
-		end else if(enable_reg && trigger_threshold) begin
+		end else if(enable_reg && trigger_threshold && (counter_threshold >= 4)) begin
 			if (($signed(y_1) >= $signed(16'd0)) && ($signed(y_2) < $signed(16'd0))) begin
 			     trigger_crossover <= 1'b1;
 			end
 		end
 	end
-    //////////////////// TRIGGER DEAD TIME CONDITIONS. ///////////////////////
-    // condition to allow spy registers to have stable data. (if not already implemented)
-    // This functionality is implemented inside spy.vhd in the 'fsm_process'. Triggers are
-    // ignored during 'store' state.
+    
+    assign counter_crossover_signal = (increment_trigger_duration == 1'b0) ?   counter_crossover[6] : 
+             (increment_trigger_duration == 1'b1) ?   (counter_crossover[9] && counter_crossover[6]):
+             1'bx;
 
     assign y = y_1;
     assign mult1 = {in_reg,9'b0};
