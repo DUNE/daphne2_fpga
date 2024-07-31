@@ -334,7 +334,7 @@ begin
     end process reg_states;
     
     -- process to define why the states change
-    mod_states: process(current_state, r_st_xc_add, xcorr_o_reg0, xcorr_o_reg1)
+    mod_states: process(current_state, r_st_xc_add, xcorr_o_reg0, xcorr_o_reg1, s_threshold, trig_en, event_timer) --filt_ready)
     begin
         next_state <= current_state; -- Declare default state for current_state to avoid latches, default is to stay in current state
         case (current_state) is
