@@ -14,7 +14,8 @@ module hpf_pedestal_recovery_filter_trigger(
 	input wire clk,
 	input wire reset,
 	input wire enable,
-    input wire signed [13:0] threshold_value,
+    //input wire signed [13:0] threshold_value,
+    input wire [41:0] threshold_xc,
     input wire [1:0] output_selector,
     output wire signed [15:0] baseline,
 	input wire signed [15:0] x,
@@ -31,19 +32,22 @@ module hpf_pedestal_recovery_filter_trigger(
 	wire signed [15:0] suma_out;
     wire tm_output_selector;
 
-    (* dont_touch = "true" *) reg signed [13:0] threshold_level;
+    wire triggered_xc;
+    wire signed [27:0] xcorr_calc;
 
-    initial begin 
-        threshold_level <= $signed(256); // Same as DEFAULT_THRESHOLD
-    end 
+    //(* dont_touch = "true" *) reg signed [13:0] threshold_level;
 
-    always @(posedge clk) begin 
-        if(reset) begin
-           threshold_level <= $signed(256); // Same as DEFAULT_THRESHOLD
-        end else if (enable) begin 
-           threshold_level <= $signed(threshold_value);
-        end
-    end
+    //initial begin 
+    //    threshold_level <= $signed(256); // Same as DEFAULT_THRESHOLD
+    //end 
+
+    //always @(posedge clk) begin 
+    //    if(reset) begin
+    //       threshold_level <= $signed(256); // Same as DEFAULT_THRESHOLD
+    //    end else if (enable) begin 
+    //       threshold_level <= $signed(threshold_value);
+    //    end
+    //end
     
 
     k_low_pass_filter lpf(
@@ -81,15 +85,25 @@ module hpf_pedestal_recovery_filter_trigger(
         .y(movmean_out)
         );
 
+    trig_xc matching_trigger(
+        .reset(reset),
+        .clock(clk),
+        .din(hpf_out),
+        .threshold(threshold_xc),
+        .xcorr_calc(xcorr_calc),
+        .triggered(triggered_xc)
+    );
+
     constant_fraction_discriminator cfd(
         .clk(clk),
         .reset(reset),
         .enable(enable),
-        .x(movmean_out),
-        .threshold(threshold_level),
-        .trigger(trigger_output),
-        .y(cfd_out)
-        );
+        .x(xcorr_calc), //movmean_out),
+        //.threshold(threshold_level),
+        .trigger_threshold(triggered_xc),
+        .trigger(trigger_output)
+        //.y(cfd_out)
+        );    
 
     assign resta_out =  (enable==0) ?   x_i : 
                         (enable==1) ?   (x_i - lpf_out) : 
@@ -102,7 +116,7 @@ module hpf_pedestal_recovery_filter_trigger(
 
     assign w_out = (output_selector == 2'b00) ?   suma_out : 
                    (output_selector == 2'b01) ?   lpf_out + movmean_out : //movmean
-                   (output_selector == 2'b10) ?   lpf_out + cfd_out : //movmean cfd
+                   (output_selector == 2'b10) ?   lpf_out : //+ xcorr_calc : //cfd_out : //movmean cfd
                    (output_selector == 2'b11) ?   x_i :
                    16'bx;
    

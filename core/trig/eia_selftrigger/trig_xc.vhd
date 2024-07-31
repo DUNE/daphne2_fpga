@@ -22,11 +22,11 @@ port(
     reset: in std_logic;
     clock: in std_logic;
     din: in std_logic_vector(13 downto 0);
-    din_delayed: in std_logic_vector(13 downto 0);
+--    din_delayed: in std_logic_vector(13 downto 0);
     threshold: in std_logic_vector(41 downto 0); -- matching filter trigger threshold values
---    xcorr_calc: out std_logic_vector(27 downto 0); -- matching filter cross correlation calculated value
-    triggered: out std_logic;
-    trigsample: out std_logic_vector(13 downto 0)
+    xcorr_calc: out std_logic_vector(27 downto 0); -- matching filter cross correlation calculated value
+    triggered: out std_logic
+--    trigsample: out std_logic_vector(13 downto 0)
 );
 end trig_xc;
 
@@ -34,16 +34,16 @@ architecture trig_xc_arch of trig_xc is
 
     signal st_xc_filt_dout, st_xc_filt_dout_reg36, st_xc_mov_mean: std_logic_vector(13 downto 0);
     signal st_xc_filt_dout_reg36_reg0: std_logic_vector(13 downto 0) := (others => '0');
-    signal trigsample_reg: std_logic_vector(13 downto 0) := (others => '0');
+    -- signal trigsample_reg: std_logic_vector(13 downto 0) := (others => '0');
     signal triggered_core: std_logic;
     
-    component st_xc_filt is -- high pass first order iir filter for the algorithm (subtracts the baseline)
-    port(
-        reset: in std_logic;
-        clock: in std_logic;
-        din: in std_logic_vector(13 downto 0);
-        dout: out std_logic_vector(13 downto 0));
-    end component;
+    -- component st_xc_filt is -- high pass first order iir filter for the algorithm (subtracts the baseline)
+    -- port(
+    --     reset: in std_logic;
+    --     clock: in std_logic;
+    --     din: in std_logic_vector(13 downto 0);
+    --     dout: out std_logic_vector(13 downto 0));
+    -- end component;
 
     component st_xc is -- cross correlation matching filter component
     port(
@@ -72,13 +72,13 @@ begin
     
     -- generate the filtered output that does not have a baseline
     
-    st_xc_filt_inst: st_xc_filt
-    port map(
-        reset => reset,
-        clock => clock,
-        din => din,
-        dout => st_xc_filt_dout
-    );
+    -- st_xc_filt_inst: st_xc_filt
+    -- port map(
+    --     reset => reset,
+    --     clock => clock,
+    --     din => din,
+    --     dout => st_xc_filt_dout
+    -- );
     
     -- calculate with a moving mean the "always-zero" signal
     
@@ -86,7 +86,7 @@ begin
     port map (
         reset => reset,
         clock => clock,
-        din => st_xc_filt_dout,
+        din => din, --st_xc_filt_dout,
         din_delayed => st_xc_filt_dout_reg36,
         dout => st_xc_mov_mean
     );
@@ -99,7 +99,7 @@ begin
         clock => clock,
         din => st_xc_filt_dout_reg36_reg0,
         din_mm => st_xc_mov_mean,
-        xcorr_calc => open, --xcorr_calc,
+        xcorr_calc => xcorr_calc,
         threshold => threshold,
         triggered => triggered_core
     );
@@ -121,20 +121,20 @@ begin
 
     -- determine the sample that asserted the trigger 
     
-    xc_trigsample_proc: process(clock, reset, triggered_core, din_delayed)
-    begin
-        if rising_edge(clock) then
-            if (reset='1') then
-                trigsample_reg <= (others => '0');
-            else
-                if (triggered_core='1') then
-                    trigsample_reg <= din_delayed; --afe_del_reg2;
-                end if;
-            end if;
-        end if;
-    end process xc_trigsample_proc;
+    -- xc_trigsample_proc: process(clock, reset, triggered_core, din_delayed)
+    -- begin
+    --     if rising_edge(clock) then
+    --         if (reset='1') then
+    --             trigsample_reg <= (others => '0');
+    --         else
+    --             if (triggered_core='1') then
+    --                 trigsample_reg <= din_delayed; --afe_del_reg2;
+    --             end if;
+    --         end if;
+    --     end if;
+    -- end process xc_trigsample_proc;
 
-    trigsample <= trigsample_reg;
+    -- trigsample <= trigsample_reg;
     triggered <= triggered_core;
 
 end trig_xc_arch;

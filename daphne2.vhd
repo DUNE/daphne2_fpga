@@ -300,7 +300,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
         filter_output_selector: in std_logic_vector(1 downto 0); -- filter signal type selector
         outmode: in std_logic_vector(7 downto 0); -- choose streaming or self-trig sender for each output
         adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
-        threshold: in std_logic_vector(13 downto 0); -- for self-trig senders, threshold relative to average baseline
+        threshold_xc: in std_logic_vector(41 downto 0); -- for self-trig senders, threshold relative to average baseline
         --
         ti_trigger: in std_logic_vector(7 downto 0); -- WARNING
         ti_trigger_stbr: in std_logic; -- WARNING
@@ -395,8 +395,11 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal outmode_reg: std_logic_vector(7 downto 0);
     signal outmode_we: std_logic;
 
-    signal threshold_reg: std_logic_vector(13 downto 0);
-    signal threshold_we: std_logic;
+    -- signal threshold_reg: std_logic_vector(13 downto 0);
+    -- signal threshold_we: std_logic;
+
+    signal threshold_xc_reg: std_logic_vector(41 downto 0);
+    signal threshold_xc_we: std_logic;
     
     signal adhoc_reg: std_logic_vector(7 downto 0);
     signal adhoc_we: std_logic;
@@ -782,7 +785,7 @@ begin
                (X"000000000000" & "000" & mclk_stat_reg) when std_match(rx_addr_reg, MCLK_STAT_ADDR) else
                (X"000000000000" & mclk_ctrl_reg) when std_match(rx_addr_reg, MCLK_CTRL_ADDR) else 
                (X"00000000000000" & spi_res_fifo_data) when std_match(rx_addr_reg, SPI_FIFO_ADDR) else 
-               (X"000000000000" & "00" & threshold_reg(13 downto 0)) when std_match(rx_addr_reg, THRESHOLD_BASEADDR) else
+               (X"00000" & "00" & threshold_xc_reg(41 downto 0)) when std_match(rx_addr_reg, THRESHOLD_XC_BASEADDR) else
                (X"00000000" & st_config_reg) when std_match(rx_addr_reg, ST_CONFIG_ADDR) else  
                (X"00000000000000" & adhoc_reg(7 downto 0)) when std_match(rx_addr_reg, ST_ADHOC_BASEADDR) else 
                (X"00000000000000" & outmode_reg(7 downto 0)) when std_match(rx_addr_reg, DAQ_OUTMODE_BASEADDR) else 
@@ -934,21 +937,21 @@ begin
         end if;
     end process outmode_proc;
 
-    -- register for setting threshold (relative to avg baseline) for self triggered senders
-    -- register is 14 bits, R/W from GBE
+    -- register for setting threshold (related to cross correlation matching filter output) and trigger enabler threshold for self triggered senders
+    -- register is 28 bits, R/W from GBE
 
-    threshold_we <= '1' when (std_match(rx_addr,THRESHOLD_BASEADDR) and rx_wren='1') else '0';
+    threshold_xc_we <= '1' when (std_match(rx_addr,THRESHOLD_XC_BASEADDR) and rx_wren='1') else '0';
 
-    thresh_proc: process(oeiclk)
+    thresh_xc_proc: process(oeiclk)
     begin
         if rising_edge(oeiclk) then
             if (reset_async='1') then
-                threshold_reg <= DEFAULT_THRESHOLD;
-            elsif (threshold_we='1') then
-                threshold_reg <= rx_data(13 downto 0);
+                threshold_xc_reg <= DEFAULT_THRESHOLD_XC;
+            elsif (threshold_xc_we='1') then
+                threshold_xc_reg <= rx_data(41 downto 0);
             end if;
         end if;
-    end process thresh_proc;
+    end process thresh_xc_proc;
 
     -- register for setting the adhoc trigger command for the self triggered senders
     -- register is 8 bits, R/W from GBE
@@ -1027,7 +1030,7 @@ begin
 
         outmode => outmode_reg,
         adhoc => adhoc_reg,
-        threshold => threshold_reg,
+        threshold_xc => threshold_xc_reg,
         st_config => st_config_reg(15 downto 2), -- Self-Trigger Config CIEMAT (Nacho)
         --
         ti_trigger => ti_trigger_reg, --------------------

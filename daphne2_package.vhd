@@ -108,11 +108,11 @@ package daphne2_package is
 
     constant CORE_INMUX_ADDR: std_logic_vector(31 downto 0) := "0000000000000000010100000000----";
 
-    -- address of the threshold register for the self trig senders
-
-    constant THRESHOLD_BASEADDR: std_logic_vector(31 downto 0) := X"00006000";
-
-    constant DEFAULT_THRESHOLD: std_logic_vector(13 downto 0) := "00000100000000";
+    -- address of the cross correlation threshold register for the self trig sender
+ 
+    constant THRESHOLD_XC_BASEADDR: std_logic_vector(31 downto 0) := X"00006100";
+   
+    constant DEFAULT_THRESHOLD_XC: std_logic_vector(41 downto 0) := "111111101100000000000000000000000011001000";
 
     -- enable disable individual input channels for self triggered sender only
 

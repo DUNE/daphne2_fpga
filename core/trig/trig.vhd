@@ -22,7 +22,7 @@ port(
     din: in std_logic_vector(13 downto 0); -- raw AFE data
     dout: out std_logic_vector(13 downto 0); -- Filtered AFE data
     adhoc: in std_logic_vector(7 downto 0); -- command value for adhoc trigger
-    threshold: in std_logic_vector(13 downto 0); -- trigger threshold relative to baseline
+    threshold_xc: in std_logic_vector(41 downto 0); -- trigger threshold relative to baseline
     filter_output_selector: in std_logic_vector(1 downto 0);
     baseline: out std_logic_vector(13 downto 0); -- baseline 300mHz LPF output. 
     triggered: out std_logic;
@@ -45,7 +45,8 @@ architecture trig_arch of trig is
         clk: in std_logic;
         reset: in std_logic;
         enable: in std_logic;
-        threshold_value: in std_logic_vector(13 downto 0);
+        -- threshold_value: in std_logic_vector(13 downto 0);
+        threshold_xc: in std_logic_vector(41 downto 0);
         output_selector: in std_logic_vector(1 downto 0);
         baseline: out std_logic_vector(15 downto 0);
         x:  in std_logic_vector(15 downto 0);
@@ -79,7 +80,8 @@ begin
         clk => clock,
         reset => reset,
         enable => enable,
-        threshold_value => threshold,
+        -- threshold_value => threshold,
+        threshold_xc => threshold_xc,
         output_selector => filter_output_selector,
         baseline => k_lpf_baseline,
         x => din_trig,

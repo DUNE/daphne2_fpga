@@ -20,7 +20,7 @@ port(
 
     adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
     st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
-    threshold: in std_logic_vector(13 downto 0); -- user defined threshold relative to avg baseline
+    threshold_xc: in std_logic_vector(41 downto 0); -- user defined threshold relative to avg baseline
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
     ti_trigger_stbr: in std_logic;  -------------------------
     trig_rst_count: in std_logic;
@@ -71,7 +71,7 @@ architecture st40_top_arch of st40_top is
         reset: in std_logic;
         st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
         adhoc: in std_logic_vector(7 downto 0);
-        threshold: std_logic_vector(13 downto 0);
+        threshold_xc: std_logic_vector(41 downto 0);
         slot_id: std_logic_vector(3 downto 0);
         crate_id: std_logic_vector(9 downto 0);
         detector_id: std_logic_vector(5 downto 0);
@@ -106,7 +106,7 @@ begin
             port map(
                 reset => reset,
                 adhoc => adhoc,
-                threshold => threshold,
+                threshold_xc => threshold_xc,
                 ti_trigger => ti_trigger, -------------------------
                 ti_trigger_stbr => ti_trigger_stbr,  -------------------------
                 trig_rst_count => trig_rst_count,

@@ -10,7 +10,7 @@
 -- trigger when it should not since it's the same peak, therefore this value must be adjusted
 -- in the trigger primitives calculation
 --
--- Daniel Avila Gomez <daniel.avila.gomez@cern.ch> & Edgar Rincon Gil <edgar.rincon.g@gmail.com>
+-- Daniel Avila Gomez <daniel.avila@eia.edu.co> & Edgar Rincon Gil <edgar.rincon.g@gmail.com>
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -27,6 +27,7 @@ port(
     din: in std_logic_vector(13 downto 0); -- filtered AFE data (no baseline)
     din_mm: in std_logic_vector(13 downto 0); -- filtered "always-zero" data
     threshold: in std_logic_vector(41 downto 0); -- matching filter trigger threshold values
+--    filt_ready: in std_logic;
     triggered: out std_logic;
     xcorr_calc: out std_logic_vector(27 downto 0)
 );
@@ -35,9 +36,9 @@ end st_xc;
 architecture st_xc_arch of st_xc is
 
     -- timer to enable the self trigger (stabilization time of the filter)
-    signal filt_ready: std_logic := '0';
-    signal filt_timer: integer := 6250;
-    constant filt_timer_stable: integer := 6250;
+    -- signal filt_ready: std_logic := '0';
+    -- signal filt_timer: integer := 6250;
+    -- constant filt_timer_stable: integer := 6250;
 
     -- self trigger input data and finite state machine signals 
     signal din_xcorr: std_logic_vector(13 downto 0) := (others => '0');
@@ -51,15 +52,19 @@ architecture st_xc_arch of st_xc is
     
     -- cross correlator inner signals
     type type_r_st_xc_dat is array (0 to 30) of std_logic_vector(13 downto 0);
-    type type_s_r_st_xc_dat is array (0 to 30) of signed(13 downto 0);
-    type type_r_st_xc_mult is array (0 to 31) of signed(27 downto 0);
-    type type_r_st_xc_add is array (0 to 4) of signed(27 downto 0);
+    type type_s_r_st_xc_dat is array (0 to 30) of signed(13 downto 0); 
+    type type_r_st_xc_mult_dsp is array (0 to 16) of signed(27 downto 0); --31, this initially was 32 registers, complemented by the next signal
+    type type_r_st_xc_mult_log is array (0 to 14) of signed(27 downto 0); -- this complements the other signal, until the amount of registers in total is 32
+    type type_r_st_xc_add is array (0 to 4) of signed(27 downto 0); 
 
     signal r_st_xc_dat: type_r_st_xc_dat := (others => (others => '0'));
-    signal s_r_st_xc_dat: type_s_r_st_xc_dat := (others => (others => '0'));
-    signal r_st_xc_mult: type_r_st_xc_mult := (others => (others => '0'));
+    signal s_r_st_xc_dat: type_s_r_st_xc_dat := (others => (others => '0'));     
+    signal r_st_xc_mult_dsp: type_r_st_xc_mult_dsp := (others => (others => '0')); -- r_st_xc_mult_dsp is new, r_st_xc_mult was the only signal here  
+    signal r_st_xc_mult_log: type_r_st_xc_mult_log := (others => (others => '0')); -- r_st_xc_mult_log is new, r_st_xc_mult was the only signal here  
     signal r_st_xc_add: type_r_st_xc_add := (others => (others => '0'));
-
+    attribute use_dsp : string;
+    attribute use_dsp of r_st_xc_mult_dsp : signal is "yes";
+    
     -- signals to enable the trigger
     signal trig_en: std_logic := '1'; 
     signal din_reg0, din_reg1, din_reg2: std_logic_vector(13 downto 0) := (others => '0');
@@ -185,7 +190,7 @@ begin
     
     -- use "for generates" in order to create a pipeline with a desired amount of registers
     -- fill all of the registers by using 4 clock ticks delays
-    st_xc_buff_gen: for i in 0 to 30 generate
+    st_xc_buff_gen: for i in 0 to 30 generate 
         undersampling_ticks_gen: for j in 13 downto 0 generate
             -- generate 4 ticks in between samples to generate a proper undersampling (4 clock ticks)
 
@@ -227,38 +232,52 @@ begin
     end generate st_xc_buff_gen;
 
     -- multiply the data registers with the template
-    st_xc_mult_gen: for i in 0 to 31 generate        
+    st_xc_mult_gen: for i in 0 to 31 generate       
         -- initial multiplication
         st_xc_mult_0: if (i=0) generate
             st_xc_mult_proc: process(clock, reset, din_xcorr)
             begin
                 if rising_edge(clock) then
                     if (reset='1') then
-                        r_st_xc_mult(i) <= (others => '0');
+                        r_st_xc_mult_dsp(i) <= (others => '0');
                     else
-                        r_st_xc_mult(i) <= signed(din_xcorr)*sig_templ(i);
+                        r_st_xc_mult_dsp(i) <= signed(din_xcorr)*sig_templ(i);
                     end if;
                 end if;
             end process st_xc_mult_proc;
         end generate st_xc_mult_0;
         
-        -- consecutive multiplication
-        st_xc_mult_n: if (i>0) generate
+        -- consecutive multiplication with DSPs until the maximum register is reached
+        st_xc_mult_n_dsp: if (i>0 and i<17) generate
             st_xc_mult_proc: process(clock, reset, s_r_st_xc_dat)
             begin
                 if rising_edge(clock) then
                     if (reset='1') then
-                        r_st_xc_mult(i) <= (others => '0');
+                        r_st_xc_mult_dsp(i) <= (others => '0');
                     else
-                        r_st_xc_mult(i) <= s_r_st_xc_dat(i-1)*sig_templ(i);
+                        r_st_xc_mult_dsp(i) <= s_r_st_xc_dat(i-1)*sig_templ(i);
                     end if;
                 end if;
             end process st_xc_mult_proc;
-        end generate st_xc_mult_n;
+        end generate st_xc_mult_n_dsp;
+        
+        -- consecutive multiplication with DSPs until the maximum register is reached
+        st_xc_mult_n_log: if (i>16) generate
+            st_xc_mult_proc: process(clock, reset, s_r_st_xc_dat)
+            begin
+                if rising_edge(clock) then
+                    if (reset='1') then
+                        r_st_xc_mult_log(i-17) <= (others => '0');
+                    else
+                        r_st_xc_mult_log(i-17) <= s_r_st_xc_dat(i-1)*sig_templ(i);
+                    end if;
+                end if;
+            end process st_xc_mult_proc;
+        end generate st_xc_mult_n_log;
     end generate st_xc_mult_gen;
 
     -- addition of the multiplications
-    add_proc: process(clock, reset, r_st_xc_mult, r_st_xc_add, xcorr_o_reg0)
+    add_proc: process(clock, reset, r_st_xc_mult_dsp, r_st_xc_mult_log, r_st_xc_add, xcorr_o_reg0)
     begin
         if rising_edge(clock) then
             if ( ( reset='1' ) or ( rst_xcorr_regs='1' ) ) then
@@ -267,23 +286,23 @@ begin
                 xcorr_o_reg1 <= (others => '0');
             else
                 -- first pipeline stage
-                r_st_xc_add(0) <= r_st_xc_mult(0) + r_st_xc_mult(1) + r_st_xc_mult(2) + r_st_xc_mult(3) +
-                                  r_st_xc_mult(4) + r_st_xc_mult(5) + r_st_xc_mult(6) + r_st_xc_mult(7);
+                r_st_xc_add(0) <= r_st_xc_mult_dsp(0) + r_st_xc_mult_dsp(1) + r_st_xc_mult_dsp(2) + r_st_xc_mult_dsp(3) +
+                                  r_st_xc_mult_dsp(4) + r_st_xc_mult_dsp(5) + r_st_xc_mult_dsp(6) + r_st_xc_mult_dsp(7);
                 -- second pipeline stage
-                r_st_xc_add(1) <= r_st_xc_mult(8) + r_st_xc_mult(9) + r_st_xc_mult(10) + r_st_xc_mult(11) +
-                                  r_st_xc_mult(12) + r_st_xc_mult(13) + r_st_xc_mult(14) + r_st_xc_mult(15);
+                r_st_xc_add(1) <= r_st_xc_mult_dsp(8) + r_st_xc_mult_dsp(9) + r_st_xc_mult_dsp(10) + r_st_xc_mult_dsp(11) +
+                                  r_st_xc_mult_dsp(12) + r_st_xc_mult_dsp(13) + r_st_xc_mult_dsp(14) + r_st_xc_mult_dsp(15);
                 -- third pipeline stage
-                r_st_xc_add(2) <= r_st_xc_mult(16) + r_st_xc_mult(17) + r_st_xc_mult(18) + r_st_xc_mult(19) +
-                                  r_st_xc_mult(20) + r_st_xc_mult(21) + r_st_xc_mult(22) + r_st_xc_mult(23);
+                r_st_xc_add(2) <= r_st_xc_mult_dsp(16) + r_st_xc_mult_log(0) + r_st_xc_mult_log(1) + r_st_xc_mult_log(2) + -- started from 16 and so on
+                                  r_st_xc_mult_log(3) + r_st_xc_mult_log(4) + r_st_xc_mult_log(5) + r_st_xc_mult_log(6);
                 -- fourth pipeline stage
-                r_st_xc_add(3) <= r_st_xc_mult(24) + r_st_xc_mult(25) + r_st_xc_mult(26) + r_st_xc_mult(27) +
-                                  r_st_xc_mult(28) + r_st_xc_mult(29) + r_st_xc_mult(30) + r_st_xc_mult(31);
+                r_st_xc_add(3) <= r_st_xc_mult_log(7) + r_st_xc_mult_log(8) + r_st_xc_mult_log(9) + r_st_xc_mult_log(10) +
+                                  r_st_xc_mult_log(11) + r_st_xc_mult_log(12) + r_st_xc_mult_log(13) + r_st_xc_mult_log(14); -- until 31 was reached
 
                 -- final addition
                 r_st_xc_add(4) <= r_st_xc_add(0) + r_st_xc_add(1) + r_st_xc_add(2) + r_st_xc_add(3);
 
                 -- register the old values to keep track of how the calculation is behaving
-                xcorr_o_reg0 <= r_st_xc_add(4);
+                xcorr_o_reg0 <= r_st_xc_add(4); 
                 xcorr_o_reg1 <= xcorr_o_reg0;
             end if;
         end if;
@@ -323,7 +342,7 @@ begin
                 next_state <= stand_by;
             when stand_by =>
                 if ( ( r_st_xc_add(r_st_xc_add'HIGH)>s_threshold ) and ( xcorr_o_reg0>s_threshold ) 
-                       and ( xcorr_o_reg1<s_threshold or xcorr_o_reg1=s_threshold ) and ( trig_en='1' )  and ( filt_ready='1' ) ) then
+                       and ( xcorr_o_reg1<s_threshold or xcorr_o_reg1=s_threshold ) and ( trig_en='1' )  ) then --and ( filt_ready='1' ) ) then
                     next_state <= self_triggered;
                 end if;
             when self_triggered =>
@@ -394,25 +413,25 @@ begin
         end if;
     end process event_timer_proc;
     
-    -- clocked process to disable the trigger while the filter stabilizes after a reset
-    trig_disable_filt_proc: process(clock, reset, filt_timer)
-    begin
-        if rising_edge(clock) then
-            if (reset='1') then
-                filt_timer <= filt_timer_stable;
-                filt_ready <= '0';
-            else
-                if (filt_timer>0) then
-                    filt_timer <= filt_timer - 1;
-                    filt_ready <= '0';
-                else
-                    filt_timer <= filt_timer;
-                    filt_ready <= '1';
-                end if;
-            end if;
-        end if;
-    end process trig_disable_filt_proc;
+    -- -- clocked process to disable the trigger while the filter stabilizes after a reset
+    -- trig_disable_filt_proc: process(clock, reset, filt_timer)
+    -- begin
+    --     if rising_edge(clock) then
+    --         if (reset='1') then
+    --             filt_timer <= filt_timer_stable;
+    --             filt_ready <= '0';
+    --         else
+    --             if (filt_timer>0) then
+    --                 filt_timer <= filt_timer - 1;
+    --                 filt_ready <= '0';
+    --             else
+    --                 filt_timer <= filt_timer;
+    --                 filt_ready <= '1';
+    --             end if;
+    --         end if;
+    --     end if;
+    -- end process trig_disable_filt_proc;
     
-    xcorr_calc <= std_logic_vector(r_st_xc_add(4));
+    xcorr_calc <= std_logic_vector(r_st_xc_add(4)); 
 
 end st_xc_arch;

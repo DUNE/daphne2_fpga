@@ -136,6 +136,17 @@
 	
 	0x00006010 Ad hoc Trigger command value, 8 bits R/W
 
+	Specify the threshold value to be used for all self-triggered mode senders.
+	Note that the 28 LSBs represent a value used by the output of the cross
+	correlation strategy implemented in the self trigger modules. Typically,
+	the proper threshold level is set to 300 when the user intends to find 
+	Single Photoelectrons with a 32 register window. Default is 300.
+	Note that the 14 MSBs represent a SIGNED value in ADC counts relative to
+	a signal with no baseline, this value is used to disable the trigger 
+	whenever large event happen. Default is -80. This register is read/write
+
+	0x00006100 Cross Correlation Trigger threshold values for self triggered senders, 42 bits R/W
+
 	0x00009000  Read the FW version aka git commit hash ID, read-only, 28 bits
 
 	0x0000AA55  Test register R/O always returns 0xDEADBEEF, read-only, 32 bit
