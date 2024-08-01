@@ -77,13 +77,13 @@ module hpf_pedestal_recovery_filter_trigger(
     //    .y(movmean_out)
     //);
 
-    moving_integrator_filter movmean_25(
-        .clk(clk),
-        .reset(reset),
-        .enable(enable),
-        .x(hpf_out),
-        .y(movmean_out)
-        );
+    //moving_integrator_filter movmean_25(
+    //    .clk(clk),
+    //    .reset(reset),
+    //    .enable(enable),
+    //    .x(hpf_out),
+    //    .y(movmean_out)
+    //    );
 
     trig_xc matching_trigger(
         .reset(reset),
@@ -91,6 +91,7 @@ module hpf_pedestal_recovery_filter_trigger(
         .din(hpf_out),
         .threshold(threshold_xc),
         .xcorr_calc(xcorr_calc),
+        .dout_movmean_32(movmean_out),
         .triggered(triggered_xc)
     );
 
