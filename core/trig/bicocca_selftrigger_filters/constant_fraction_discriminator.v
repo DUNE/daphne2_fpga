@@ -21,7 +21,7 @@ module constant_fraction_discriminator(
     //output wire signed[27:0] y //15
 );
     
-	parameter shift_delay = 19;
+	parameter shift_delay = 26;
     
     reg reset_reg, enable_reg;
     reg trigger_threshold_reg, trigger_crossover, trigger_reg, increment_trigger_duration; // trigger_threshold
@@ -110,7 +110,7 @@ module constant_fraction_discriminator(
 	    if (reset_reg || counter_crossover_signal) begin
 	        trigger_crossover <= 1'b0;
 		end else if(enable_reg && trigger_threshold_reg && (counter_threshold >= 4)) begin
-			if (($signed(y_1) >= $signed(16'd0)) && ($signed(y_2) < $signed(16'd0))) begin
+			if (($signed(y_1) <= $signed(16'd0)) && ($signed(y_2) > $signed(16'd0))) begin
 			     trigger_crossover <= 1'b1;
 			end
 		end

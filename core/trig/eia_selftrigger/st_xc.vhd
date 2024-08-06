@@ -24,6 +24,7 @@ entity st_xc is
 port(
     reset: in std_logic;
     clock: in std_logic; -- AFE clock 62.500 MHz
+    enable: in std_logic;
     din: in std_logic_vector(13 downto 0); -- filtered AFE data (no baseline)
     din_mm: in std_logic_vector(13 downto 0); -- filtered "always-zero" data
     threshold: in std_logic_vector(41 downto 0); -- matching filter trigger threshold values
@@ -62,6 +63,7 @@ architecture st_xc_arch of st_xc is
     signal r_st_xc_mult_dsp: type_r_st_xc_mult_dsp := (others => (others => '0')); -- r_st_xc_mult_dsp is new, r_st_xc_mult was the only signal here  
     signal r_st_xc_mult_log: type_r_st_xc_mult_log := (others => (others => '0')); -- r_st_xc_mult_log is new, r_st_xc_mult was the only signal here  
     signal r_st_xc_add: type_r_st_xc_add := (others => (others => '0'));
+    constant offset_reg: signed(27 downto 0) := to_signed(integer(-159),28);
     attribute use_dsp : string;
     attribute use_dsp of r_st_xc_mult_dsp : signal is "yes";
     
@@ -129,14 +131,14 @@ begin
     -- disable the trigger feature
 -------------------------------------------------------------------------------------------------------------------
     -- generate some delays to see how the signal is behaving 
-    din_reg_proc: process(clock, reset, s_din_reg0, s_din_reg1)
+    din_reg_proc: process(clock, reset, enable, s_din_reg0, s_din_reg1)
     begin
         if rising_edge(clock) then
             if (reset='1') then
                 din_reg0 <= (others => '0');
                 din_reg1 <= (others => '0');
                 din_reg2 <= (others => '0');
-            else
+            elsif (enable = '1') then
                 din_reg0 <= din;
                 din_reg1 <= din_reg0;
                 din_reg2 <= din_reg1;
@@ -152,12 +154,12 @@ begin
 
     -- compare the registers with the enabling threshold
     -- if the signal is smaller than the threshold, it means there is a big event therefore the trigger should be disabled
-    en_trig_proc: process(clock, reset, trig_en, trig_ignore_count, s_din_reg0, s_din_reg1, s_din_reg2, en_threshold)
+    en_trig_proc: process(clock, reset, enable, trig_en, trig_ignore_count, s_din_reg0, s_din_reg1, s_din_reg2, en_threshold)
     begin
         if rising_edge(clock) then
             if (reset='1') then
                 trig_en <= '1';
-            else
+            elsif (enable = '1') then
                 -- disable the trigger
                 if ( trig_en='1' and ( s_din_reg2>en_threshold and ( s_din_reg1<en_threshold or s_din_reg1=en_threshold ) and s_din_reg0<en_threshold and s_din<en_threshold ) ) then
                     -- three ticks ago we were above the threshold, two ticks we were at the same level or passed below it
@@ -235,12 +237,12 @@ begin
     st_xc_mult_gen: for i in 0 to 31 generate       
         -- initial multiplication
         st_xc_mult_0: if (i=0) generate
-            st_xc_mult_proc: process(clock, reset, din_xcorr)
+            st_xc_mult_proc: process(clock, reset, enable, din_xcorr)
             begin
                 if rising_edge(clock) then
                     if (reset='1') then
                         r_st_xc_mult_dsp(i) <= (others => '0');
-                    else
+                    elsif (enable = '1') then
                         r_st_xc_mult_dsp(i) <= signed(din_xcorr)*sig_templ(i);
                     end if;
                 end if;
@@ -249,12 +251,12 @@ begin
         
         -- consecutive multiplication with DSPs until the maximum register is reached
         st_xc_mult_n_dsp: if (i>0 and i<17) generate
-            st_xc_mult_proc: process(clock, reset, s_r_st_xc_dat)
+            st_xc_mult_proc: process(clock, reset, enable, s_r_st_xc_dat)
             begin
                 if rising_edge(clock) then
                     if (reset='1') then
                         r_st_xc_mult_dsp(i) <= (others => '0');
-                    else
+                    elsif (enable = '1') then
                         r_st_xc_mult_dsp(i) <= s_r_st_xc_dat(i-1)*sig_templ(i);
                     end if;
                 end if;
@@ -263,12 +265,12 @@ begin
         
         -- consecutive multiplication with DSPs until the maximum register is reached
         st_xc_mult_n_log: if (i>16) generate
-            st_xc_mult_proc: process(clock, reset, s_r_st_xc_dat)
+            st_xc_mult_proc: process(clock, reset, enable, s_r_st_xc_dat)
             begin
                 if rising_edge(clock) then
                     if (reset='1') then
                         r_st_xc_mult_log(i-17) <= (others => '0');
-                    else
+                    elsif (enable = '1') then
                         r_st_xc_mult_log(i-17) <= s_r_st_xc_dat(i-1)*sig_templ(i);
                     end if;
                 end if;
@@ -277,14 +279,14 @@ begin
     end generate st_xc_mult_gen;
 
     -- addition of the multiplications
-    add_proc: process(clock, reset, r_st_xc_mult_dsp, r_st_xc_mult_log, r_st_xc_add, xcorr_o_reg0)
+    add_proc: process(clock, reset, enable, r_st_xc_mult_dsp, r_st_xc_mult_log, r_st_xc_add, xcorr_o_reg0)
     begin
         if rising_edge(clock) then
             if ( ( reset='1' ) or ( rst_xcorr_regs='1' ) ) then
                 r_st_xc_add <= (others => (others => '0'));
                 xcorr_o_reg0 <= (others => '0');
                 xcorr_o_reg1 <= (others => '0');
-            else
+            elsif (enable = '1') then
                 -- first pipeline stage
                 r_st_xc_add(0) <= r_st_xc_mult_dsp(0) + r_st_xc_mult_dsp(1) + r_st_xc_mult_dsp(2) + r_st_xc_mult_dsp(3) +
                                   r_st_xc_mult_dsp(4) + r_st_xc_mult_dsp(5) + r_st_xc_mult_dsp(6) + r_st_xc_mult_dsp(7);
@@ -299,7 +301,7 @@ begin
                                   r_st_xc_mult_log(11) + r_st_xc_mult_log(12) + r_st_xc_mult_log(13) + r_st_xc_mult_log(14); -- until 31 was reached
 
                 -- final addition
-                r_st_xc_add(4) <= r_st_xc_add(0) + r_st_xc_add(1) + r_st_xc_add(2) + r_st_xc_add(3);
+                r_st_xc_add(4) <= r_st_xc_add(0) + r_st_xc_add(1) + r_st_xc_add(2) + r_st_xc_add(3) + offset_reg;
 
                 -- register the old values to keep track of how the calculation is behaving
                 xcorr_o_reg0 <= r_st_xc_add(4); 
@@ -322,12 +324,12 @@ begin
     -- after the baseline is fully regained, it comes back again to State 0
     
     -- process to sync change the states of the FSM
-    reg_states: process(clock, reset, next_state)
+    reg_states: process(clock, reset, enable, next_state)
     begin
         if rising_edge(clock) then
             if (reset='1') then
                 current_state <= reset_st;
-            else
+            elsif (enable = '1') then
                 current_state <= next_state;
             end if;
         end if;
@@ -399,13 +401,13 @@ begin
     end process; 
     
     -- clocked process to count the length of the event
-    event_timer_proc: process(clock, reset, current_state, event_timer)
+    event_timer_proc: process(clock, reset, enable, current_state, event_timer)
     begin
         if rising_edge(clock) then
             if ( ( reset='1' ) or ( current_state=reset_st ) or ( current_state=stand_by ) 
                    or ( current_state=self_triggered ) or ( current_state=event_finished ) ) then
                 event_timer <= event_timer_limit;
-            else
+            elsif (enable = '1') then
                 if ( ( current_state=peak_finder ) or ( current_state=peak_found ) ) then
                     event_timer <= event_timer - 1;
                 end if;

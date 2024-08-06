@@ -25,6 +25,7 @@ module hpf_pedestal_recovery_filter_trigger(
 	
 	wire signed [15:0] hpf_out;
     wire signed [15:0] movmean_out;
+    wire signed [13:0] movmean_out_14;
 	wire signed [15:0] x_i;
     //wire signed [15:0] w_resta_out [4:0][7:0];
     wire signed [15:0] w_out;
@@ -88,10 +89,11 @@ module hpf_pedestal_recovery_filter_trigger(
     trig_xc matching_trigger(
         .reset(reset),
         .clock(clk),
+        .enable(enable),
         .din(hpf_out),
         .threshold(threshold_xc),
         .xcorr_calc(xcorr_calc),
-        .dout_movmean_32(movmean_out),
+        .dout_movmean_32(movmean_out_14),
         .triggered(triggered_xc)
     );
 
@@ -117,7 +119,7 @@ module hpf_pedestal_recovery_filter_trigger(
 
     assign w_out = (output_selector == 2'b00) ?   suma_out : 
                    (output_selector == 2'b01) ?   lpf_out + movmean_out : //movmean
-                   (output_selector == 2'b10) ?   lpf_out : //+ xcorr_calc : //cfd_out : //movmean cfd
+                   (output_selector == 2'b10) ?   lpf_out + xcorr_calc[15:0] : //+ xcorr_calc : //cfd_out : //movmean cfd
                    (output_selector == 2'b11) ?   x_i :
                    16'bx;
    
@@ -125,6 +127,7 @@ module hpf_pedestal_recovery_filter_trigger(
     assign x_i = x;
     assign y = w_out;
     assign baseline = lpf_out;
+    assign movmean_out = $signed(movmean_out_14);
 	
     assign tm_output_selector = (output_selector == 2'b00) ?   1'b0 : //hpf 
                                 (output_selector == 2'b01) ?   1'b0 : //movmean

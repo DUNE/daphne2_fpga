@@ -29,10 +29,10 @@ module k_low_pass_filter(
 	initial begin 
 		reset_reg <= 1'b0;
 	    enable_reg <= 1'b0;
-	    x_1 <= 48'b0;
-		y_1 <= 48'b0;
+	    x_1 <= 48'b001000000000000000000000000000000000000000000000;
+		y_1 <= 48'b001000000000000000000000000000000000000000000000;
 		in_reg <= 16'b0;
-		out_reg <= 16'b0;
+		out_reg <= 16'b0010000000000000;
 	end
 
 	always @(posedge clk) begin
@@ -42,10 +42,10 @@ module k_low_pass_filter(
 
 	always @(posedge clk) begin
 		if(reset_reg) begin
-			x_1 <= 48'b0;
-			y_1 <= 48'b0;
-			in_reg <= 16'b0;
-			out_reg <= 16'b0;
+			x_1 <= 48'b001000000000000000000000000000000000000000000000;
+		    y_1 <= 48'b001000000000000000000000000000000000000000000000;
+		    in_reg <= 16'b0;
+		    out_reg <= 16'b0010000000000000;
 		end else if(enable_reg) begin
 			x_1 <= w1;
 			y_1 <= w6;

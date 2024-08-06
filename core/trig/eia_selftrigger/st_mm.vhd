@@ -20,6 +20,7 @@ entity st_xc_mm is
 port( 
     reset: in std_logic;
     clock: in std_logic;
+    enable: in std_logic;
     din: in std_logic_vector(13 downto 0);
     din_delayed: out std_logic_vector(13 downto 0);
     dout_movmean_32: out std_logic_vector(13 downto 0);
@@ -31,7 +32,7 @@ architecture st_xc_mm_arch of st_xc_mm is
 
     signal din_delayed32, din_delayed32_aux, din_delayed64: std_logic_vector(13 downto 0) := (others => '0'); -- register signals for the moving average window    
     signal din_delayed32_aux0, din_delayed32_aux1, din_delayed32_aux2, din_delayed32_aux3: std_logic_vector(13 downto 0) := (others => '0'); -- input data registers after 32 clock delays
-    signal reg_adder64, reg_adder64_1, reg_adder32, reg_adder32_1: std_logic_vector(13 downto 0) := (others => '0'); -- addition register signal  
+    signal reg_din, reg_adder64, reg_adder64_1, reg_adder32, reg_adder32_1: std_logic_vector(13 downto 0) := (others => '0'); -- addition register signal  
     -- signal in_A: std_logic_vector(29 downto 0) := (others => '0'); -- DSPs module interconnect signals
     -- signal in_D: std_logic_vector(24 downto 0) := (others => '0'); -- DSPs module interconnect signals
     -- signal add_counter: integer := 64; -- window size counter    
@@ -171,30 +172,35 @@ begin
        
     -- register the output to keep it synchronized to the clock
     
-    mean_val_proc: process(clock, reset, reg_adder64, reg_adder32, reg_adder64_1, reg_adder32_1)
+    mean_val_proc: process(clock, reset, enable, din, reg_din, reg_adder64, reg_adder32, reg_adder64_1, reg_adder32_1)
     begin
         if rising_edge(clock) then
             if (reset='1') then
                 mean_val_64 <= (others => '0');
                 mean_val_32 <= (others => '0');
-                reg_adder64 <= (others => '0');
                 reg_adder64_1 <= (others => '0');
-                reg_adder32 <= (others => '0');
                 reg_adder32_1 <= (others => '0');
-            else
+            elsif (enable = '1') then
                 mean_val_64 <= std_logic_vector(shift_right(signed(reg_adder64),6));
                 mean_val_32 <= std_logic_vector(shift_right(signed(reg_adder32),5));
-                reg_adder64 <= din + reg_adder64_1 - din_delayed64;
-                reg_adder32 <= din + reg_adder32_1 - din_delayed32;
                 reg_adder64_1 <= reg_adder64;
                 reg_adder32_1 <= reg_adder32;
+                reg_din <= din;
             end if;
+        end if;
+        if (reset = '1') then 
+            reg_adder64 <= (others => '0');
+            reg_adder32 <= (others => '0');
+            reg_din <= (others => '0');
+        elsif (enable ='1') then 
+            reg_adder64 <= reg_din + reg_adder64_1 - din_delayed64;
+            reg_adder32 <= reg_din + reg_adder32_1 - din_delayed32;
         end if;
     end process mean_val_proc;    
     
     -- create extra clock delays for the input data so that the mean can be subtracted from it 
     
-    gendelay_extra_proc: process(clock, reset, din_delayed32_aux, din_delayed32_aux0, din_delayed32_aux1, din_delayed32_aux2)
+    gendelay_extra_proc: process(clock, reset, enable, din_delayed32_aux, din_delayed32_aux0, din_delayed32_aux1, din_delayed32_aux2)
     begin
         if rising_edge(clock) then
             if (reset='1') then
@@ -202,7 +208,7 @@ begin
                 din_delayed32_aux1 <= (others => '0');
                 din_delayed32_aux2 <= (others => '0');
                 din_delayed32_aux3 <= (others => '0');
-            else
+            elsif (enable = '1') then
                 din_delayed32_aux0 <= din_delayed32_aux;
                 din_delayed32_aux1 <= din_delayed32_aux0;
                 din_delayed32_aux2 <= din_delayed32_aux1;
@@ -213,18 +219,18 @@ begin
     
     -- subtract the mean from the data
     
-    subtractor_proc: process(clock, reset, din_delayed32_aux3, mean_val_64)
+    subtractor_proc: process(clock, reset, enable, din_delayed32_aux3, mean_val_64)
     begin
         if rising_edge(clock) then
             if (reset='1') then
                 sub <= (others => '0');
-            else
+            elsif (enable = '1') then
                 sub <= din_delayed32_aux3 - mean_val_64;
             end if;
         end if;
     end process subtractor_proc;
 
-    dout_movmean_32 <= reg_adder32;
+    dout_movmean_32 <= mean_val_32;
     din_delayed <= din_delayed32_aux3;
     dout <= sub;
     

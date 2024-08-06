@@ -21,6 +21,7 @@ entity trig_xc is
 port(
     reset: in std_logic;
     clock: in std_logic;
+    enable: in std_logic;
     din: in std_logic_vector(13 downto 0);
 --    din_delayed: in std_logic_vector(13 downto 0);
     threshold: in std_logic_vector(41 downto 0); -- matching filter trigger threshold values
@@ -50,6 +51,7 @@ architecture trig_xc_arch of trig_xc is
     port(
         reset: in std_logic;
         clock: in std_logic;
+        enable: in std_logic;
         din: in std_logic_vector(13 downto 0);
         din_mm: in std_logic_vector(13 downto 0);
         threshold: in std_logic_vector(41 downto 0); 
@@ -61,6 +63,7 @@ architecture trig_xc_arch of trig_xc is
     port(
         reset: in std_logic;
         clock: in std_logic;
+        enable: in std_logic;
         din: in std_logic_vector(13 downto 0);
         din_delayed: out std_logic_vector(13 downto 0);
         dout_movmean_32: out std_logic_vector(13 downto 0);
@@ -88,6 +91,7 @@ begin
     port map (
         reset => reset,
         clock => clock,
+        enable => enable,
         din => din, --st_xc_filt_dout,
         din_delayed => st_xc_filt_dout_reg36,
         dout_movmean_32 => dout_movmean_32,
@@ -100,6 +104,7 @@ begin
     port map(
         reset => reset,
         clock => clock,
+        enable => enable,
         din => st_xc_filt_dout_reg36_reg0,
         din_mm => st_xc_mov_mean,
         xcorr_calc => xcorr_calc,
@@ -111,12 +116,12 @@ begin
 ------------------------------------------------------------------------------------------------------------------------------
     -- add extra delay to match the internal delay given by the moving average calculator (1 extra)
     
-    gendelay_mm_int: process(clock, reset, st_xc_filt_dout_reg36) 
+    gendelay_mm_int: process(clock, reset, enable, st_xc_filt_dout_reg36) 
     begin
         if rising_edge(clock) then
             if (reset='1') then
                 st_xc_filt_dout_reg36_reg0 <= (others => '0');
-            else
+            elsif (enable = '1') then
                 st_xc_filt_dout_reg36_reg0 <= st_xc_filt_dout_reg36;
             end if;
         end if;
