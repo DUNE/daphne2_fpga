@@ -23,10 +23,11 @@ port(
     clock: in std_logic;
     enable: in std_logic;
     din: in std_logic_vector(13 downto 0);
+    din_sub: in std_logic_vector(13 downto 0);
 --    din_delayed: in std_logic_vector(13 downto 0);
     threshold: in std_logic_vector(41 downto 0); -- matching filter trigger threshold values
     xcorr_calc: out std_logic_vector(27 downto 0); -- matching filter cross correlation calculated value
-    dout_movmean_32: out std_logic_vector(13 downto 0);
+--    dout_movmean_32: out std_logic_vector(13 downto 0);
     triggered: out std_logic
 --    trigsample: out std_logic_vector(13 downto 0)
 );
@@ -59,16 +60,16 @@ architecture trig_xc_arch of trig_xc is
         triggered: out std_logic);
     end component;
     
-    component st_xc_mm is -- moving mean calculator and subtractor
-    port(
-        reset: in std_logic;
-        clock: in std_logic;
-        enable: in std_logic;
-        din: in std_logic_vector(13 downto 0);
-        din_delayed: out std_logic_vector(13 downto 0);
-        dout_movmean_32: out std_logic_vector(13 downto 0);
-        dout: out std_logic_vector(13 downto 0));
-    end component;
+    --component st_xc_mm is -- moving mean calculator and subtractor
+    --port(
+    --    reset: in std_logic;
+    --    clock: in std_logic;
+    --    enable: in std_logic;
+    --    din: in std_logic_vector(13 downto 0);
+    --    din_delayed: out std_logic_vector(13 downto 0);
+    --    dout_movmean_32: out std_logic_vector(13 downto 0);
+    --    dout: out std_logic_vector(13 downto 0));
+    --end component;
 
 begin
     
@@ -87,16 +88,16 @@ begin
     
     -- calculate with a moving mean the "always-zero" signal
     
-    st_mm_inst: st_xc_mm
-    port map (
-        reset => reset,
-        clock => clock,
-        enable => enable,
-        din => din, --st_xc_filt_dout,
-        din_delayed => st_xc_filt_dout_reg36,
-        dout_movmean_32 => dout_movmean_32,
-        dout => st_xc_mov_mean
-    );
+    --st_mm_inst: st_xc_mm
+    --port map (
+    --    reset => reset,
+    --    clock => clock,
+    --    enable => enable,
+    --    din => din, --st_xc_filt_dout,
+    --    din_delayed => st_xc_filt_dout_reg36,
+    --    dout_movmean_32 => dout_movmean_32,
+    --    dout => st_xc_mov_mean
+    --);
 
     -- use the filtered output to watch over the data and generate self triggers
     
@@ -105,8 +106,8 @@ begin
         reset => reset,
         clock => clock,
         enable => enable,
-        din => st_xc_filt_dout_reg36_reg0,
-        din_mm => st_xc_mov_mean,
+        din => din,
+        din_mm => din_sub,
         xcorr_calc => xcorr_calc,
         threshold => threshold,
         triggered => triggered_core

@@ -26,7 +26,7 @@ module hpf_pedestal_recovery_filter_trigger(
 	wire signed [15:0] hpf_out;
     wire signed [15:0] movmean_out;
     wire signed [13:0] movmean_out_14;
-	wire signed [15:0] x_i;
+	wire signed [15:0] x_i, x_delayed, sub;
     //wire signed [15:0] w_resta_out [4:0][7:0];
     wire signed [15:0] w_out;
 	wire signed [15:0] resta_out, lpf_out, cfd_out;
@@ -78,22 +78,25 @@ module hpf_pedestal_recovery_filter_trigger(
     //    .y(movmean_out)
     //);
 
-    //moving_integrator_filter movmean_25(
-    //    .clk(clk),
-    //    .reset(reset),
-    //    .enable(enable),
-    //    .x(hpf_out),
-    //    .y(movmean_out)
-    //    );
+    moving_integrator_filter movmean_25(
+        .clk(clk),
+        .reset(reset),
+        .enable(enable),
+        .x(hpf_out),
+        .y(movmean_out),
+        .x_delayed(x_delayed),
+        .sub(sub)
+        );
 
     trig_xc matching_trigger(
         .reset(reset),
         .clock(clk),
         .enable(enable),
-        .din(hpf_out),
+        .din(x_delayed[13:0]),
+        .din_sub(sub[13:0]),
         .threshold(threshold_xc),
         .xcorr_calc(xcorr_calc),
-        .dout_movmean_32(movmean_out_14),
+        //.dout_movmean_32(movmean_out_14),
         .triggered(triggered_xc)
     );
 
@@ -127,7 +130,7 @@ module hpf_pedestal_recovery_filter_trigger(
     assign x_i = x;
     assign y = w_out;
     assign baseline = lpf_out;
-    assign movmean_out = $signed(movmean_out_14);
+    //assign movmean_out = $signed(movmean_out_14);
 	
     assign tm_output_selector = (output_selector == 2'b00) ?   1'b0 : //hpf 
                                 (output_selector == 2'b01) ?   1'b0 : //movmean
