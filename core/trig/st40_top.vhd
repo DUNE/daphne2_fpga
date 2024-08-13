@@ -60,7 +60,7 @@ architecture st40_top_arch of st40_top is
     signal fifo_ko: array_5x8x4_type;
     signal d, dout_reg: std_logic_vector(31 downto 0);
     signal k, kout_reg: std_logic_vector( 3 downto 0);
-    signal packet_size_counter: integer range 0 to 467;
+    --signal packet_size_counter: integer range 0 to 467;
     signal trigcount: array_5x8x64_type;
     signal packcount: array_5x8x64_type;
     signal sendCount: unsigned(63 downto 0) := (others => '0');
@@ -206,17 +206,18 @@ begin
                         else
                             selc <= selc + 1;
                         end if;
-                        packet_size_counter <= 0;
+                        --packet_size_counter <= 0;
                     when dump =>
                         if (trig_rst_count = '1') then
                             sendCount <= (others => '0');
                         end if;
-                        if ((k="0001" and d(7 downto 0)=X"DC") or packet_size_counter=467) then -- this the EOF word, done reading from this STC
+                        --if ((k="0001" and d(7 downto 0)=X"DC") or packet_size_counter=467) then -- this the EOF word, done reading from this STC
+                        if (k="0001" and d(7 downto 0)=X"DC") then -- this the EOF word, done reading from this STC 
                             state <= scan;
                             sendCount <= sendCount + 1;
                         else
                             state <= dump; -- in this state I can continue to search for the next fifo_ready_flag
-                            packet_size_counter <= packet_size_counter + 1;
+                            --packet_size_counter <= packet_size_counter + 1;
                             if (fifo_ready='0') then
                                 if (selc=7) then
                                     if (sela=4) then -- loop around when sel = 4 7
@@ -264,20 +265,21 @@ begin
 --         fifo_ko(9) when (sel_reg="001001" and state=dump) else
 --         "0001"; -- idle word
 
-    outmux_proc: process(fifo_do, fifo_ko, sela_rden, selc_rden, state, packet_size_counter)
+    --outmux_proc: process(fifo_do, fifo_ko, sela_rden, selc_rden, state, packet_size_counter)
+    outmux_proc: process(fifo_do, fifo_ko, sela_rden, selc_rden, state)
     begin
         d <= X"000000BC"; -- default
         k <= "0001"; -- default
         loop_a: for a in 4 downto 0 loop
         loop_c: for c in 7 downto 0 loop
             if ( sela_rden=a and selc_rden=c and state=dump ) then
-                if (packet_size_counter=467 and fifo_ko(a)(c) /= "0001" and fifo_do(a)(c) /= X"DC") then
-                    d <= X"011223DC";     
-                    k <= "0001";
-                else
+                --if (packet_size_counter=467 and fifo_ko(a)(c) /= "0001" and fifo_do(a)(c) /= X"DC") then
+                --    d <= X"011223DC";     
+                --    k <= "0001";
+                --else
                     d <= fifo_do(a)(c);
                     k <= fifo_ko(a)(c);
-                end if;
+                --end if;
             end if;
         end loop loop_c;
         end loop loop_a;

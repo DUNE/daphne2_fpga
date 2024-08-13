@@ -41,7 +41,7 @@ read_verilog ../core/trig/bicocca_selftrigger_filters/IIRfilter_movmean25_cfd_tr
 read_verilog ../core/trig/bicocca_selftrigger_filters/moving_integrator_filter.v
 read_verilog ../core/trig/bicocca_selftrigger_filters/constant_fraction_discriminator.v
 # eia
-read_vhdl ../core/trig/eia_selftrigger/st_mm.vhd
+read_vhdl ../core/trig/eia_selftrigger/st_xc_mm.vhd
 read_vhdl ../core/trig/eia_selftrigger/st_xc.vhd
 #read_vhdl ../core/trig/eia_selftrigger/st_xc_filt.vhd
 read_vhdl ../core/trig/eia_selftrigger/trig_xc.vhd
