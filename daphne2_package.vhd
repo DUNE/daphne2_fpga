@@ -183,14 +183,13 @@ package daphne2_package is
     constant SPYBUF_AFE4_D6_BASEADDR: std_logic_vector(31 downto 0) := "0100000001000110----------------";
     constant SPYBUF_AFE4_D7_BASEADDR: std_logic_vector(31 downto 0) := "0100000001000111----------------";
     constant SPYBUF_AFE4_FR_BASEADDR: std_logic_vector(31 downto 0) := "0100000001001000----------------";
-
-    constant RCOUNT_ADDR: std_logic_vector(31 downto 0) := X"40800000";
+                                                                       
+    constant RCOUNT_ADDR: std_logic_vector(31 downto 0) := "0100000010000000----------------";
 
     -- spy buffer for the 64 bit timestamp value
 
     constant SPYBUFTS_BASEADDR: std_logic_vector(31 downto 0) := "0100000001010000----------------";
-
-    -- spy buffer for the first output link 
+    -- spy buffer for the first output link
 
     constant SPYBUFDOUT0_BASEADDR: std_logic_vector(31 downto 0) := "0100000001100000----------------";
 

@@ -315,7 +315,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
         inmux_we: in std_logic;
         inmux_dout: out std_logic_vector(5 downto 0);
 
-        Rcount_addr: in std_logic_vector(6 downto 0);
+        Rcount_addr: in std_logic_vector(31 downto 0);
         Rcount: out std_logic_vector(63 downto 0);
 
         daq_refclk_p, daq_refclk_n: in std_logic; -- MGT REFCLK for DAQ, LVDS, quad 213, refclk0, 120.237MHz
@@ -417,9 +417,6 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal st_enable_we, st_config_we: std_logic;
 
     signal Rcount_reg: std_logic_vector(63 downto 0);
-    signal Rcount_addr_reg: std_logic_vector(6 downto 0);
-    signal rcount_we: std_logic;
-
     signal trig_rst_count: std_logic;
 
 begin
@@ -986,19 +983,6 @@ begin
             end if;
         end if;
     end process st_enable_proc;
-    
-    rcount_we <= '1' when (std_match(rx_addr,RCOUNT_ADDR) and rx_wren='1') else '0';
-
-    rcount_proc: process(oeiclk)
-    begin
-        if rising_edge(oeiclk) then
-            if (reset_async='1') then
-                Rcount_addr_reg <= (others => '0');
-            elsif (rcount_we='1') then
-                Rcount_addr_reg <= rx_data(6 downto 0);
-            end if;
-        end if;
-    end process rcount_proc;
 
     st_config_we <= '1' when (std_match(rx_addr,ST_CONFIG_ADDR) and rx_wren='1') else '0';
 
@@ -1052,7 +1036,7 @@ begin
         spy_dout => core_spy_data(31 downto 0),
         inmux_dout => inmux_dout,
 
-        Rcount_addr => Rcount_addr_reg,
+        Rcount_addr => rx_addr,
         Rcount => Rcount_reg,
         
         daq_refclk_p => daq_refclk_p, daq_refclk_n => daq_refclk_n,
