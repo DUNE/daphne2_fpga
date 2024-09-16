@@ -370,6 +370,8 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal trig_internal_enable: std_logic := '1';
     signal trig_spybuffer_read_dead_time_ON, trig_spybuffer_read_dead_time_OFF: std_logic;
     signal triggered: array_5x8x1_type;
+    signal self_trigger_test_selector: std_logic := '1';
+    signal self_trigger_test_reg_we: std_logic;
 
     signal afe_dout: array_5x9x14_type;
     --signal afe_dout_filtered: array_5x9x14_type;
@@ -585,11 +587,106 @@ begin
 
     -- pad this out to make it 5x9x16
     gen_a: for a in 4 downto 0 generate
-        gen_b: for b in 8 downto 0 generate
+        gen_b: for b in 8 downto 8 generate --- coonects the dataframe
             afe_dout_pad(a)(b) <= "00" & afe_dout(a)(b);
         end generate gen_b;
     end generate gen_a;
 
+    self_trigger_test_reg_we <= '1' when (std_match(rx_addr,SELFTRIGGER_TEST_ADDR) and rx_wren='1') else '0';
+
+    self_trigger_test_proc: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            if (self_trigger_test_reg_we='1') then
+                self_trigger_test_selector <= rx_data(0);
+            end if;
+        end if;
+    end process self_trigger_test_proc;
+
+    -- manual routing of signals 
+    -- channels 0 to 19: signals; channels 20 to 39: triggers from 0 to 19 when self_trigger_test_selector = 1;
+    -- channels 0 to 19: signals; channels 20 to 39: triggers from 0 to 19 when self_trigger_test_selector = 0;
+    afe_dout_pad(0)(0) <= "00" & afe_dout(0)(0) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(2)(4);
+    afe_dout_pad(0)(1) <= "00" & afe_dout(0)(1) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(2)(5); 
+    afe_dout_pad(0)(2) <= "00" & afe_dout(0)(1) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(2)(6);                      
+    afe_dout_pad(0)(3) <= "00" & afe_dout(0)(2) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(2)(7);
+    afe_dout_pad(0)(4) <= "00" & afe_dout(0)(3) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(3)(0);
+    afe_dout_pad(0)(5) <= "00" & afe_dout(0)(4) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(3)(1);
+    afe_dout_pad(0)(6) <= "00" & afe_dout(0)(5) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(3)(2);
+    afe_dout_pad(0)(7) <= "00" & afe_dout(0)(6) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(3)(3);
+    afe_dout_pad(1)(0) <= "00" & afe_dout(1)(0) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(3)(4);
+    afe_dout_pad(1)(1) <= "00" & afe_dout(1)(1) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(3)(5);
+    afe_dout_pad(1)(2) <= "00" & afe_dout(1)(2) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(3)(6);
+    afe_dout_pad(1)(3) <= "00" & afe_dout(1)(3) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(3)(7);
+    afe_dout_pad(1)(4) <= "00" & afe_dout(1)(4) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(4)(0);
+    afe_dout_pad(1)(5) <= "00" & afe_dout(1)(5) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(4)(1);
+    afe_dout_pad(1)(6) <= "00" & afe_dout(1)(6) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(4)(2);
+    afe_dout_pad(1)(7) <= "00" & afe_dout(1)(7) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(4)(3);
+    afe_dout_pad(2)(0) <= "00" & afe_dout(2)(0) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(4)(4);
+    afe_dout_pad(2)(1) <= "00" & afe_dout(2)(1) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(4)(5);
+    afe_dout_pad(2)(2) <= "00" & afe_dout(2)(2) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(4)(6);
+    afe_dout_pad(2)(3) <= "00" & afe_dout(2)(3) when self_trigger_test_selector = '1'
+                           else "000000000000000" & triggered(4)(7);
+    ------------- first 20 channels -------------------------------------------
+    afe_dout_pad(2)(4) <= "000000000000000" & triggered(0)(0) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(2)(4);
+    afe_dout_pad(2)(5) <= "000000000000000" & triggered(0)(1) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(2)(5);
+    afe_dout_pad(2)(6) <= "000000000000000" & triggered(0)(2) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(2)(6);
+    afe_dout_pad(2)(7) <= "000000000000000" & triggered(0)(3) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(2)(7);
+    afe_dout_pad(3)(0) <= "000000000000000" & triggered(0)(4) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(3)(0);
+    afe_dout_pad(3)(1) <= "000000000000000" & triggered(0)(5) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(3)(1);
+    afe_dout_pad(3)(2) <= "000000000000000" & triggered(0)(6) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(3)(2);
+    afe_dout_pad(3)(3) <= "000000000000000" & triggered(0)(7) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(3)(3);
+    afe_dout_pad(3)(4) <= "000000000000000" & triggered(1)(0) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(3)(4);
+    afe_dout_pad(3)(5) <= "000000000000000" & triggered(1)(1) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(3)(5);
+    afe_dout_pad(3)(6) <= "000000000000000" & triggered(1)(2) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(3)(6);
+    afe_dout_pad(3)(7) <= "000000000000000" & triggered(1)(3) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(3)(7);
+    afe_dout_pad(4)(0) <= "000000000000000" & triggered(1)(4) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(4)(0);
+    afe_dout_pad(4)(1) <= "000000000000000" & triggered(1)(5) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(4)(1);
+    afe_dout_pad(4)(2) <= "000000000000000" & triggered(1)(6) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(4)(2);
+    afe_dout_pad(4)(3) <= "000000000000000" & triggered(1)(7) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(4)(3);
+    afe_dout_pad(4)(4) <= "000000000000000" & triggered(2)(0) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(4)(4);
+    afe_dout_pad(4)(5) <= "000000000000000" & triggered(2)(1) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(4)(5);
+    afe_dout_pad(4)(6) <= "000000000000000" & triggered(2)(2) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(4)(6);
+    afe_dout_pad(4)(7) <= "000000000000000" & triggered(2)(3) when self_trigger_test_selector = '1'
+                           else "00" & afe_dout(4)(7);
     -- Spy Buffers ------------------------------------------------------------
 
     -- make 45 spy buffers for AFE data, these buffers are READ ONLY
