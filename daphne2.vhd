@@ -363,7 +363,11 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal sclk200, sclk100, mclk, fclk: std_logic;
 
     signal trig_sync, trig_gbe: std_logic;
-    signal trig_gbe0_reg, trig_gbe1_reg, trig_gbe2_reg: std_logic;
+    signal trig_gbe0_reg, trig_gbe1_reg, trig_gbe2_reg, trig_gbe_total: std_logic;
+    signal trig_spybuffer_read_dead_time_ON_reg0, trig_spybuffer_read_dead_time_ON_reg1, trig_spybuffer_read_dead_time_ON_reg2, trig_spybuffer_read_dead_time_total_ON: std_logic;
+    signal trig_spybuffer_read_dead_time_OFF_reg0, trig_spybuffer_read_dead_time_OFF_reg1, trig_spybuffer_read_dead_time_OFF_reg2, trig_spybuffer_read_dead_time_total_OFF: std_logic;
+    signal trig_internal_enable: std_logic := '1';
+    signal trig_spybuffer_read_dead_time_ON, trig_spybuffer_read_dead_time_OFF: std_logic;
 
     signal afe_dout: array_5x9x14_type;
     --signal afe_dout_filtered: array_5x9x14_type;
@@ -408,9 +412,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal ti_trigger_reg: std_logic_vector(7 downto 0); ------------------
     signal ti_trigger_stbr_reg: std_logic;  ---------------------------
     signal ti_trigger_en: std_logic;
-    signal ti_trigger_en0: std_logic;
-    signal ti_trigger_en1: std_logic;
-    signal ti_trigger_en2: std_logic;   
+    signal ti_trigger_en0, ti_trigger_en1, ti_trigger_en2, trig_en_total: std_logic;    
     
     signal st_enable_reg: std_logic_vector(39 downto 0);
     signal st_config_reg: std_logic_vector(31 downto 0);
@@ -513,6 +515,8 @@ begin
 
     trig_gbe <= '1' when (std_match(rx_addr,TRIGGER_ADDR) and rx_wren='1') else '0';
     ti_trigger_en <= '1' when ( ti_trigger_reg=adhoc_reg and ti_trigger_stbr_reg='1' ) else '0';
+    trig_spybuffer_read_dead_time_ON <= '1' when (std_match(rx_addr,TRIGGER_SPYBUFFER_READ_DEAD_TIME_ON_ADDR) and rx_wren='1') else '0';
+    trig_spybuffer_read_dead_time_OFF <= '1' when (std_match(rx_addr,TRIGGER_SPYBUFFER_READ_DEAD_TIME_OFF_ADDR) and rx_wren='1') else '0';
 
     trig_oei_proc: process(oeiclk)
     begin
@@ -523,13 +527,36 @@ begin
             ti_trigger_en0 <= ti_trigger_en;
             ti_trigger_en1 <= ti_trigger_en0;
             ti_trigger_en2 <= ti_trigger_en1;
+            trig_spybuffer_read_dead_time_ON_reg0 <= trig_spybuffer_read_dead_time_ON;
+            trig_spybuffer_read_dead_time_ON_reg1 <= trig_spybuffer_read_dead_time_ON_reg0;
+            trig_spybuffer_read_dead_time_ON_reg2 <= trig_spybuffer_read_dead_time_ON_reg1;
+            trig_spybuffer_read_dead_time_OFF_reg0 <= trig_spybuffer_read_dead_time_OFF;
+            trig_spybuffer_read_dead_time_OFF_reg1 <= trig_spybuffer_read_dead_time_OFF_reg0;
+            trig_spybuffer_read_dead_time_OFF_reg2 <= trig_spybuffer_read_dead_time_OFF_reg1;
         end if;
     end process trig_oei_proc;
+
+    trig_en_total <= ti_trigger_en0 or ti_trigger_en1 or ti_trigger_en2;
+    trig_gbe_total <= trig_gbe0_reg or trig_gbe1_reg or trig_gbe2_reg;
+    trig_spybuffer_read_dead_time_total_ON <= trig_spybuffer_read_dead_time_ON_reg0 or trig_spybuffer_read_dead_time_ON_reg1 or trig_spybuffer_read_dead_time_ON_reg2;
+    trig_spybuffer_read_dead_time_total_OFF <= trig_spybuffer_read_dead_time_OFF_reg0 or trig_spybuffer_read_dead_time_OFF_reg1 or trig_spybuffer_read_dead_time_OFF_reg2;
+
+    -- process to acount for dead time during async reading of spy registers
+    spy_buffer_reading_dead_time: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            if (trig_spybuffer_read_dead_time_total_ON = '1') then 
+                trig_internal_enable <= '1';
+            elsif (trig_spybuffer_read_dead_time_total_OFF = '1') then 
+                trig_internal_enable <= '0';
+            end if; 
+        end if;
+    end process spy_buffer_reading_dead_time;
 
     trig_proc: process(mclk) -- note external trigger input is inverted on DAPHNE2
     begin
         if rising_edge(mclk) then
-            trig_sync <= (not trig_ext) or trig_gbe0_reg or trig_gbe1_reg or trig_gbe2_reg or ti_trigger_en0 or ti_trigger_en1 or ti_trigger_en2; --------------- WARNING------------------- 
+            trig_sync <= trig_gbe_total or (trig_internal_enable and (trig_en_total or (not trig_ext))); --------------- WARNING------------------- 
         end if;
     end process trig_proc;
 

@@ -51,6 +51,8 @@ package daphne2_package is
     -- write anything to this address to force trigger
 
     constant TRIGGER_ADDR: std_logic_vector(31 downto 0) := X"00002000";
+    constant TRIGGER_SPYBUFFER_READ_DEAD_TIME_ON_ADDR: std_logic_vector(31 downto 0) := X"00002020";
+    constant TRIGGER_SPYBUFFER_READ_DEAD_TIME_OFF_ADDR: std_logic_vector(31 downto 0) := X"00002021";
 
     -- write anything to this address to force front end recalibration
 
