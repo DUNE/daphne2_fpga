@@ -42,6 +42,7 @@ port(
     ti_trigger: in std_logic_vector(7 downto 0); ------------------------
     ti_trigger_stbr: in std_logic; -------------------------------------
     trig_rst_count: in std_logic;
+    triggered: out array_5x8x1_type;
     
     slot_id: in std_logic_vector(3 downto 0); -- used in output header
     crate_id: in std_logic_vector(9 downto 0); -- used in output header
@@ -121,6 +122,7 @@ architecture core_arch of core is
         aclk: in std_logic; -- AFE clock 62.500 MHz
         timestamp: in std_logic_vector(63 downto 0);
     	afe_dat: in array_5x9x14_type; -- ADC data all 40 input streams
+        triggered: out array_5x8x1_type;
         oeiclk: in std_logic;
         fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
         dout: out std_logic_vector(31 downto 0);
@@ -252,6 +254,7 @@ begin
         ti_trigger_stbr => ti_trigger_stbr, -------------------------
         trig_rst_count => trig_rst_count,
     	afe_dat => afe_dat, -- AFE raw data after alignment all 40 channels
+        triggered => triggered,
         oeiclk => oeiclk,
         fclk => fclk(0), 
         dout => selftrig_sender_dout,

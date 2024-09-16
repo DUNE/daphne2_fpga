@@ -39,6 +39,7 @@ port(
     
     fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
     fifo_rden: in std_logic;
+    triggered_out: out std_logic;
     fifo_ae: out std_logic;
     fifo_do: out std_logic_vector(31 downto 0);
     fifo_ko: out std_logic_vector( 3 downto 0);
@@ -756,6 +757,7 @@ begin
     end generate genfifo;
 
     triggered <= triggered_bicocca;
+    triggered_out <= triggered; 
 
     fifo_ae <= '1' when (almostempty="0000") else '0';
     fifo_af <= '1' when (almostfull="0000") else '0';

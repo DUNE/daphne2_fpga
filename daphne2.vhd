@@ -304,6 +304,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
         --
         ti_trigger: in std_logic_vector(7 downto 0); -- WARNING
         ti_trigger_stbr: in std_logic; -- WARNING
+        triggered: out array_5x8x1_type;
         --
         trig_rst_count:in std_logic;
 
@@ -368,6 +369,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal trig_spybuffer_read_dead_time_OFF_reg0, trig_spybuffer_read_dead_time_OFF_reg1, trig_spybuffer_read_dead_time_OFF_reg2, trig_spybuffer_read_dead_time_total_OFF: std_logic;
     signal trig_internal_enable: std_logic := '1';
     signal trig_spybuffer_read_dead_time_ON, trig_spybuffer_read_dead_time_OFF: std_logic;
+    signal triggered: array_5x8x1_type;
 
     signal afe_dout: array_5x9x14_type;
     --signal afe_dout_filtered: array_5x9x14_type;
@@ -1054,6 +1056,7 @@ begin
         version_id => daq_out_param_reg(5 downto 0), -- 6 bits
         st_enable => st_enable_reg,
         filter_output_selector => st_config_reg(1 downto 0), -- filter type selector
+        triggered => triggered,
    
         oeiclk => oeiclk,
         trig => trig_sync,
