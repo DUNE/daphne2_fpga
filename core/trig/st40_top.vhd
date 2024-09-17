@@ -91,9 +91,9 @@ architecture st40_top_arch of st40_top is
         triggered_out: out std_logic;
         fifo_ae: out std_logic;
         fifo_do: out std_logic_vector(31 downto 0);
-        fifo_ko: out std_logic_vector( 3 downto 0);
-        Tcount: out std_logic_vector(63 downto 0);
-        Pcount: out std_logic_vector(63 downto 0)
+        fifo_ko: out std_logic_vector( 3 downto 0)
+        --Tcount: out std_logic_vector(63 downto 0);
+        --Pcount: out std_logic_vector(63 downto 0)
       );
     end component;
 
@@ -128,9 +128,9 @@ begin
                 triggered_out => triggered(a)(c),
                 fifo_ae => fifo_ae(a)(c),
                 fifo_do => fifo_do(a)(c),
-                fifo_ko => fifo_ko(a)(c),
-                Tcount => trigcount(a)(c),
-                Pcount => packcount(a)(c)
+                fifo_ko => fifo_ko(a)(c)
+                --Tcount => trigcount(a)(c),
+                --Pcount => packcount(a)(c)
               );
 
     end generate gen_stc_c;
@@ -301,177 +301,190 @@ begin
 
     dout <= dout_reg;
     kout <= kout_reg;
-    
+
     rcount_mux_proc: process(oeiclk)
     begin 
         if rising_edge(oeiclk) then
             case Rcount_addr is
                 when X"40800000" =>
-                    Rcount <= trigcount(0)(0);
-                when X"40800008" =>
-                    Rcount <= trigcount(0)(1);
-                when X"40800010" =>
-                    Rcount <= trigcount(0)(2);
-                when X"40800018" =>
-                    Rcount <= trigcount(0)(3);
-                when X"40800020" =>
-                    Rcount <= trigcount(0)(4);
-                when X"40800028" =>
-                    Rcount <= trigcount(0)(5);
-                when X"40800030" =>
-                    Rcount <= trigcount(0)(6);
-                when X"40800038" =>
-                    Rcount <= trigcount(0)(7);
-                when X"40800040" =>
-                    Rcount <= trigcount(1)(0);
-                when X"40800048" =>
-                    Rcount <= trigcount(1)(1);
-                when X"40800050" =>
-                    Rcount <= trigcount(1)(2);
-                when X"40800058" =>
-                    Rcount <= trigcount(1)(3);
-                when X"40800060" =>
-                    Rcount <= trigcount(1)(4);
-                when X"40800068" =>
-                    Rcount <= trigcount(1)(5);
-                when X"40800070" =>
-                    Rcount <= trigcount(1)(6);
-                when X"40800078" =>
-                    Rcount <= trigcount(1)(7);
-                when X"40800080" =>
-                    Rcount <= trigcount(2)(0);
-                when X"40800088" =>
-                    Rcount <= trigcount(2)(1);
-                when X"40800090" =>
-                    Rcount <= trigcount(2)(2);
-                when X"40800098" =>
-                    Rcount <= trigcount(2)(3);
-                when X"408000A0" =>
-                    Rcount <= trigcount(2)(4);
-                when X"408000A8" =>
-                    Rcount <= trigcount(2)(5);
-                when X"408000B0" =>
-                    Rcount <= trigcount(2)(6);
-                when X"408000B8" =>
-                    Rcount <= trigcount(2)(7);
-                when X"408000C0" =>
-                    Rcount <= trigcount(3)(0);
-                when X"408000C8" =>
-                    Rcount <= trigcount(3)(1);
-                when X"408000D0" =>
-                    Rcount <= trigcount(3)(2);
-                when X"408000D8" =>
-                    Rcount <= trigcount(3)(3);
-                when X"408000E0" =>
-                    Rcount <= trigcount(3)(4);
-                when X"408000E8" =>
-                    Rcount <= trigcount(3)(5);
-                when X"408000F0" =>
-                    Rcount <= trigcount(3)(6);
-                when X"408000F8" =>
-                    Rcount <= trigcount(3)(7);
-                when X"40800100" =>
-                    Rcount <= trigcount(4)(0);
-                when X"40800108" =>
-                    Rcount <= trigcount(4)(1);
-                when X"40800110" =>
-                    Rcount <= trigcount(4)(2);
-                when X"40800118" =>
-                    Rcount <= trigcount(4)(3);
-                when X"40800120" =>
-                    Rcount <= trigcount(4)(4);
-                when X"40800128" =>
-                    Rcount <= trigcount(4)(5);
-                when X"40800130" =>
-                    Rcount <= trigcount(4)(6);
-                when X"40800138" =>
-                    Rcount <= trigcount(4)(7);
-                when X"40800140" =>
-                    Rcount <= packcount(0)(0);
-                when X"40800148" =>
-                    Rcount <= packcount(0)(1);
-                when X"40800150" =>
-                    Rcount <= packcount(0)(2);
-                when X"40800158" =>
-                    Rcount <= packcount(0)(3);
-                when X"40800160" =>
-                    Rcount <= packcount(0)(4);
-                when X"40800168" =>
-                    Rcount <= packcount(0)(5);
-                when X"40800170" =>
-                    Rcount <= packcount(0)(6);
-                when X"40800178" =>
-                    Rcount <= packcount(0)(7);
-                when X"40800180" =>
-                    Rcount <= packcount(1)(0);
-                when X"40800188" =>
-                    Rcount <= packcount(1)(1);
-                when X"40800190" =>
-                    Rcount <= packcount(1)(2);
-                when X"40800198" =>
-                    Rcount <= packcount(1)(3);
-                when X"408001A0" =>
-                    Rcount <= packcount(1)(4);
-                when X"408001A8" =>
-                    Rcount <= packcount(1)(5);
-                when X"408001B0" =>
-                    Rcount <= packcount(1)(6);
-                when X"408001B8" =>
-                    Rcount <= packcount(1)(7);
-                when X"408001C0" =>
-                    Rcount <= packcount(2)(0);
-                when X"408001C8" =>
-                    Rcount <= packcount(2)(1);
-                when X"408001D0" =>
-                    Rcount <= packcount(2)(2);
-                when X"408001D8" =>
-                    Rcount <= packcount(2)(3);
-                when X"408001E0" =>
-                    Rcount <= packcount(2)(4);
-                when X"408001E8" =>
-                    Rcount <= packcount(2)(5);
-                when X"408001F0" =>
-                    Rcount <= packcount(2)(6);
-                when X"408001F8" =>
-                    Rcount <= packcount(2)(7);
-                when X"40800200" =>
-                    Rcount <= packcount(3)(0);
-                when X"40800208" =>
-                    Rcount <= packcount(3)(1);
-                when X"40800210" =>
-                    Rcount <= packcount(3)(2);
-                when X"40800218" =>
-                    Rcount <= packcount(3)(3);
-                when X"40800220" =>
-                    Rcount <= packcount(3)(4);
-                when X"40800228" =>
-                    Rcount <= packcount(3)(5);
-                when X"40800230" =>
-                    Rcount <= packcount(3)(6);
-                when X"40800238" =>
-                    Rcount <= packcount(3)(7);
-                when X"40800240" =>
-                    Rcount <= packcount(4)(0);
-                when X"40800248" =>
-                    Rcount <= packcount(4)(1);
-                when X"40800250" =>
-                    Rcount <= packcount(4)(2);
-                when X"40800258" =>
-                    Rcount <= packcount(4)(3);
-                when X"40800260" =>
-                    Rcount <= packcount(4)(4);
-                when X"40800268" =>
-                    Rcount <= packcount(4)(5);
-                when X"40800270" =>
-                    Rcount <= packcount(4)(6);
-                when X"40800278" =>
-                    Rcount <= packcount(4)(7);
-                when X"40800280" =>
-                    Rcount <= std_logic_vector(sendCount);
+                    Rcount <= (others => '0');
                 when others => 
                     Rcount <= (others => '1');
             end case;
         end if;
     end process rcount_mux_proc;
+
+    
+    --rcount_mux_proc: process(oeiclk)
+    --begin 
+    --    if rising_edge(oeiclk) then
+    --        case Rcount_addr is
+    --            when X"40800000" =>
+    --                Rcount <= trigcount(0)(0);
+    --            when X"40800008" =>
+    --                Rcount <= trigcount(0)(1);
+    --            when X"40800010" =>
+    --                Rcount <= trigcount(0)(2);
+    --            when X"40800018" =>
+    --                Rcount <= trigcount(0)(3);
+    --            when X"40800020" =>
+    --                Rcount <= trigcount(0)(4);
+    --            when X"40800028" =>
+    --                Rcount <= trigcount(0)(5);
+    --            when X"40800030" =>
+    --                Rcount <= trigcount(0)(6);
+    --            when X"40800038" =>
+    --                Rcount <= trigcount(0)(7);
+    --            when X"40800040" =>
+    --                Rcount <= trigcount(1)(0);
+    --            when X"40800048" =>
+    --                Rcount <= trigcount(1)(1);
+    --            when X"40800050" =>
+    --                Rcount <= trigcount(1)(2);
+    --            when X"40800058" =>
+    --                Rcount <= trigcount(1)(3);
+    --            when X"40800060" =>
+    --                Rcount <= trigcount(1)(4);
+    --            when X"40800068" =>
+    --                Rcount <= trigcount(1)(5);
+    --            when X"40800070" =>
+    --                Rcount <= trigcount(1)(6);
+    --            when X"40800078" =>
+    --                Rcount <= trigcount(1)(7);
+    --            when X"40800080" =>
+    --                Rcount <= trigcount(2)(0);
+    --            when X"40800088" =>
+    --                Rcount <= trigcount(2)(1);
+    --            when X"40800090" =>
+    --                Rcount <= trigcount(2)(2);
+    --            when X"40800098" =>
+    --                Rcount <= trigcount(2)(3);
+    --            when X"408000A0" =>
+    --                Rcount <= trigcount(2)(4);
+    --            when X"408000A8" =>
+    --                Rcount <= trigcount(2)(5);
+    --            when X"408000B0" =>
+    --                Rcount <= trigcount(2)(6);
+    --            when X"408000B8" =>
+    --                Rcount <= trigcount(2)(7);
+    --            when X"408000C0" =>
+    --                Rcount <= trigcount(3)(0);
+    --            when X"408000C8" =>
+    --                Rcount <= trigcount(3)(1);
+    --            when X"408000D0" =>
+    --                Rcount <= trigcount(3)(2);
+    --            when X"408000D8" =>
+    --                Rcount <= trigcount(3)(3);
+    --            when X"408000E0" =>
+    --                Rcount <= trigcount(3)(4);
+    --            when X"408000E8" =>
+    --                Rcount <= trigcount(3)(5);
+    --            when X"408000F0" =>
+    --                Rcount <= trigcount(3)(6);
+    --            when X"408000F8" =>
+    --                Rcount <= trigcount(3)(7);
+    --            when X"40800100" =>
+    --                Rcount <= trigcount(4)(0);
+    --            when X"40800108" =>
+    --                Rcount <= trigcount(4)(1);
+    --            when X"40800110" =>
+    --                Rcount <= trigcount(4)(2);
+    --            when X"40800118" =>
+    --                Rcount <= trigcount(4)(3);
+    --            when X"40800120" =>
+    --                Rcount <= trigcount(4)(4);
+    --            when X"40800128" =>
+    --                Rcount <= trigcount(4)(5);
+    --            when X"40800130" =>
+    --                Rcount <= trigcount(4)(6);
+    --            when X"40800138" =>
+    --                Rcount <= trigcount(4)(7);
+    --            when X"40800140" =>
+    --                Rcount <= packcount(0)(0);
+    --            when X"40800148" =>
+    --                Rcount <= packcount(0)(1);
+    --            when X"40800150" =>
+    --                Rcount <= packcount(0)(2);
+    --            when X"40800158" =>
+    --                Rcount <= packcount(0)(3);
+    --            when X"40800160" =>
+    --                Rcount <= packcount(0)(4);
+    --            when X"40800168" =>
+    --                Rcount <= packcount(0)(5);
+    --            when X"40800170" =>
+    --                Rcount <= packcount(0)(6);
+    --            when X"40800178" =>
+    --                Rcount <= packcount(0)(7);
+    --            when X"40800180" =>
+    --                Rcount <= packcount(1)(0);
+    --            when X"40800188" =>
+    --                Rcount <= packcount(1)(1);
+    --            when X"40800190" =>
+    --                Rcount <= packcount(1)(2);
+    --            when X"40800198" =>
+    --                Rcount <= packcount(1)(3);
+    --            when X"408001A0" =>
+    --                Rcount <= packcount(1)(4);
+    --            when X"408001A8" =>
+    --                Rcount <= packcount(1)(5);
+    --            when X"408001B0" =>
+    --                Rcount <= packcount(1)(6);
+    --            when X"408001B8" =>
+    --                Rcount <= packcount(1)(7);
+    --            when X"408001C0" =>
+    --                Rcount <= packcount(2)(0);
+    --            when X"408001C8" =>
+    --                Rcount <= packcount(2)(1);
+    --            when X"408001D0" =>
+    --                Rcount <= packcount(2)(2);
+    --            when X"408001D8" =>
+    --                Rcount <= packcount(2)(3);
+    --            when X"408001E0" =>
+    --                Rcount <= packcount(2)(4);
+    --            when X"408001E8" =>
+    --                Rcount <= packcount(2)(5);
+    --            when X"408001F0" =>
+    --                Rcount <= packcount(2)(6);
+    --            when X"408001F8" =>
+    --                Rcount <= packcount(2)(7);
+    --            when X"40800200" =>
+    --                Rcount <= packcount(3)(0);
+    --            when X"40800208" =>
+    --                Rcount <= packcount(3)(1);
+    --            when X"40800210" =>
+    --                Rcount <= packcount(3)(2);
+    --            when X"40800218" =>
+    --                Rcount <= packcount(3)(3);
+    --            when X"40800220" =>
+    --                Rcount <= packcount(3)(4);
+    --            when X"40800228" =>
+    --                Rcount <= packcount(3)(5);
+    --            when X"40800230" =>
+    --                Rcount <= packcount(3)(6);
+    --            when X"40800238" =>
+    --                Rcount <= packcount(3)(7);
+    --            when X"40800240" =>
+    --                Rcount <= packcount(4)(0);
+    --            when X"40800248" =>
+    --                Rcount <= packcount(4)(1);
+    --            when X"40800250" =>
+    --                Rcount <= packcount(4)(2);
+    --            when X"40800258" =>
+    --                Rcount <= packcount(4)(3);
+    --            when X"40800260" =>
+    --                Rcount <= packcount(4)(4);
+    --            when X"40800268" =>
+    --                Rcount <= packcount(4)(5);
+    --            when X"40800270" =>
+    --                Rcount <= packcount(4)(6);
+    --            when X"40800278" =>
+    --                Rcount <= packcount(4)(7);
+    --            when X"40800280" =>
+    --                Rcount <= std_logic_vector(sendCount);
+    --            when others => 
+    --                Rcount <= (others => '1');
+    --        end case;
+    --    end if;
+    --end process rcount_mux_proc;
 
 end st40_top_arch;

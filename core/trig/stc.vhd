@@ -42,9 +42,9 @@ port(
     triggered_out: out std_logic;
     fifo_ae: out std_logic;
     fifo_do: out std_logic_vector(31 downto 0);
-    fifo_ko: out std_logic_vector( 3 downto 0);
-    TCount: out std_logic_vector(63 downto 0);
-    Pcount: out std_logic_vector(63 downto 0)
+    fifo_ko: out std_logic_vector( 3 downto 0)
+    --TCount: out std_logic_vector(63 downto 0);
+    --Pcount: out std_logic_vector(63 downto 0)
   );
 end stc;
 
@@ -72,8 +72,8 @@ architecture stc_arch of stc is
     signal almostempty: std_logic_vector(3 downto 0);
     signal almostfull: std_logic_vector(3 downto 0);
     signal fifo_af: std_logic;
-    signal trigCount: unsigned(63 downto 0) := (others => '0');
-    signal packCount: unsigned(63 downto 0) := (others => '0');
+    --signal trigCount: unsigned(63 downto 0) := (others => '0');
+    --signal packCount: unsigned(63 downto 0) := (others => '0');
 
     type array_4x64_type is array(3 downto 0) of std_logic_vector(63 downto 0);
     signal DI, DO: array_4x64_type;
@@ -352,7 +352,7 @@ begin
     begin
         if rising_edge(aclk) then
             if ( reset='1' or trig_rst_count='1' ) then
-                trigCount <= (others => '0');
+                --trigCount <= (others => '0');
                 trigger_counter_state <= rst_trggr;
             else
                 case(trigger_counter_state) is
@@ -360,7 +360,7 @@ begin
                         trigger_counter_state <= wait4trig_trggr;
                     when wait4trig_trggr =>
                         if ( enable='1' and triggered='1') then
-                            trigCount <= trigCount + 1;
+                            --trigCount <= trigCount + 1;
                             trigger_counter_state <= rising_triggered;
                         elsif ( enable='1' and triggered='0') then
                             trigger_counter_state <= wait4trig_trggr;
@@ -388,18 +388,18 @@ begin
             if (reset='1' or trig_rst_count='1') then ---------------////
                 state <= rst;
                 --trigCount <= (others => '0');
-                packCount <= (others => '0');
+                --packCount <= (others => '0');
             else
                 case(state) is
                     when rst =>
                         state <= wait4trig;
                     when wait4trig => 
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         if (triggered='1' and enable='1' and fifo_af='1') then -- start assembling the output frame
                             block_count <= "000000";
-                            packCount <= packCount+1;
+                            --packCount <= packCount+1;
                            -- trigCount <= trigCount+1;
                             ts_reg <= std_logic_vector( unsigned(timestamp) - 124 );
                             state <= sof; 
@@ -407,114 +407,114 @@ begin
                             state <= wait4trig; --962 760 410 El de las naranjas
                         end if;
                     when sof =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= hdr0;
                     when hdr0 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= hdr1;
                     when hdr1 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= hdr2;
                     when hdr2 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= hdr3;
                     when hdr3 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= hdr4;
                     when hdr4 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat0;
                     when dat0 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat1;
                     when dat1 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat2;
                     when dat2 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat3;
                     when dat3 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat4;
                     when dat4 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat5;
                     when dat5 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat6;
                     when dat6 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat7;
                     when dat7 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat8;
                     when dat8 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat9;
                     when dat9 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat10;
                     when dat10 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat11;
                     when dat11 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat12;
                     when dat12 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');  
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');  
+                        --end if;
                         state <= dat13;
                     when dat13 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat14;
                     when dat14 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= dat15;
                     when dat15 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         if (block_count="111111") then -- we have cycled through the data block (16 samples per block) 64 times, done
                             state <= trailer1;
                         else
@@ -522,79 +522,79 @@ begin
                             state <= dat0;
                         end if;
                     when trailer1 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer2;
                     when trailer2 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer3;
                     when trailer3 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer4;
                     when trailer4 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer5;
                     when trailer5 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer6;
                     when trailer6 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer7;
                     when trailer7 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer8;
                     when trailer8 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer9;
                     when trailer9 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer10;
                     when trailer10 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer11;
                     when trailer11 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer12;
                     when trailer12 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= trailer13;
                     when trailer13 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= eof;
                     when eof =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= wait4trig;
                     when others => 
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
-                        end if;
+                        --if (trig_rst_count = '1') then
+                            --packCount <= (others => '0');
+                        --end if;
                         state <= rst;
                 end case;
             end if;
@@ -764,8 +764,8 @@ begin
 
     fifo_do(31 downto 0) <= DO(3)(7 downto 0) & DO(2)(7 downto 0) & DO(1)(7 downto 0) & DO(0)(7 downto 0);
     fifo_ko( 3 downto 0) <= DOP(3)(0) & DOP(2)(0) & DOP(1)(0) & DOP(0)(0);
-    TCount <= std_logic_vector(trigCount); 
-    Pcount <= std_logic_vector(packCount); 
+    --TCount <= std_logic_vector(trigCount); 
+    --Pcount <= std_logic_vector(packCount); 
 
 
 end stc_arch;
