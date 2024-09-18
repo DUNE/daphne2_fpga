@@ -26,6 +26,7 @@ port(
     filter_output_selector: in std_logic_vector(1 downto 0);
     baseline: out std_logic_vector(13 downto 0); -- baseline 300mHz LPF output. 
     triggered: out std_logic;
+    triggered_internal: out std_logic; -- internal selftrigger signal
     trigsample: out std_logic_vector(13 downto 0); -- the sample that caused the trigger
     ti_trigger: in std_logic_vector(7 downto 0);
     ti_trigger_stbr: in std_logic
@@ -91,8 +92,9 @@ begin
     -- triggered_i <= '1' when ( ti_trigger=adhoc and ti_trigger_stbr='1' ) else '0';
 
     -- trigger goes between the adhoc conditions or the Milano self trigger condition
-    triggered_i <= '1' when ( ( ti_trigger=adhoc and ti_trigger_stbr='1' ) or ( triggered_i_module = '1' ) ) else '0';
-    
+    -- triggered_i <= '1' when ( ( ti_trigger=adhoc and ti_trigger_stbr='1' ) or ( triggered_i_module = '1' ) ) else '0'; -- original trigger condition 
+    triggered_i <= '1' when ( ( ti_trigger=adhoc and ti_trigger_stbr='1' )  ) else '0'; -- self-trigger module signal removes
+                                                                                        -- only ad-hoc (LED) signal 
     -- add in some fake/synthetic latency, adjust it so total trigger latency is 64 clocks
 
     srlc32e_0_inst : srlc32e
@@ -125,7 +127,8 @@ begin
             end if;
         end if;    
     end process samplecap_proc;
-
+    
+    triggered_internal <= triggered_i_module;
     trigsample <= trigsample_reg;
     dout <= dout_filter(13 downto 0);
     baseline <= k_lpf_baseline(13 downto 0); 

@@ -298,6 +298,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
         st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
         st_config: in std_logic_vector(13 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
         filter_output_selector: in std_logic_vector(1 downto 0); -- filter signal type selector
+        self_trigger_test_selector: in std_logic;
         outmode: in std_logic_vector(7 downto 0); -- choose streaming or self-trig sender for each output
         adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
         threshold_xc: in std_logic_vector(41 downto 0); -- for self-trig senders, threshold relative to average baseline
@@ -417,6 +418,9 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal st_enable_reg: std_logic_vector(39 downto 0);
     signal st_config_reg: std_logic_vector(31 downto 0);
     signal st_enable_we, st_config_we: std_logic;
+
+    signal self_trigger_test_selector: std_logic := '1';
+    signal self_trigger_test_reg_we: std_logic;
 
     signal Rcount_reg: std_logic_vector(63 downto 0);
     signal trig_rst_count: std_logic;
@@ -587,6 +591,17 @@ begin
             afe_dout_pad(a)(b) <= "00" & afe_dout(a)(b);
         end generate gen_b;
     end generate gen_a;
+
+    self_trigger_test_reg_we <= '1' when (std_match(rx_addr,SELFTRIGGER_TEST_ADDR) and rx_wren='1') else '0';
+
+    self_trigger_test_proc: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            if (self_trigger_test_reg_we='1') then
+                self_trigger_test_selector <= rx_data(0);
+            end if;
+        end if;
+    end process self_trigger_test_proc;
 
     -- Spy Buffers ------------------------------------------------------------
 
@@ -1054,6 +1069,7 @@ begin
         version_id => daq_out_param_reg(5 downto 0), -- 6 bits
         st_enable => st_enable_reg,
         filter_output_selector => st_config_reg(1 downto 0), -- filter type selector
+        self_trigger_test_selector => self_trigger_test_selector,
    
         oeiclk => oeiclk,
         trig => trig_sync,

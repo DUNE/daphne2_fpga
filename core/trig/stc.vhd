@@ -39,6 +39,7 @@ port(
     
     fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
     fifo_rden: in std_logic;
+    triggered_internal: out std_logic;
     fifo_ae: out std_logic;
     fifo_do: out std_logic_vector(31 downto 0);
     fifo_ko: out std_logic_vector( 3 downto 0);
@@ -178,7 +179,8 @@ architecture stc_arch of stc is
         adhoc: in std_logic_vector(7 downto 0);
         threshold_xc: in std_logic_vector(41 downto 0);
         filter_output_selector: in std_logic_vector(1 downto 0);
-        triggered: out std_logic;        
+        triggered: out std_logic;
+        triggered_internal: out std_logic;        
         trigsample: out std_logic_vector(13 downto 0);
         ti_trigger: in std_logic_vector(7 downto 0); -------------------------
         ti_trigger_stbr: in std_logic);  -------------------------
@@ -195,7 +197,7 @@ architecture stc_arch of stc is
         Reset: in std_logic);
     end component;
 
-    signal crc_calc, crc_reset, triggered, triggered_bicocca, triggered_ciemat: std_logic;
+    signal crc_calc, crc_reset, triggered, triggered_xc_cfd, triggered_ciemat: std_logic;
     signal crc20: std_logic_vector(19 downto 0);
 
 begin
@@ -281,7 +283,8 @@ begin
         baseline => baseline,
         threshold_xc => threshold_xc,
         filter_output_selector => filter_output_selector,
-        triggered => triggered_bicocca,
+        triggered => triggered_xc_cfd, -- this signal carries adhoc 
+        triggered_internal => triggered_internal, -- this signal carries the selftrigger module 
         trigsample => trigsample, -- the ADC sample that caused the trigger 
         ti_trigger => ti_trigger,
         ti_trigger_stbr => ti_trigger_stbr
@@ -755,7 +758,7 @@ begin
 
     end generate genfifo;
 
-    triggered <= triggered_bicocca;
+    triggered <= triggered_xc_cfd;
 
     fifo_ae <= '1' when (almostempty="0000") else '0';
     fifo_af <= '1' when (almostfull="0000") else '0';

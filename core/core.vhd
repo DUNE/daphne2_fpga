@@ -49,6 +49,7 @@ port(
     version_id: in std_logic_vector(5 downto 0); -- used in output header
     st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
     filter_output_selector: in std_logic_vector(1 downto 0); -- filter type selector
+    self_trigger_test_selector: in std_logic;
 
     oeiclk: in std_logic; -- interface used for output spy buffer and to configure input mux
     trig: in std_logic; -- manually trigger output spy buffer
@@ -118,6 +119,7 @@ architecture core_arch of core is
         version_id: in std_logic_vector(5 downto 0);
         enable: in std_logic_vector(39 downto 0);
         filter_output_selector: in std_logic_vector(1 downto 0);
+        self_trigger_test_selector: in std_logic;
         aclk: in std_logic; -- AFE clock 62.500 MHz
         timestamp: in std_logic_vector(63 downto 0);
     	afe_dat: in array_5x9x14_type; -- ADC data all 40 input streams
@@ -246,6 +248,7 @@ begin
         version_id => version_id,
         enable => st_enable,
         filter_output_selector => filter_output_selector,
+        self_trigger_test_selector => self_trigger_test_selector,
         aclk => mclk,
         timestamp => timestamp,
         ti_trigger => ti_trigger, ------------------------------

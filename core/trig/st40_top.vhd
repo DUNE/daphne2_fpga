@@ -30,6 +30,7 @@ port(
     version_id: in std_logic_vector(5 downto 0);
     enable: in std_logic_vector(39 downto 0);
     filter_output_selector: in std_logic_vector(1 downto 0);
+    self_trigger_test_selector: in std_logic;
 
     aclk: in std_logic; -- AFE clock 62.500 MHz
     timestamp: in std_logic_vector(63 downto 0);
@@ -61,7 +62,9 @@ architecture st40_top_arch of st40_top is
     signal fifo_ko: array_5x8x4_type;
     signal d, dout_reg: std_logic_vector(31 downto 0);
     signal k, kout_reg: std_logic_vector( 3 downto 0);
+    signal triggered_internal: std_logic_vector(39 downto 0);
     --signal packet_size_counter: integer range 0 to 467;
+    signal rerouted_signal: array_5x8x14_type;
     signal trigcount: array_5x8x64_type;
     signal packcount: array_5x8x64_type;
     signal sendCount: unsigned(63 downto 0) := (others => '0');
@@ -79,6 +82,7 @@ architecture st40_top_arch of st40_top is
         version_id: std_logic_vector(5 downto 0);
         enable: std_logic;
         filter_output_selector: in std_logic_vector(1 downto 0);
+        triggered_internal: out std_logic;
         aclk: in std_logic; -- AFE clock 62.500 MHz
         timestamp: in std_logic_vector(63 downto 0);
     	ti_trigger: in std_logic_vector(7 downto 0); -------------------------
@@ -120,7 +124,8 @@ begin
                 filter_output_selector => filter_output_selector,
                 aclk => aclk,
                 timestamp => timestamp,
-            	afe_dat => afe_dat(a)(c),
+            	afe_dat => rerouted_signal(a)(c),
+                triggered_internal => triggered_internal(8*a+c),
                 fclk => fclk,
                 fifo_rden => fifo_rden(a)(c),
                 fifo_ae => fifo_ae(a)(c),
@@ -132,6 +137,88 @@ begin
 
     end generate gen_stc_c;
     end generate gen_stc_a;
+
+    rerouted_signal(0)(0) <= afe_dat(0)(0) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(20);
+    rerouted_signal(0)(1) <= afe_dat(0)(1) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(21); 
+    rerouted_signal(0)(2) <= afe_dat(0)(1) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(22);                      
+    rerouted_signal(0)(3) <= afe_dat(0)(2) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(23);
+    rerouted_signal(0)(4) <= afe_dat(0)(3) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(24);
+    rerouted_signal(0)(5) <= afe_dat(0)(4) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(25);
+    rerouted_signal(0)(6) <= afe_dat(0)(5) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(26);
+    rerouted_signal(0)(7) <= afe_dat(0)(6) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(27);
+    rerouted_signal(1)(0) <= afe_dat(1)(0) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(28);
+    rerouted_signal(1)(1) <= afe_dat(1)(1) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(29);
+    rerouted_signal(1)(2) <= afe_dat(1)(2) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(30);
+    rerouted_signal(1)(3) <= afe_dat(1)(3) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(31);
+    rerouted_signal(1)(4) <= afe_dat(1)(4) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(32);
+    rerouted_signal(1)(5) <= afe_dat(1)(5) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(33);
+    rerouted_signal(1)(6) <= afe_dat(1)(6) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(34);
+    rerouted_signal(1)(7) <= afe_dat(1)(7) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(35);
+    rerouted_signal(2)(0) <= afe_dat(2)(0) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(36);
+    rerouted_signal(2)(1) <= afe_dat(2)(1) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(37);
+    rerouted_signal(2)(2) <= afe_dat(2)(2) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(38);
+    rerouted_signal(2)(3) <= afe_dat(2)(3) when self_trigger_test_selector = '1'
+                           else "0000000000000" & triggered_internal(39);
+    ------------- first 20 channels -------------------------------------------
+    rerouted_signal(2)(4) <= "0000000000000" & triggered_internal(0) when self_trigger_test_selector = '1'
+                           else afe_dat(2)(4);
+    rerouted_signal(2)(5) <= "0000000000000" & triggered_internal(1) when self_trigger_test_selector = '1'
+                           else afe_dat(2)(5);
+    rerouted_signal(2)(6) <= "0000000000000" & triggered_internal(2) when self_trigger_test_selector = '1'
+                           else afe_dat(2)(6);
+    rerouted_signal(2)(7) <= "0000000000000" & triggered_internal(3) when self_trigger_test_selector = '1'
+                           else afe_dat(2)(7);
+    rerouted_signal(3)(0) <= "0000000000000" & triggered_internal(4) when self_trigger_test_selector = '1'
+                           else afe_dat(3)(0);
+    rerouted_signal(3)(1) <= "0000000000000" & triggered_internal(5) when self_trigger_test_selector = '1'
+                           else afe_dat(3)(1);
+    rerouted_signal(3)(2) <= "0000000000000" & triggered_internal(6) when self_trigger_test_selector = '1'
+                           else afe_dat(3)(2);
+    rerouted_signal(3)(3) <= "0000000000000" & triggered_internal(7) when self_trigger_test_selector = '1'
+                           else afe_dat(3)(3);
+    rerouted_signal(3)(4) <= "0000000000000" & triggered_internal(8) when self_trigger_test_selector = '1'
+                           else afe_dat(3)(4);
+    rerouted_signal(3)(5) <= "0000000000000" & triggered_internal(9) when self_trigger_test_selector = '1'
+                           else afe_dat(3)(5);
+    rerouted_signal(3)(6) <= "0000000000000" & triggered_internal(10) when self_trigger_test_selector = '1'
+                           else afe_dat(3)(6);
+    rerouted_signal(3)(7) <= "0000000000000" & triggered_internal(11) when self_trigger_test_selector = '1'
+                           else afe_dat(3)(7);
+    rerouted_signal(4)(0) <= "0000000000000" & triggered_internal(12) when self_trigger_test_selector = '1'
+                           else afe_dat(4)(0);
+    rerouted_signal(4)(1) <= "0000000000000" & triggered_internal(13) when self_trigger_test_selector = '1'
+                           else afe_dat(4)(1);
+    rerouted_signal(4)(2) <= "0000000000000" & triggered_internal(14) when self_trigger_test_selector = '1'
+                           else afe_dat(4)(2);
+    rerouted_signal(4)(3) <= "0000000000000" & triggered_internal(15) when self_trigger_test_selector = '1'
+                           else afe_dat(4)(3);
+    rerouted_signal(4)(4) <= "0000000000000" & triggered_internal(16) when self_trigger_test_selector = '1'
+                           else afe_dat(4)(4);
+    rerouted_signal(4)(5) <= "0000000000000" & triggered_internal(17) when self_trigger_test_selector = '1'
+                           else afe_dat(4)(5);
+    rerouted_signal(4)(6) <= "0000000000000" & triggered_internal(18) when self_trigger_test_selector = '1'
+                           else afe_dat(4)(6);
+    rerouted_signal(4)(7) <= "0000000000000" & triggered_internal(19) when self_trigger_test_selector = '1'
+                           else afe_dat(4)(7);
 
     -- fifo read enable and fifo flag selection
 
