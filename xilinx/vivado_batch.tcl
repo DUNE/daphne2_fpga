@@ -46,10 +46,11 @@ read_vhdl ../core/trig/eia_selftrigger/st_xc.vhd
 #read_vhdl ../core/trig/eia_selftrigger/st_xc_filt.vhd
 read_vhdl ../core/trig/eia_selftrigger/trig_xc.vhd
 # ciemat
-#read_vhdl ../core/trig/ciemat_selftrigger/Filter_CIEMAT.vhd
+read_vhdl ../core/trig/ciemat_selftrigger/Filter_CIEMAT.vhd
 read_vhdl ../core/trig/ciemat_selftrigger/LocalPrimitives_CIEMAT.vhd
 read_vhdl ../core/trig/ciemat_selftrigger/PeakDetector_SelfTrigger_CIEMAT.vhd
 read_vhdl ../core/trig/ciemat_selftrigger/Self_Trigger_Primitive_Calculation.vhd
+read_vhdl ../core/trig/ciemat_selftrigger/Configurable_CFD.vhd
 # --------------------
 
 read_vhdl ../oei/hdl/burst_traffic_controller.vhd
