@@ -36,7 +36,7 @@ port(
 
     outmode: in std_logic_vector(7 downto 0); -- output link mode control
     adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
-    st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
+    st_config: in std_logic_vector(27 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
     threshold_xc: in std_logic_vector(41 downto 0); -- for self-triggered mode, relative to average baseline
 
     ti_trigger: in std_logic_vector(7 downto 0); ------------------------
@@ -106,7 +106,7 @@ architecture core_arch of core is
     generic( link_id: std_logic_vector(5 downto 0)  := "000000" );
     port(
         reset: in std_logic; 
-        st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)   
+        st_config: in std_logic_vector(27 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)   
         adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
         threshold_xc: in std_logic_vector(41 downto 0); -- user defined threshold relative to baseline
         ti_trigger: in std_logic_vector(7 downto 0); -------------------------

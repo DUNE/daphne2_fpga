@@ -41,7 +41,7 @@ port(
     clock:                          in  std_logic;                                              -- AFE clock
     reset:                          in  std_logic;                                              -- Reset signal. ACTIVE HIGH
     din:                            in  std_logic_vector(13 downto 0);                          -- Data coming from the Filter Block / Raw data from AFEs
-    Config_Param:                   in  std_logic_vector(13 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
+    Config_Param:                   in  std_logic_vector(27 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
     Self_trigger:                   out std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
     Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
     Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
@@ -51,12 +51,12 @@ port(
     Charge:                         out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
     Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
-    --filtered_dout:                  out std_logic_vector (13 downto 0);                         -- HIGH PASS Filtered signal
-    Baseline:                       in std_logic_vector(13 downto 0);                          -- Real Time calculated BASELINE
+    filtered_dout:                  out std_logic_vector (13 downto 0);                         -- HIGH PASS Filtered signal
+    Baseline:                       out std_logic_vector(14 downto 0);                          -- Real Time calculated BASELINE
     Amplitude:                      out std_logic_vector(14 downto 0);                          -- Real Time calculated AMPLITUDE
     Peak_Current:                   out std_logic;                                              -- ACTIVE HIGH when a peak is detected
     Slope_Current:                  out std_logic_vector(13 downto 0);                          -- Real Time calculated SLOPE
-    Slope_Threshold:                out std_logic_vector(6 downto 0);                           -- Threshold over the slope to detect Peaks
+    Slope_Threshold:                out std_logic_vector(13 downto 0);                           -- Threshold over the slope to detect Peaks
     Detection:                      out std_logic;                                              -- ACTIVE HIGH when primitives are being calculated (during light pulse)
     Sending:                        out std_logic;                                              -- ACTIVE HIGH when colecting data for self-trigger frame
     Info_Previous:                  out std_logic;                                              -- ACTIVE HIGH when self-trigger is produced by a waveform between two frames 
@@ -77,17 +77,16 @@ port(
 end Self_Trigger_Primitive_Calculation;
 
 architecture Behavioral of Self_Trigger_Primitive_Calculation is
-
---COMPONENT Filter_CIEMAT IS 
---  PORT (  
---    clock:          in  std_logic;                          -- AFE clock
---    reset:          in  std_logic;                          -- Reset signal. ACTIVE HIGH 
---    din:            in  std_logic_vector(13 downto 0);      -- Raw AFE data
---    Config_Param:   in std_logic_vector(3 downto 0);        -- Config_Param[0] --> 1 = ENABLE filtering / 0 = DISABLE filtering 
---                                                           -- Config_Param[1] --> '0' = 1 LSB truncated / '1' = 2 LSBs truncated 
---                                                            -- Config_Param[3 downto 2] --> '00' = 4 Samples Window / '01' = 8 Samples Window / '10' = 16 Samples Window / '11' = 32 Samples Window
---    filtered_dout:  out  std_logic_vector(13 downto 0));    -- Raw AFE data
---  END component;
+COMPONENT Filter_CIEMAT IS 
+  PORT (  
+    clock:          in  std_logic;                          -- AFE clock
+    reset:          in  std_logic;                          -- Reset signal. ACTIVE HIGH 
+    din:            in  std_logic_vector(13 downto 0);      -- Raw AFE data
+    Config_Param:   in std_logic_vector(3 downto 0);        -- Config_Param[0] --> 1 = ENABLE filtering / 0 = DISABLE filtering 
+                                                            -- Config_Param[1] --> '0' = 1 LSB truncated / '1' = 2 LSBs truncated 
+                                                            -- Config_Param[3 downto 2] --> '00' = 4 Samples Window / '01' = 8 Samples Window / '10' = 16 Samples Window / '11' = 32 Samples Window
+    filtered_dout:  out  std_logic_vector(13 downto 0));    -- Raw AFE data
+  END component;
     
  COMPONENT PeakDetector_SelfTrigger_CIEMAT IS 
   PORT (  
@@ -95,14 +94,16 @@ architecture Behavioral of Self_Trigger_Primitive_Calculation is
     reset:                          in  std_logic;                      -- Reset signal. ACTIVE HIGH 
     din:                            in  std_logic_vector(13 downto 0);  -- Data coming from the Filter Block / Raw data from AFEs
     Sending_Data:                   in  std_logic;                      -- DATA is being sent. ACTIVE HIGH
-    Config_Param:                   in  std_logic_vector(9 downto 0);   -- Config_Param[0] --> '0' = Peak detector as self-trigger  / '1' = Main detection as Self-Trigger (Undershoot peaks will not trigger)
+    Config_Param:                   in  std_logic_vector(23 downto 0);   -- Config_Param[0] --> '0' = Peak detector as self-trigger  / '1' = Main detection as Self-Trigger (Undershoot peaks will not trigger)
                                                                         -- Config_Param[1] --> '0' = NOT ALLOWED  Self-Trigger with light pulse between 2 data adquisition frames   
                                                                         --                 --> '1' = ALLOWED Self-Trigger with light pulse between 2 data adquisition frames
                                                                         -- Config_Param[2] --> '0' = Slope calculation with 2 consecutive samples --> x(n) - x(n-1)  / '1' = Slope calculation with 3 consecutive samples --> [x(n) - x(n-2)] / 2 
-                                                                        -- Config_Param[9 downto 3] --> Slope_Threshold (signed) 1(sign) + 6 bits, must be negative.
+                                                                        -- Config_Param[9 downto 3] --> Slope_Threshold for single PE (signed) 1(sign) + 6 bits, must be negative --> SINGLE PE to detect all peaks.
+                                                                        -- Config_Param[23 downto 10] --> Slope_Threshold for TRIGGER (signed) 1(sign) + 13 bits, must be negative --> THRESHOLD FOR THE TRIGGER ALGOTRIHM.
     Interface_LOCAL_Primitves_IN:   in  std_logic_vector(23 downto 0);   -- Interface with Local Primitives calculation BLOCK --> DEPENDS ON SELF-TRIGGER ALGORITHM 
     Interface_LOCAL_Primitves_OUT:  out std_logic_vector(23 downto 0);   -- Interface with Local Primitives calculation BLOCK --> DEPENDS ON SELF-TRIGGER ALGORITHM 
-    Self_trigger:                   out std_logic);                       -- ACTIVE HIGH when a Self-trigger events occurs
+    Self_trigger:                   out std_logic;                       -- ACTIVE HIGH when a Self-trigger events occurs
+    Self_trigger_CFD:               out std_logic);                      -- ACTIVE HIGH when a Self-trigger from CFD block occurs
 END component;
 
 COMPONENT LocalPrimitives_CIEMAT IS 
@@ -121,7 +122,7 @@ COMPONENT LocalPrimitives_CIEMAT IS
     Charge:                         out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
     Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
-    Baseline:                       in std_logic_vector(13 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
+    Baseline:                       out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
     Amplitude:                      out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
     High_Freq_Noise:                out std_logic);                                                 -- ACTIVE HIGH when high freq noise is detected 
 END component;
@@ -129,7 +130,7 @@ END component;
 -- Common signals for three blocks
 SIGNAL clock_aux : std_logic;
 SIGNAL reset_aux : std_logic;
-SIGNAL Config_Param_Reg: std_logic_vector (13 downto 0);
+SIGNAL Config_Param_Reg: std_logic_vector (27 downto 0);
 
 -- FILTER SIGNALS
 SIGNAL din_aux : std_logic_vector(13 downto 0):= "00000000000000";
@@ -138,7 +139,7 @@ SIGNAL filtered_dout_aux: std_logic_vector(13 downto 0);
 SIGNAL filtered_dout_aux_delay: std_logic_vector(13 downto 0);
 
 -- SELF TRIGGER SIGNALS
-SIGNAL Config_Param_SELF_aux: std_logic_vector(9 downto 0);
+SIGNAL Config_Param_SELF_aux: std_logic_vector(23 downto 0);
 --SIGNAL Sending_Data_aux : std_logic;
 SIGNAL Interface_LOCAL_Primitves_IN_aux: std_logic_vector(23 downto 0);
 SIGNAL Interface_LOCAL_Primitves_OUT_aux: std_logic_vector(23 downto 0);
@@ -194,7 +195,7 @@ signal Sending_Data_aux: std_logic:='0'; -- ACTIVE HIGH when data is being sent
 
 -- SIGNALS WITH IMPORTANT INFO
 SIGNAL Slope_Current_aux: std_logic_vector(13 downto 0):=(others=>'0');
-SIGNAL Slope_Threshold_aux: std_logic_vector(6 downto 0):=(others=>'0');
+SIGNAL Slope_Threshold_aux: std_logic_vector(13 downto 0):=(others=>'0');
 SIGNAL Peak_Current_aux: std_logic:='0';
 SIGNAL Detection_aux: std_logic:='0';
 SIGNAL Allow_Previous_Info: std_logic:='0';
@@ -209,24 +210,25 @@ SIGNAL Trigger_Delay: std_logic_vector(4 downto 0):=(others=>'0');
 
 begin
 
---UUT1 : Filter_CIEMAT 
---      PORT MAP (
---      clock         => clock_aux,
---      reset         => reset_aux,      
---      din           => din_aux,
---      Config_Param  => Config_Param_FILTER_aux, 
---      filtered_dout => filtered_dout_aux);
+UUT1 : Filter_CIEMAT 
+      PORT MAP (
+      clock         => clock_aux,
+      reset         => reset_aux,      
+      din           => din_aux,
+      Config_Param  => Config_Param_FILTER_aux, 
+      filtered_dout => filtered_dout_aux);
       
 UUT2 : PeakDetector_SelfTrigger_CIEMAT 
       PORT MAP (
       clock         => clock_aux,
       reset         => reset_aux,      
-      din           => din_aux,
+      din           => filtered_dout_aux,
       Sending_Data  => Sending_Data_aux, 
       Config_Param  => Config_Param_SELF_aux, 
       Interface_LOCAL_Primitves_IN => Interface_LOCAL_Primitves_IN_aux,
       Interface_LOCAL_Primitves_OUT => Interface_LOCAL_Primitves_OUT_aux,
-      Self_trigger => Self_trigger_aux);
+      Self_trigger => open,
+      Self_trigger_CFD => Self_trigger_aux);
       
 UUT3 : LocalPrimitives_CIEMAT
     PORT MAP ( 
@@ -244,7 +246,7 @@ UUT3 : LocalPrimitives_CIEMAT
     Charge=>  Charge_aux,                                               -- Charge of the light pulse (without undershoot) in ADC*samples
     Number_Peaks_UB=>  Number_Peaks_UB_aux,                             -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     Number_Peaks_OB=>  Number_Peaks_OB_aux,                             -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
-    Baseline=>  Baseline,                                           -- TO BE REMOVED AFTER DEBUGGING
+    Baseline=>  Baseline_aux,                                           -- TO BE REMOVED AFTER DEBUGGING
     Amplitude=>  Amplitude_aux,                                        -- TO BE REMOVED AFTER DEBUGGING
     High_Freq_Noise=> Noise_aux);
 
@@ -266,8 +268,9 @@ Config_Param_FILTER_aux             <= Config_Param_Reg(3 downto 0);
 -- Config_Param_SELF[1] --> '0' = NOT ALLOWED  Self-Trigger with light pulse between 2 data adquisition frames   
 --                 --> '1' = ALLOWED Self-Trigger with light pulse between 2 data adquisition frames
 -- Config_Param_SELF[2] --> '0' = Slope calculation with 2 consecutive samples --> x(n) - x(n-1)  / '1' = Slope calculation with 3 consecutive samples --> [x(n) - x(n-2)] / 2 
--- Config_Param_SELF[9 downto 3] --> Slope_Threshold (signed) 1(sign) + 6 bits, must be negative.
-Config_Param_SELF_aux               <= Config_Param_Reg(13 downto 4);
+-- Config_Param_SELF[9 downto 3] --> Slope_Threshold SINGLE PE (signed) 1(sign) + 6 bits, must be negative.
+-- Config_Param_SELF[23 downto 10] --> Slope_Threshold TRIGGER (signed) 1(sign) + 13 bits, must be negative.
+Config_Param_SELF_aux               <= Config_Param_Reg(27 downto 4);
 
 ---------------------- REGISTER THE VALUES OF A WAVEFORM TO FILL THE TRAILER WORDS     -----------------------
 
@@ -311,7 +314,7 @@ Info_Previous <= Info_Previous_reg;
 ------------ VARIABLES WITH IMPORTANT INFO ------------------------
 Peak_Current_aux    <= Interface_LOCAL_Primitves_OUT_aux(0);
 Slope_Current_aux   <= Interface_LOCAL_Primitves_OUT_aux(14 downto 1);
-Slope_Threshold_aux <= Config_Param_SELF_aux(9 downto 3);
+Slope_Threshold_aux <= Config_Param_SELF_aux(23 downto 10);
 Detection_aux       <= Interface_LOCAL_Primitves_IN_aux(0);
 Allow_Previous_Info <= Config_Param_SELF_aux(1);
 
@@ -678,8 +681,8 @@ gendelay: for i in 13 downto 0 generate
         port map(
             clk => clock_aux,
             ce => '1',
-            a => "00010",
-            d => din_aux(i), -- real time filtered data
+            a => "11011",
+            d => filtered_dout_aux(i), -- real time filtered data
             q => filtered_dout_aux_delay(i), -- Filtered data 8 cycles ago 
             q31 => open 
         );
@@ -699,8 +702,8 @@ Max_Peak            <= Max_Peak_aux;
 Charge              <= Charge_aux;                          
 Number_Peaks_UB     <= Number_Peaks_UB_aux;                 
 Number_Peaks_OB     <= Number_Peaks_OB_aux; 
---filtered_dout       <= filtered_dout_aux;                  
---Baseline            <= Baseline_aux;                        
+filtered_dout       <= filtered_dout_aux;                  
+Baseline            <= Baseline_aux;                        
 Amplitude           <= Amplitude_aux;                       
 Peak_Current        <= Peak_Current_aux;                   
 Slope_Current       <= Slope_Current_aux;                  

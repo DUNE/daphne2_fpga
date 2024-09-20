@@ -26,7 +26,7 @@ port(
     detector_id: std_logic_vector(5 downto 0);
     version_id: std_logic_vector(5 downto 0);
     adhoc: std_logic_vector(7 downto 0); -- command for adhoc trigger
-    st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
+    st_config: in std_logic_vector(27 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
     threshold_xc: in std_logic_vector(41 downto 0); -- trig threshold relative to calculated baseline
     filter_output_selector: in std_logic_vector(1 downto 0); --Esteban 
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
@@ -133,7 +133,7 @@ architecture stc_arch of stc is
         clock:                          in  std_logic;                                              -- AFE clock
         reset:                          in  std_logic;                                              -- Reset signal. ACTIVE HIGH
         din:                            in  std_logic_vector(13 downto 0);                          -- Data coming from the Filter Block / Raw data from AFEs
-        Config_Param:                   in  std_logic_vector(13 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
+        Config_Param:                   in  std_logic_vector(27 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
         Self_trigger:                   out std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
         Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
         Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
@@ -143,12 +143,12 @@ architecture stc_arch of stc is
         Charge:                         out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
         Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
         Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
-        --filtered_dout:                  out std_logic_vector (13 downto 0);                         -- HIGH PASS Filtered signal
-        Baseline:                       in std_logic_vector(13 downto 0);                          -- Real Time calculated BASELINE
+        filtered_dout:                  out std_logic_vector (13 downto 0);                         -- HIGH PASS Filtered signal
+        Baseline:                       out std_logic_vector(14 downto 0);                          -- Real Time calculated BASELINE
         Amplitude:                      out std_logic_vector(14 downto 0);                          -- Real Time calculated AMPLITUDE
         Peak_Current:                   out std_logic;                                              -- ACTIVE HIGH when a peak is detected
         Slope_Current:                  out std_logic_vector(13 downto 0);                          -- Real Time calculated SLOPE
-        Slope_Threshold:                out std_logic_vector(6 downto 0);                           -- Threshold over the slope to detect Peaks
+        Slope_Threshold:                out std_logic_vector(13 downto 0);                           -- Threshold over the slope to detect Peaks
         Detection:                      out std_logic;                                              -- ACTIVE HIGH when primitives are being calculated (during light pulse)
         Sending:                        out std_logic;                                              -- ACTIVE HIGH when colecting data for self-trigger frame
         Info_Previous:                  out std_logic;                                              -- ACTIVE HIGH when self-trigger is produced by a waveform between two frames 
@@ -294,7 +294,7 @@ begin
         reset                       => reset,                          -- Reset signal. ACTIVE HIGH
         din                         => afe_dat_filtered,                        -- Data coming from the Filter Block / Raw data from AFEs
         Config_Param                => st_config,                      -- Configure parameters for filtering & self-trigger bloks
-        Self_trigger                => triggered_ciemat,                      -- Self-Trigger signal comming from the Self-Trigger block
+        Self_trigger                => open, --triggered_ciemat,                      -- Self-Trigger signal comming from the Self-Trigger block
         Data_Available              => open,                           -- ACTIVE HIGH when LOCAL primitives are calculated
         Time_Peak                   => open,                           -- Time in Samples to achieve de Max peak
         Time_Pulse_UB               => open,                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
@@ -303,8 +303,8 @@ begin
         Charge                      => open,                           -- Charge of the light pulse (without undershoot) in ADC*samples
         Number_Peaks_UB             => open,                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
         Number_Peaks_OB             => open,                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
-        --filtered_dout               => open,                           -- HIGH PASS Filtered signal
-        Baseline                    => baseline,                           
+        filtered_dout               => open,                           -- HIGH PASS Filtered signal
+        Baseline                    => open,                           
         Amplitude                   => open,                           -- Real Time calculated AMPLITUDE
         Peak_Current                => open,                           -- ACTIVE HIGH when a peak is detected
         Slope_Current               => open,                           -- Real Time calculated SLOPE

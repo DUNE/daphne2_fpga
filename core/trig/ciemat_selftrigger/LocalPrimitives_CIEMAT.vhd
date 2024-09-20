@@ -52,7 +52,7 @@ port(
     Charge:                         out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
     Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
-    Baseline:                       in std_logic_vector(13 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
+    Baseline:                       out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
     Amplitude:                      out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
     High_Freq_Noise:                out std_logic                                                 -- ACTIVE HIGH when high freq noise is detected 
 --    Trailer_Word_0:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
@@ -100,13 +100,13 @@ signal Slope_Current: std_logic_vector(13 downto 0):= (others=>'0'); -- Real val
 --signal Baseline_Sum7_aux, Baseline_Sum7_reg: std_logic_vector(16 downto 0);
 
 signal din_delay1 : std_logic_vector(13 downto 0);
---signal Baseline_Err_aux : std_logic_vector(11 downto 0);
---signal Baseline_Add: std_logic_vector(14 downto 0):= (others=>'0'); 
---signal Baseline_current:std_logic_vector(13 downto 0):= (others=>'0'); 
---signal Baseline_delay1, Baseline_delay2, Baseline_delay3, Baseline_delay4, Baseline_delay5, Baseline_delay6 :std_logic_vector(13 downto 0):= (others=>'0');
---signal Baseline_delay7, Baseline_delay8, Baseline_delay9, Baseline_delay10, Baseline_delay11, Baseline_delay12 :std_logic_vector(13 downto 0):= (others=>'0'); 
---signal Baseline_delay13, Baseline_delay14, Baseline_delay15, Baseline_delay16:std_logic_vector(13 downto 0):= (others=>'0');
---signal Baseline_delay17, Baseline_delay18, Baseline_delay19, Baseline_delay20:std_logic_vector(13 downto 0):= (others=>'0');  
+signal Baseline_Err_aux : std_logic_vector(11 downto 0);
+signal Baseline_Add: std_logic_vector(14 downto 0):= (others=>'0'); 
+signal Baseline_current:std_logic_vector(13 downto 0):= (others=>'0'); 
+signal Baseline_delay1, Baseline_delay2, Baseline_delay3, Baseline_delay4, Baseline_delay5, Baseline_delay6 :std_logic_vector(13 downto 0):= (others=>'0');
+signal Baseline_delay7, Baseline_delay8, Baseline_delay9, Baseline_delay10, Baseline_delay11, Baseline_delay12 :std_logic_vector(13 downto 0):= (others=>'0'); 
+signal Baseline_delay13, Baseline_delay14, Baseline_delay15, Baseline_delay16:std_logic_vector(13 downto 0):= (others=>'0');
+signal Baseline_delay17, Baseline_delay18, Baseline_delay19, Baseline_delay20:std_logic_vector(13 downto 0):= (others=>'0');  
 signal Amplitude_Aux: std_logic_vector(14 downto 0):= (others=>'0'); 
 signal Amplitude_current:std_logic_vector(14 downto 0):= (others=>'0'); 
 
@@ -152,87 +152,87 @@ begin
 --Baseline_Sum1_aux     <= std_logic_vector(unsigned(resize(unsigned('0'& din),17))+unsigned(resize(unsigned('0'& din_delay1),17)));
 
 --Baseline_Add    <= '0' & Baseline_Sum7_reg(16 downto 3);
-Amplitude_Aux        <= std_logic_vector(signed('0' & din) - signed('0' & Baseline)); --Aca esta
+Amplitude_Aux        <= std_logic_vector(signed('0' & din) - signed('0' & Baseline_delay20));
 
---Baseline_Err_aux     <= std_logic_vector(unsigned("0" & din(13 downto 3)) - unsigned("0" & Baseline_Current(13 downto 3)));
---Baseline_Add         <= std_logic_vector(signed('0' & Baseline_Current) + signed(resize(signed(Baseline_Err_aux),15)));
+Baseline_Err_aux     <= std_logic_vector(unsigned("0" & din(13 downto 3)) - unsigned("0" & Baseline_Current(13 downto 3)));
+Baseline_Add         <= std_logic_vector(signed('0' & Baseline_Current) + signed(resize(signed(Baseline_Err_aux),15)));
 
---Baseline            <= ('0' & Baseline_delay4); -- TO BE REMOVED AFTER DEBUGGING
+Baseline            <= ('0' & Baseline_delay4); -- TO BE REMOVED AFTER DEBUGGING
 Amplitude           <= Amplitude_current; -- TO BE REMOVED AFTER DEBUGGING
 Baseline_Amplitude: process(clock, reset)
 begin
     if (clock'event and clock='1') then
         din_delay1 <= din;
         if(reset='1')then
-            --Baseline_Current    <= din;
-            --Baseline_delay1     <= din;
-            --Baseline_delay2     <= din;
-            --Baseline_delay3     <= din;
-            --Baseline_delay4     <= din;
-            --Baseline_delay5     <= din;
-            --Baseline_delay6     <= din;
-            --Baseline_delay7     <= din;
-            --Baseline_delay8     <= din;
-            --Baseline_delay9     <= din;
-            --Baseline_delay10     <= din;
-            --Baseline_delay11     <= din;
-            --Baseline_delay12     <= din;
-            --Baseline_delay13     <= din;
-            --Baseline_delay14     <= din;
-            --Baseline_delay15     <= din;
-            --Baseline_delay16     <= din;
-            --Baseline_delay17     <= din;
-            --Baseline_delay18     <= din;
-            --Baseline_delay19     <= din;
-            --Baseline_delay20     <= din;
+            Baseline_Current    <= din;
+            Baseline_delay1     <= din;
+            Baseline_delay2     <= din;
+            Baseline_delay3     <= din;
+            Baseline_delay4     <= din;
+            Baseline_delay5     <= din;
+            Baseline_delay6     <= din;
+            Baseline_delay7     <= din;
+            Baseline_delay8     <= din;
+            Baseline_delay9     <= din;
+            Baseline_delay10     <= din;
+            Baseline_delay11     <= din;
+            Baseline_delay12     <= din;
+            Baseline_delay13     <= din;
+            Baseline_delay14     <= din;
+            Baseline_delay15     <= din;
+            Baseline_delay16     <= din;
+            Baseline_delay17     <= din;
+            Baseline_delay18     <= din;
+            Baseline_delay19     <= din;
+            Baseline_delay20     <= din;
             Amplitude_Current    <= (others=>'0');  
         else
             Amplitude_Current    <= Amplitude_Aux;
-            --if(Peak_Detection='1')then
-                --Baseline_Current    <= Baseline_delay20;
-                --Baseline_delay1     <= Baseline_delay20;
-                --Baseline_delay2     <= Baseline_delay20;
-                --Baseline_delay3     <= Baseline_delay20;
-                --Baseline_delay4     <= Baseline_delay20;
-                --Baseline_delay5     <= Baseline_delay20;
-                --Baseline_delay6     <= Baseline_delay20;
-                --Baseline_delay7     <= Baseline_delay20;
-                --Baseline_delay8     <= Baseline_delay20;
-                --Baseline_delay9     <= Baseline_delay20;
-                --Baseline_delay10    <= Baseline_delay20;
-                --Baseline_delay11    <= Baseline_delay20;
-                --Baseline_delay12    <= Baseline_delay20;
-                --Baseline_delay13    <= Baseline_delay20;
-                --Baseline_delay14    <= Baseline_delay20;
-                --Baseline_delay15    <= Baseline_delay20;
-                --Baseline_delay16    <= Baseline_delay20;
-                --Baseline_delay17    <= Baseline_delay20;
-                --Baseline_delay18    <= Baseline_delay20;
-                --Baseline_delay19    <= Baseline_delay20;
-                --Baseline_delay20    <= Baseline_delay20;
-            --else
-                --Baseline_delay20    <= Baseline_delay19;
-                --Baseline_delay19    <= Baseline_delay18;
-                --Baseline_delay18    <= Baseline_delay17;
-                --Baseline_delay17    <= Baseline_delay16;
-                --Baseline_delay16    <= Baseline_delay15;
-                --Baseline_delay15    <= Baseline_delay14;
-                --Baseline_delay14    <= Baseline_delay13;
-                --Baseline_delay13    <= Baseline_delay12;
-                --Baseline_delay12    <= Baseline_delay11;
-                --Baseline_delay11    <= Baseline_delay10;
-                --Baseline_delay10    <= Baseline_delay9;
-                --Baseline_delay9     <= Baseline_delay8;
-                --Baseline_delay8     <= Baseline_delay7;
-                --Baseline_delay7     <= Baseline_delay6;
-                --Baseline_delay6     <= Baseline_delay5;
-                --Baseline_delay5     <= Baseline_delay4;
-                --Baseline_delay4     <= Baseline_delay3;
-                --Baseline_delay3     <= Baseline_delay2;
-                --Baseline_delay2     <= Baseline_delay1;
-                --Baseline_delay1     <= Baseline_Current;
-                --Baseline_Current    <= Baseline_Add(13 downto 0);    
-            --end if;
+            if(Peak_Detection='1')then
+                Baseline_Current    <= Baseline_delay20;
+                Baseline_delay1     <= Baseline_delay20;
+                Baseline_delay2     <= Baseline_delay20;
+                Baseline_delay3     <= Baseline_delay20;
+                Baseline_delay4     <= Baseline_delay20;
+                Baseline_delay5     <= Baseline_delay20;
+                Baseline_delay6     <= Baseline_delay20;
+                Baseline_delay7     <= Baseline_delay20;
+                Baseline_delay8     <= Baseline_delay20;
+                Baseline_delay9     <= Baseline_delay20;
+                Baseline_delay10    <= Baseline_delay20;
+                Baseline_delay11    <= Baseline_delay20;
+                Baseline_delay12    <= Baseline_delay20;
+                Baseline_delay13    <= Baseline_delay20;
+                Baseline_delay14    <= Baseline_delay20;
+                Baseline_delay15    <= Baseline_delay20;
+                Baseline_delay16    <= Baseline_delay20;
+                Baseline_delay17    <= Baseline_delay20;
+                Baseline_delay18    <= Baseline_delay20;
+                Baseline_delay19    <= Baseline_delay20;
+                Baseline_delay20    <= Baseline_delay20;
+            else
+                Baseline_delay20    <= Baseline_delay19;
+                Baseline_delay19    <= Baseline_delay18;
+                Baseline_delay18    <= Baseline_delay17;
+                Baseline_delay17    <= Baseline_delay16;
+                Baseline_delay16    <= Baseline_delay15;
+                Baseline_delay15    <= Baseline_delay14;
+                Baseline_delay14    <= Baseline_delay13;
+                Baseline_delay13    <= Baseline_delay12;
+                Baseline_delay12    <= Baseline_delay11;
+                Baseline_delay11    <= Baseline_delay10;
+                Baseline_delay10    <= Baseline_delay9;
+                Baseline_delay9     <= Baseline_delay8;
+                Baseline_delay8     <= Baseline_delay7;
+                Baseline_delay7     <= Baseline_delay6;
+                Baseline_delay6     <= Baseline_delay5;
+                Baseline_delay5     <= Baseline_delay4;
+                Baseline_delay4     <= Baseline_delay3;
+                Baseline_delay3     <= Baseline_delay2;
+                Baseline_delay2     <= Baseline_delay1;
+                Baseline_delay1     <= Baseline_Current;
+                Baseline_Current    <= Baseline_Add(13 downto 0);    
+            end if;
         end if;
     end if;
 end process Baseline_Amplitude;

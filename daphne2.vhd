@@ -296,7 +296,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
         detector_id: in std_logic_vector(5 downto 0);
         version_id: in std_logic_vector(5 downto 0);
         st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
-        st_config: in std_logic_vector(13 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
+        st_config: in std_logic_vector(27 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
         filter_output_selector: in std_logic_vector(1 downto 0); -- filter signal type selector
         outmode: in std_logic_vector(7 downto 0); -- choose streaming or self-trig sender for each output
         adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
@@ -1042,7 +1042,7 @@ begin
         outmode => outmode_reg,
         adhoc => adhoc_reg,
         threshold_xc => threshold_xc_reg,
-        st_config => st_config_reg(15 downto 2), -- Self-Trigger Config CIEMAT (Nacho)
+        st_config => st_config_reg(29 downto 2), -- Self-Trigger Config CIEMAT (Nacho)
         --
         ti_trigger => ti_trigger_reg, --------------------
         ti_trigger_stbr => ti_trigger_stbr_reg, -------------------
