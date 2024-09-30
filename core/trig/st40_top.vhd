@@ -142,17 +142,17 @@ begin
                            else "0000000000000" & triggered_internal(20);
     rerouted_signal(0)(1) <= afe_dat(0)(1) when self_trigger_test_selector = '1'
                            else "0000000000000" & triggered_internal(21); 
-    rerouted_signal(0)(2) <= afe_dat(0)(1) when self_trigger_test_selector = '1'
+    rerouted_signal(0)(2) <= afe_dat(0)(2) when self_trigger_test_selector = '1'
                            else "0000000000000" & triggered_internal(22);                      
-    rerouted_signal(0)(3) <= afe_dat(0)(2) when self_trigger_test_selector = '1'
+    rerouted_signal(0)(3) <= afe_dat(0)(3) when self_trigger_test_selector = '1'
                            else "0000000000000" & triggered_internal(23);
-    rerouted_signal(0)(4) <= afe_dat(0)(3) when self_trigger_test_selector = '1'
+    rerouted_signal(0)(4) <= afe_dat(0)(4) when self_trigger_test_selector = '1'
                            else "0000000000000" & triggered_internal(24);
-    rerouted_signal(0)(5) <= afe_dat(0)(4) when self_trigger_test_selector = '1'
+    rerouted_signal(0)(5) <= afe_dat(0)(5) when self_trigger_test_selector = '1'
                            else "0000000000000" & triggered_internal(25);
-    rerouted_signal(0)(6) <= afe_dat(0)(5) when self_trigger_test_selector = '1'
+    rerouted_signal(0)(6) <= afe_dat(0)(6) when self_trigger_test_selector = '1'
                            else "0000000000000" & triggered_internal(26);
-    rerouted_signal(0)(7) <= afe_dat(0)(6) when self_trigger_test_selector = '1'
+    rerouted_signal(0)(7) <= afe_dat(0)(7) when self_trigger_test_selector = '1'
                            else "0000000000000" & triggered_internal(27);
     rerouted_signal(1)(0) <= afe_dat(1)(0) when self_trigger_test_selector = '1'
                            else "0000000000000" & triggered_internal(28);
