@@ -43,8 +43,8 @@ port(
     fifo_ae: out std_logic;
     fifo_do: out std_logic_vector(31 downto 0);
     fifo_ko: out std_logic_vector( 3 downto 0);
-    TCount: out std_logic_vector(63 downto 0);
-    Pcount: out std_logic_vector(63 downto 0)
+    TCount: out std_logic_vector(31 downto 0);
+    Pcount: out std_logic_vector(31 downto 0)
   );
 end stc;
 
@@ -72,8 +72,8 @@ architecture stc_arch of stc is
     signal almostempty: std_logic_vector(3 downto 0);
     signal almostfull: std_logic_vector(3 downto 0);
     signal fifo_af: std_logic;
-    signal trigCount: unsigned(63 downto 0) := (others => '0');
-    signal packCount: unsigned(63 downto 0) := (others => '0');
+    signal trigCount: unsigned(31 downto 0) := (others => '0');
+    signal packCount: unsigned(31 downto 0) := (others => '0');
 
     type array_4x64_type is array(3 downto 0) of std_logic_vector(63 downto 0);
     signal DI, DO: array_4x64_type;

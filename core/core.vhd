@@ -60,7 +60,7 @@ port(
     inmux_dout: out std_logic_vector(5 downto 0); -- read inmux control regs
 
     Rcount_addr: in std_logic_vector(31 downto 0);
-    Rcount: out std_logic_vector(63 downto 0);
+    Rcount: out std_logic_vector(31 downto 0);
 
     daq_refclk_p, daq_refclk_n: in std_logic; -- MGT REFCLK for DAQ, LVDS, quad 213, refclk0, 120.237MHz
     daq0_tx_p, daq0_tx_n: out std_logic;
@@ -128,7 +128,7 @@ architecture core_arch of core is
         dout: out std_logic_vector(31 downto 0);
         kout: out std_logic_vector(3 downto 0);
         Rcount_addr: in std_logic_vector(31 downto 0);
-        Rcount: out std_logic_vector(63 downto 0)
+        Rcount: out std_logic_vector(31 downto 0)
     );
     end component;
 
