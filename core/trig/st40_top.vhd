@@ -41,7 +41,7 @@ port(
     dout: out std_logic_vector(31 downto 0);
     kout: out std_logic_vector(3 downto 0);
     Rcount_addr: in std_logic_vector(31 downto 0);
-    Rcount: out std_logic_vector(31 downto 0)
+    Rcount: out std_logic_vector(1 downto 0)
     
 );
 end st40_top;
@@ -65,9 +65,9 @@ architecture st40_top_arch of st40_top is
     signal triggered_internal: std_logic_vector(39 downto 0);
     --signal packet_size_counter: integer range 0 to 467;
     signal rerouted_signal: array_5x8x14_type;
-    signal trigcount: array_5x8x32_type;
-    signal packcount: array_5x8x32_type;
-    signal sendCount: unsigned(31 downto 0) := (others => '0');
+    signal trigcount: array_5x8x2_type;
+    signal packcount: array_5x8x2_type;
+    signal sendCount: unsigned(1 downto 0) := (others => '0');
 
     component stc is
     generic( link_id: std_logic_vector(5 downto 0) := "000000"; ch_id: std_logic_vector(5 downto 0) := "000000" );
@@ -94,8 +94,8 @@ architecture st40_top_arch of st40_top is
         fifo_ae: out std_logic;
         fifo_do: out std_logic_vector(31 downto 0);
         fifo_ko: out std_logic_vector( 3 downto 0);
-        Tcount: out std_logic_vector(31 downto 0);
-        Pcount: out std_logic_vector(31 downto 0)
+        Tcount: out std_logic_vector(1 downto 0);
+        Pcount: out std_logic_vector(1 downto 0)
       );
     end component;
 

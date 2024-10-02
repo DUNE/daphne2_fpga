@@ -31,6 +31,7 @@ package daphne2_package is
     type array_8x4_type is array (7 downto 0) of std_logic_vector(3 downto 0);
     type array_8x14_type is array (7 downto 0) of std_logic_vector(13 downto 0);
     type array_8x32_type is array (7 downto 0) of std_logic_vector(31 downto 0);
+    type array_8x2_type is array (7 downto 0) of std_logic_vector(1 downto 0);
     type array_8x64_type is array (7 downto 0) of std_logic_vector(63 downto 0);
     type array_9x14_type is array (8 downto 0) of std_logic_vector(13 downto 0);
     type array_9x16_type is array (8 downto 0) of std_logic_vector(15 downto 0);
@@ -44,6 +45,7 @@ package daphne2_package is
     type array_5x8x4_type is array (4 downto 0) of array_8x4_type;
     type array_5x8x14_type is array (4 downto 0) of array_8x14_type;
     type array_5x8x32_type is array (4 downto 0) of array_8x32_type;
+    type array_5x8x2_type is array (4 downto 0) of array_8x2_type;
     type array_5x8x64_type is array (4 downto 0) of array_8x64_type;
     type array_5x9x14_type is array (4 downto 0) of array_9x14_type;
     type array_5x9x16_type is array (4 downto 0) of array_9x16_type;
