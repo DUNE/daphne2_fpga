@@ -42,9 +42,9 @@ port(
     triggered_internal: out std_logic;
     fifo_ae: out std_logic;
     fifo_do: out std_logic_vector(31 downto 0);
-    fifo_ko: out std_logic_vector( 3 downto 0);
-    TCount: out std_logic_vector(1 downto 0);
-    Pcount: out std_logic_vector(1 downto 0)
+    fifo_ko: out std_logic_vector( 3 downto 0)
+    --TCount: out std_logic_vector(1 downto 0);
+    --Pcount: out std_logic_vector(1 downto 0)
   );
 end stc;
 
@@ -72,8 +72,8 @@ architecture stc_arch of stc is
     signal almostempty: std_logic_vector(3 downto 0);
     signal almostfull: std_logic_vector(3 downto 0);
     signal fifo_af: std_logic;
-    signal trigCount: unsigned(1 downto 0) := (others => '0');
-    signal packCount: unsigned(1 downto 0) := (others => '0');
+    --signal trigCount: unsigned(1 downto 0) := (others => '0');
+    --signal packCount: unsigned(1 downto 0) := (others => '0');
 
     type array_4x64_type is array(3 downto 0) of std_logic_vector(63 downto 0);
     signal DI, DO: array_4x64_type;
@@ -354,7 +354,7 @@ begin
     begin
         if rising_edge(aclk) then
             if ( reset='1' or trig_rst_count='1' ) then
-                trigCount <= (others => '0');
+                --trigCount <= (others => '0');
                 trigger_counter_state <= rst_trggr;
             else
                 case(trigger_counter_state) is
@@ -362,7 +362,7 @@ begin
                         trigger_counter_state <= wait4trig_trggr;
                     when wait4trig_trggr =>
                         if ( enable='1' and triggered='1') then
-                            trigCount <= trigCount + 1;
+                            --trigCount <= trigCount + 1;
                             trigger_counter_state <= rising_triggered;
                         elsif ( enable='1' and triggered='0') then
                             trigger_counter_state <= wait4trig_trggr;
@@ -390,18 +390,18 @@ begin
             if (reset='1' or trig_rst_count='1') then ---------------////
                 state <= rst;
                 --trigCount <= (others => '0');
-                packCount <= (others => '0');
+                --packCount <= (others => '0');
             else
                 case(state) is
                     when rst =>
                         state <= wait4trig;
                     when wait4trig => 
                         if (trig_rst_count = '1') then
-                            packCount <= (others => '0');
+                            --packCount <= (others => '0');
                         end if;
                         if (triggered='1' and enable='1' and fifo_af='1') then -- start assembling the output frame
                             block_count <= "000000";
-                            packCount <= packCount+1;
+                            --packCount <= packCount+1;
                            -- trigCount <= trigCount+1;
                             ts_reg <= std_logic_vector( unsigned(timestamp) - 124 );
                             state <= sof; 
@@ -499,9 +499,9 @@ begin
 --                        end if;
                         state <= dat12;
                     when dat12 =>
-                        if (trig_rst_count = '1') then
-                            packCount <= (others => '0');  
-                        end if;
+                        --if (trig_rst_count = '1') then
+                        --    packCount <= (others => '0');  
+                        --end if;
                         state <= dat13;
                     when dat13 =>
                         --if (trig_rst_count = '1') then
@@ -765,8 +765,8 @@ begin
 
     fifo_do(31 downto 0) <= DO(3)(7 downto 0) & DO(2)(7 downto 0) & DO(1)(7 downto 0) & DO(0)(7 downto 0);
     fifo_ko( 3 downto 0) <= DOP(3)(0) & DOP(2)(0) & DOP(1)(0) & DOP(0)(0);
-    TCount <= std_logic_vector(trigCount); 
-    Pcount <= std_logic_vector(packCount); 
+    --TCount <= std_logic_vector(trigCount); 
+    --Pcount <= std_logic_vector(packCount); 
 
 
 end stc_arch;
