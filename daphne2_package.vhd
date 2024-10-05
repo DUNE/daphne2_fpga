@@ -51,10 +51,13 @@ package daphne2_package is
     type array_5x9x16_type is array (4 downto 0) of array_9x16_type;
 
     -- write anything to this address to force trigger
-
     constant TRIGGER_ADDR: std_logic_vector(31 downto 0) := X"00002000";
+    -- write anything to this adresss to activate the deadtime during SPYBUFFERs readout
     constant TRIGGER_SPYBUFFER_READ_DEAD_TIME_ON_ADDR: std_logic_vector(31 downto 0) := X"00002020";
+    -- write anything to this adresss to deactivate the deadtime during SPYBUFFERs readout
     constant TRIGGER_SPYBUFFER_READ_DEAD_TIME_OFF_ADDR: std_logic_vector(31 downto 0) := X"00002021";
+    -- FOR SELFTRIGGER TEST: write 1 to this address to have signal in channels 0 2 5 7; triggers in 1 3 4 6 in all AFEs 
+    --                       write 0 to this address to have signal in channels 1 3 4 6; triggers in 0 2 5 7 in all AFEs 
     constant SELFTRIGGER_TEST_ADDR: std_logic_vector(31 downto 0) := X"00002023";
 
     -- write anything to this address to force front end recalibration

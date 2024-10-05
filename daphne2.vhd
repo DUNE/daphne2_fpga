@@ -830,6 +830,7 @@ begin
                (X"00000000000000" & outmode_reg(7 downto 0)) when std_match(rx_addr_reg, DAQ_OUTMODE_BASEADDR) else 
                (X"00000000000000" & "00" & inmux_dout(5 downto 0)) when std_match(rx_addr_reg, CORE_INMUX_ADDR) else
                (X"000000" & st_enable_reg) when std_match(rx_addr_reg, ST_ENABLE_ADDR) else
+               (X"000000000000000" & "000" & self_trigger_test_selector) when std_match(rx_addr_reg, SELFTRIGGER_TEST_ADDR) else
                (X"000000000000000" & "00" & Rcount_reg) when std_match(rx_addr_reg, RCOUNT_ADDR) else
 
                (others=>'0');
