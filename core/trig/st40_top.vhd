@@ -36,12 +36,12 @@ port(
     timestamp: in std_logic_vector(63 downto 0);
 	afe_dat: in array_5x9x14_type; -- ALL AFE channels feed into this module
 
-    oeiclk: in std_logic;
+    --oeiclk: in std_logic;
     fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
     dout: out std_logic_vector(31 downto 0);
-    kout: out std_logic_vector(3 downto 0);
-    Rcount_addr: in std_logic_vector(31 downto 0);
-    Rcount: out std_logic_vector(1 downto 0)
+    kout: out std_logic_vector(3 downto 0)
+    --Rcount_addr: in std_logic_vector(31 downto 0);
+    --Rcount: out std_logic_vector(1 downto 0)
     
 );
 end st40_top;
@@ -395,17 +395,5 @@ begin
 
     dout <= dout_reg;
     kout <= kout_reg;
-
-    rcount_mux_proc: process(oeiclk)
-    begin 
-        if rising_edge(oeiclk) then
-            case Rcount_addr is
-                when X"40800000" =>
-                    Rcount <= "01";
-                when others => 
-                    Rcount <= (others => '1');
-            end case;
-        end if;
-    end process rcount_mux_proc;
 
 end st40_top_arch;

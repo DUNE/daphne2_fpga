@@ -316,8 +316,8 @@ architecture DAPHNE2_arch of DAPHNE2 is
         inmux_we: in std_logic;
         inmux_dout: out std_logic_vector(5 downto 0);
 
-        Rcount_addr: in std_logic_vector(31 downto 0);
-        Rcount: out std_logic_vector(1 downto 0);
+        --Rcount_addr: in std_logic_vector(31 downto 0);
+        --Rcount: out std_logic_vector(1 downto 0);
 
         daq_refclk_p, daq_refclk_n: in std_logic; -- MGT REFCLK for DAQ, LVDS, quad 213, refclk0, 120.237MHz
         daq0_tx_p, daq0_tx_n: out std_logic;
@@ -422,7 +422,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal self_trigger_test_selector: std_logic := '1';
     signal self_trigger_test_reg_we: std_logic;
 
-    signal Rcount_reg: std_logic_vector(1 downto 0);
+    signal Rcount_reg: std_logic_vector(1 downto 0) := "11";
     signal trig_rst_count: std_logic;
 
 begin
@@ -1080,8 +1080,8 @@ begin
         spy_dout => core_spy_data(31 downto 0),
         inmux_dout => inmux_dout,
 
-        Rcount_addr => rx_addr,
-        Rcount => Rcount_reg,
+        --Rcount_addr => rx_addr,
+        --Rcount => Rcount_reg,
         
         daq_refclk_p => daq_refclk_p, daq_refclk_n => daq_refclk_n,
         daq0_tx_p => daq0_tx_p, daq0_tx_n => daq0_tx_n,
