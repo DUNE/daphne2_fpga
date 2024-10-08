@@ -78,7 +78,7 @@ module hpf_pedestal_recovery_filter_trigger(
     //    .y(movmean_out)
     //);
 
-    moving_integrator_filter movmean_25(
+    moving_integrator_filter movmean(
         .clk(clk),
         .reset(reset),
         .enable(enable),
@@ -100,16 +100,27 @@ module hpf_pedestal_recovery_filter_trigger(
         .triggered(triggered_xc)
     );
 
-    constant_fraction_discriminator cfd(
-        .clk(clk),
+    // constant_fraction_discriminator cfd(
+    //     .clk(clk),
+    //     .reset(reset),
+    //     .enable(enable),
+    //     .x(xcorr_calc), //movmean_out),
+    //     //.threshold(threshold_level),
+    //     .trigger_threshold(triggered_xc),
+    //     .trigger(trigger_output)
+    //     //.y(cfd_out)
+    //     );    
+
+    Configurable_CFD cfd(
+        .clock(clk),
         .reset(reset),
         .enable(enable),
-        .x(xcorr_calc), //movmean_out),
-        //.threshold(threshold_level),
         .trigger_threshold(triggered_xc),
+        .config_delay(5'b11010),
+        .config_sign(1'b0),
+        .din(xcorr_calc),
         .trigger(trigger_output)
-        //.y(cfd_out)
-        );    
+        );
 
     assign resta_out =  (enable==0) ?   x_i : 
                         (enable==1) ?   (x_i - lpf_out) : 
