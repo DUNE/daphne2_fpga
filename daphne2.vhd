@@ -359,7 +359,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
 
     -- DAPHNE specific signals...
 
-	signal reset_async, reset_ep, reset_fe_sclk200, reset_fe_mclk, reset_mmcm1: std_logic;
+	signal reset_async, reset_ep, reset_fe_sclk200, reset_fe_mclk, reset_mmcm1, reset_core: std_logic;
 
     signal sclk200, sclk100, mclk, fclk: std_logic;
 
@@ -1045,12 +1045,13 @@ begin
     inmux_we <= '1' when (std_match(rx_addr,CORE_INMUX_ADDR) and rx_wren='1') else '0';
 
     -- combo core logic, streaming and self-trig
+    reset_core <= reset_async or reset_mmcm1;
 
     core_inst: core
     port map(
         mclk => mclk,
         sclk100 => sclk100,
-        reset => reset_async,
+        reset => reset_core,
 
         afe_dat => afe_dout,
         timestamp => timestamp,
