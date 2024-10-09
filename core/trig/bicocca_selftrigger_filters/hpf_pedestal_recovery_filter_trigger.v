@@ -15,7 +15,7 @@ module hpf_pedestal_recovery_filter_trigger(
 	input wire reset,
 	input wire enable,
     //input wire signed [13:0] threshold_value,
-    input wire [37:0] threshold_xc,
+    input wire [41:0] threshold_xc,
     input wire [1:0] output_selector,
     output wire signed [15:0] baseline,
 	input wire signed [15:0] x,

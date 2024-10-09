@@ -27,7 +27,7 @@ port(
     enable: in std_logic;
     din: in std_logic_vector(13 downto 0); -- filtered AFE data (no baseline)
     din_mm: in std_logic_vector(13 downto 0); -- filtered "always-zero" data
-    threshold: in std_logic_vector(37 downto 0); -- matching filter trigger threshold values
+    threshold: in std_logic_vector(41 downto 0); -- matching filter trigger threshold values
 --    filt_ready: in std_logic;
     triggered: out std_logic;
     xcorr_calc: out std_logic_vector(27 downto 0)
@@ -123,10 +123,10 @@ begin
     -- define the configuration of the trigger
 -------------------------------------------------------------------------------------------------------------------
     -- trigger threshold to ignore larger events
-    en_threshold <= signed(threshold(37 downto 24));
+    en_threshold <= signed(threshold(41 downto 28));
 
     -- trigger modification to compare the cross correlation output
-    s_threshold <= resize(signed(threshold(23 downto 0)),28);
+    s_threshold <= signed(threshold(27 downto 0));
     
     -- disable the trigger feature
 -------------------------------------------------------------------------------------------------------------------

@@ -118,7 +118,13 @@
 	0x0000500D  StreamSender3 input1 channel select, default = 31 (AFE3 ch1)
 	0x0000500E  StreamSender3 input2 channel select, default = 32 (AFE3 ch2)
 	0x0000500F  StreamSender3 input3 channel select, default = 33 (AFE3 ch3)
-	
+
+	Specify the threshold value to be used for all self-triggered mode senders.
+	Note this value is relative to the automatic baseline value calculated 
+	for each input channel. Default is 256. This register is read/write.
+
+	0x00006000  Trigger threshold for self triggered senders, 14 bits R/W
+
 	There is only one self triggered sender module and it connects to all forty
 	input channels. Use this register to enable which channels you want the self
 	triggered sender to see. The default value is for this register is all inputs DISABLED
@@ -130,70 +136,16 @@
 	
 	0x00006010 Ad hoc Trigger command value, 8 bits R/W
 
-	Specify the self trigger configuration values to be used for each self-triggered 
-	mode senders. Note that this register is 64 bits of width where the whole self-trigger
-	core is configurated. The word is distributed as follows:
-	-> Bits [1:0] self trigger core filters configuration (Default is '01')
-	-> Bits [2] self trigger core trigger primitives configuration (Default is '1')
-				--> '0' = Peak detector as self-trigger  
-				--> '1' = Main detection as Self-Trigger (Undershoot peaks will not trigger)
-	-> Bits [3] self trigger core trigger primitives configuration (Default is '1')
-				--> '0' = Self-Trigger with light pulse between 2 data adquisition frames Not Allowed  
-                --> '1' = Self-Trigger with light pulse between 2 data adquisition frames Allowed
-	-> Bits [4] self trigger core trigger primitives configuration (Default is '0')
-				--> '0' = Slope calculation with 2 consecutive samples --> x(n) - x(n-1)  
-				--> '1' = Slope calculation with 3 consecutive samples --> [x(n) - x(n-2)] / 2 
-	-> Bits [11:5] self trigger core trigger primitives configuration (Default is '1110110' or -10)
-				--> Slope_Threshold (signed) 1(sign) + 6 bits, must be negative
-	-> Bits [25:12] self trigger core primitives configuration (Default is '1110110' or -10)
-				--> SPE threshold (signed) 1(sign) + 6 bits, must be negative	
-	-> Bits [49:26] self trigger core matching trigger configuration (Default is or '000000000000000100101100' 300)
-				--> Lower limit of detection, minimum value to detect by the trigger, measured in correlation value
-				--> Signed, however it should be set positive for intended functionality
-	-> Bits [63:50] self trigger core matching trigger configuration (Default is '11111110110000' or -80)
-				--> Upper limit of detection, maximum value allowed of the peak relative to baseline
-				--> Signed - 1(sign) + 13 bits, must be negative
+	Specify the threshold value to be used for all self-triggered mode senders.
+	Note that the 28 LSBs represent a value used by the output of the cross
+	correlation strategy implemented in the self trigger modules. Typically,
+	the proper threshold level is set to 300 when the user intends to find 
+	Single Photoelectrons with a 32 register window. Default is 300.
+	Note that the 14 MSBs represent a SIGNED value in ADC counts relative to
+	a signal with no baseline, this value is used to disable the trigger 
+	whenever large event happen. Default is -80. This register is read/write
 
-	0x00006100  Self Trigger channel  1 configuration, 64 bits R/W
-	0x00006101  Self Trigger channel  2 configuration, 64 bits R/W
-	0x00006102  Self Trigger channel  3 configuration, 64 bits R/W
-	0x00006103  Self Trigger channel  4 configuration, 64 bits R/W
-	0x00006104  Self Trigger channel  5 configuration, 64 bits R/W
-	0x00006105  Self Trigger channel  6 configuration, 64 bits R/W
-	0x00006106  Self Trigger channel  7 configuration, 64 bits R/W
-	0x00006107  Self Trigger channel  8 configuration, 64 bits R/W
-	0x00006108  Self Trigger channel  9 configuration, 64 bits R/W
-	0x00006109  Self Trigger channel 10 configuration, 64 bits R/W
-	0x0000610A  Self Trigger channel 11 configuration, 64 bits R/W
-	0x0000610B  Self Trigger channel 12 configuration, 64 bits R/W
-	0x0000610C  Self Trigger channel 13 configuration, 64 bits R/W
-	0x0000610D  Self Trigger channel 14 configuration, 64 bits R/W
-	0x0000610E  Self Trigger channel 15 configuration, 64 bits R/W
-	0x0000610F  Self Trigger channel 16 configuration, 64 bits R/W
-	0x00006110  Self Trigger channel 17 configuration, 64 bits R/W
-	0x00006111  Self Trigger channel 18 configuration, 64 bits R/W
-	0x00006112  Self Trigger channel 19 configuration, 64 bits R/W
-	0x00006113  Self Trigger channel 20 configuration, 64 bits R/W
-	0x00006114  Self Trigger channel 21 configuration, 64 bits R/W
-	0x00006115  Self Trigger channel 22 configuration, 64 bits R/W
-	0x00006116  Self Trigger channel 23 configuration, 64 bits R/W
-	0x00006117  Self Trigger channel 24 configuration, 64 bits R/W
-	0x00006118  Self Trigger channel 25 configuration, 64 bits R/W
-	0x00006119  Self Trigger channel 26 configuration, 64 bits R/W
-	0x0000611A  Self Trigger channel 27 configuration, 64 bits R/W
-	0x0000611B  Self Trigger channel 28 configuration, 64 bits R/W
-	0x0000611C  Self Trigger channel 29 configuration, 64 bits R/W
-	0x0000611D  Self Trigger channel 30 configuration, 64 bits R/W
-	0x0000611E  Self Trigger channel 31 configuration, 64 bits R/W
-	0x0000611F  Self Trigger channel 32 configuration, 64 bits R/W
-	0x00006120  Self Trigger channel 33 configuration, 64 bits R/W
-	0x00006121  Self Trigger channel 34 configuration, 64 bits R/W
-	0x00006122  Self Trigger channel 35 configuration, 64 bits R/W
-	0x00006123  Self Trigger channel 36 configuration, 64 bits R/W
-	0x00006124  Self Trigger channel 37 configuration, 64 bits R/W
-	0x00006125  Self Trigger channel 38 configuration, 64 bits R/W
-	0x00006126  Self Trigger channel 39 configuration, 64 bits R/W
-	0x00006127  Self Trigger channel 40 configuration, 64 bits R/W
+	0x00006100 Cross Correlation Trigger threshold values for self triggered senders, 42 bits R/W
 
 	0x00009000  Read the FW version aka git commit hash ID, read-only, 28 bits
 

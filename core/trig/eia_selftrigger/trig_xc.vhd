@@ -25,7 +25,7 @@ port(
     din: in std_logic_vector(13 downto 0);
     din_sub: in std_logic_vector(13 downto 0);
 --    din_delayed: in std_logic_vector(13 downto 0);
-    threshold: in std_logic_vector(37 downto 0); -- matching filter trigger threshold values
+    threshold: in std_logic_vector(41 downto 0); -- matching filter trigger threshold values
     xcorr_calc: out std_logic_vector(27 downto 0); -- matching filter cross correlation calculated value
 --    dout_movmean_32: out std_logic_vector(13 downto 0);
     triggered: out std_logic
@@ -55,7 +55,7 @@ architecture trig_xc_arch of trig_xc is
         enable: in std_logic;
         din: in std_logic_vector(13 downto 0);
         din_mm: in std_logic_vector(13 downto 0);
-        threshold: in std_logic_vector(37 downto 0); 
+        threshold: in std_logic_vector(41 downto 0); 
         xcorr_calc: out std_logic_vector(27 downto 0);
         triggered: out std_logic);
     end component;

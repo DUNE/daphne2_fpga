@@ -37,7 +37,6 @@ package daphne2_package is
     type array_9x16_type is array (8 downto 0) of std_logic_vector(15 downto 0);
     type array_10x6_type is array (9 downto 0) of std_logic_vector(5 downto 0);
     type array_10x14_type is array (9 downto 0) of std_logic_vector(13 downto 0);
-    type array_40x64_type is array (39 downto 0) of std_logic_vector(63 downto 0);
 
     type array_4x4x6_type is array (3 downto 0) of array_4x6_type;
     type array_4x4x14_type is array (3 downto 0) of array_4x14_type;
@@ -117,62 +116,29 @@ package daphne2_package is
 
     constant CORE_INMUX_ADDR: std_logic_vector(31 downto 0) := "0000000000000000010100000000----";
 
+    -- address of the cross correlation threshold register for the self trig sender
+ 
+    constant THRESHOLD_XC_BASEADDR: std_logic_vector(31 downto 0) := X"00006100";
+   
+    constant DEFAULT_THRESHOLD_XC: std_logic_vector(41 downto 0) := "111111101100000000000000000000000011001000";
+
     -- enable disable individual input channels for self triggered sender only
 
     constant ST_ENABLE_ADDR: std_logic_vector(31 downto 0) := X"00006001";
 
     constant DEFAULT_ST_ENABLE: std_logic_vector(39 downto 0) := X"0000000000"; -- all self triggered channels OFF
     
+    -- Self-trigger module configuration
+
+    constant ST_CONFIG_ADDR: std_logic_vector(31 downto 0) := X"00006002";
+
+    constant DEFAULT_ST_CONFIG: std_logic_vector(31 downto 0) := X"00000003"; -- all self triggered channels OFF 
+
     -- address of the ad hoc command for the self trig senders
 
     constant ST_ADHOC_BASEADDR: std_logic_vector(31 downto 0) := X"00006010";
 
     constant DEFAULT_ST_ADHOC_COMMAND: std_logic_vector(7 downto 0) := X"07";
-    
-    -- address of register configuration for each self trigger channel 
- 
-    constant ST_CONFIG_CH00_ADDR: std_logic_vector(31 downto 0) := X"00006100";
-    constant ST_CONFIG_CH01_ADDR: std_logic_vector(31 downto 0) := X"00006101";
-    constant ST_CONFIG_CH02_ADDR: std_logic_vector(31 downto 0) := X"00006102";
-    constant ST_CONFIG_CH03_ADDR: std_logic_vector(31 downto 0) := X"00006103";
-    constant ST_CONFIG_CH04_ADDR: std_logic_vector(31 downto 0) := X"00006104";
-    constant ST_CONFIG_CH05_ADDR: std_logic_vector(31 downto 0) := X"00006105";
-    constant ST_CONFIG_CH06_ADDR: std_logic_vector(31 downto 0) := X"00006106";
-    constant ST_CONFIG_CH07_ADDR: std_logic_vector(31 downto 0) := X"00006107";
-    constant ST_CONFIG_CH08_ADDR: std_logic_vector(31 downto 0) := X"00006108";
-    constant ST_CONFIG_CH09_ADDR: std_logic_vector(31 downto 0) := X"00006109";
-    constant ST_CONFIG_CH10_ADDR: std_logic_vector(31 downto 0) := X"0000610A";
-    constant ST_CONFIG_CH11_ADDR: std_logic_vector(31 downto 0) := X"0000610B";
-    constant ST_CONFIG_CH12_ADDR: std_logic_vector(31 downto 0) := X"0000610C";
-    constant ST_CONFIG_CH13_ADDR: std_logic_vector(31 downto 0) := X"0000610D";
-    constant ST_CONFIG_CH14_ADDR: std_logic_vector(31 downto 0) := X"0000610E";
-    constant ST_CONFIG_CH15_ADDR: std_logic_vector(31 downto 0) := X"0000610F";
-    constant ST_CONFIG_CH16_ADDR: std_logic_vector(31 downto 0) := X"00006110";
-    constant ST_CONFIG_CH17_ADDR: std_logic_vector(31 downto 0) := X"00006111";
-    constant ST_CONFIG_CH18_ADDR: std_logic_vector(31 downto 0) := X"00006112";
-    constant ST_CONFIG_CH19_ADDR: std_logic_vector(31 downto 0) := X"00006113";
-    constant ST_CONFIG_CH20_ADDR: std_logic_vector(31 downto 0) := X"00006114";
-    constant ST_CONFIG_CH21_ADDR: std_logic_vector(31 downto 0) := X"00006115";
-    constant ST_CONFIG_CH22_ADDR: std_logic_vector(31 downto 0) := X"00006116";
-    constant ST_CONFIG_CH23_ADDR: std_logic_vector(31 downto 0) := X"00006117";
-    constant ST_CONFIG_CH24_ADDR: std_logic_vector(31 downto 0) := X"00006118";
-    constant ST_CONFIG_CH25_ADDR: std_logic_vector(31 downto 0) := X"00006119";
-    constant ST_CONFIG_CH26_ADDR: std_logic_vector(31 downto 0) := X"0000611A";
-    constant ST_CONFIG_CH27_ADDR: std_logic_vector(31 downto 0) := X"0000611B";
-    constant ST_CONFIG_CH28_ADDR: std_logic_vector(31 downto 0) := X"0000611C";
-    constant ST_CONFIG_CH29_ADDR: std_logic_vector(31 downto 0) := X"0000611D";
-    constant ST_CONFIG_CH30_ADDR: std_logic_vector(31 downto 0) := X"0000611E";
-    constant ST_CONFIG_CH31_ADDR: std_logic_vector(31 downto 0) := X"0000611F";
-    constant ST_CONFIG_CH32_ADDR: std_logic_vector(31 downto 0) := X"00006120";
-    constant ST_CONFIG_CH33_ADDR: std_logic_vector(31 downto 0) := X"00006121";
-    constant ST_CONFIG_CH34_ADDR: std_logic_vector(31 downto 0) := X"00006122";
-    constant ST_CONFIG_CH35_ADDR: std_logic_vector(31 downto 0) := X"00006123";
-    constant ST_CONFIG_CH36_ADDR: std_logic_vector(31 downto 0) := X"00006124";
-    constant ST_CONFIG_CH37_ADDR: std_logic_vector(31 downto 0) := X"00006125";
-    constant ST_CONFIG_CH38_ADDR: std_logic_vector(31 downto 0) := X"00006126";
-    constant ST_CONFIG_CH39_ADDR: std_logic_vector(31 downto 0) := X"00006127";
-   
-    constant DEFAULT_ST_CONFIG: std_logic_vector(63 downto 0) := X"FEC00004B0000ECD";
     
     -- spy buffers are 4k deep
 

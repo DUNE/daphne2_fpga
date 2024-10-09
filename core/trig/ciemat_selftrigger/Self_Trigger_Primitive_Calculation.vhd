@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------
 -- Company: CIEMAT
--- Engineer: Ignacio Lï¿½pez de Rego
+-- Engineer: Ignacio López de Rego
 -- 
 -- Create Date: 25.04.2024 14:10:45
 -- Design Name: 
@@ -41,7 +41,7 @@ port(
     clock:                          in  std_logic;                                              -- AFE clock
     reset:                          in  std_logic;                                              -- Reset signal. ACTIVE HIGH
     din:                            in  std_logic_vector(13 downto 0);                          -- Data coming from the Filter Block / Raw data from AFEs
-    Config_Param:                   in  std_logic_vector(23 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
+    Config_Param:                   in  std_logic_vector(13 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
     Self_trigger:                   out std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
     Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
     Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
@@ -129,7 +129,7 @@ END component;
 -- Common signals for three blocks
 SIGNAL clock_aux : std_logic;
 SIGNAL reset_aux : std_logic;
-SIGNAL Config_Param_Reg: std_logic_vector (23 downto 0);
+SIGNAL Config_Param_Reg: std_logic_vector (13 downto 0);
 
 -- FILTER SIGNALS
 SIGNAL din_aux : std_logic_vector(13 downto 0):= "00000000000000";
@@ -260,14 +260,14 @@ end process Get_Config_Params;
 -- Config_Param_FILTER[0] --> 1 = ENABLE filtering / 0 = DISABLE filtering 
 -- Config_Param_FILTER[1] --> '0' = 1 LSB truncated / '1' = 2 LSBs truncated 
 -- Config_Param_FILTER[3 downto 2] --> '00' = 4 Samples Window / '01' = 8 Samples Window / '10' = 16 Samples Window / '11' = 32 Samples Window
--- Config_Param_FILTER_aux             <= Config_Param_Reg(3 downto 0);
+Config_Param_FILTER_aux             <= Config_Param_Reg(3 downto 0);
 
 -- Config_Param_SELF[0] --> '0' = Peak detector as self-trigger  / '1' = Main detection as Self-Trigger (Undershoot peaks will not trigger)
 -- Config_Param_SELF[1] --> '0' = NOT ALLOWED  Self-Trigger with light pulse between 2 data adquisition frames   
 --                 --> '1' = ALLOWED Self-Trigger with light pulse between 2 data adquisition frames
 -- Config_Param_SELF[2] --> '0' = Slope calculation with 2 consecutive samples --> x(n) - x(n-1)  / '1' = Slope calculation with 3 consecutive samples --> [x(n) - x(n-2)] / 2 
 -- Config_Param_SELF[9 downto 3] --> Slope_Threshold (signed) 1(sign) + 6 bits, must be negative.
-Config_Param_SELF_aux               <= Config_Param_Reg(9 downto 0);
+Config_Param_SELF_aux               <= Config_Param_Reg(13 downto 4);
 
 ---------------------- REGISTER THE VALUES OF A WAVEFORM TO FILL THE TRAILER WORDS     -----------------------
 

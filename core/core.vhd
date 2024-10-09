@@ -36,8 +36,9 @@ port(
 
     outmode: in std_logic_vector(7 downto 0); -- output link mode control
     adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
-    st_config: in array_40x64_type; -- for self-trig senders, config parameters for trigger filters, trigger primitives and matching trigger
-    
+    st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
+    threshold_xc: in std_logic_vector(41 downto 0); -- for self-triggered mode, relative to average baseline
+
     ti_trigger: in std_logic_vector(7 downto 0); ------------------------
     ti_trigger_stbr: in std_logic; -------------------------------------
     trig_rst_count: in std_logic;
@@ -47,6 +48,7 @@ port(
     detector_id: in std_logic_vector(5 downto 0); -- used in output header
     version_id: in std_logic_vector(5 downto 0); -- used in output header
     st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
+    filter_output_selector: in std_logic_vector(1 downto 0); -- filter type selector
     self_trigger_test_selector: in std_logic;
 
     oeiclk: in std_logic; -- interface used for output spy buffer and to configure input mux
@@ -105,8 +107,9 @@ architecture core_arch of core is
     generic( link_id: std_logic_vector(5 downto 0)  := "000000" );
     port(
         reset: in std_logic; 
-        st_config: in array_40x64_type; -- for self-trig senders, config parameters for trigger filters, trigger primitives and matching trigger
+        st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)   
         adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
+        threshold_xc: in std_logic_vector(41 downto 0); -- user defined threshold relative to baseline
         ti_trigger: in std_logic_vector(7 downto 0); -------------------------
         ti_trigger_stbr: in std_logic;  -------------------------
         trig_rst_count: in std_logic;
@@ -115,6 +118,7 @@ architecture core_arch of core is
         detector_id: in std_logic_vector(5 downto 0);
         version_id: in std_logic_vector(5 downto 0);
         enable: in std_logic_vector(39 downto 0);
+        filter_output_selector: in std_logic_vector(1 downto 0);
         self_trigger_test_selector: in std_logic;
         aclk: in std_logic; -- AFE clock 62.500 MHz
         timestamp: in std_logic_vector(63 downto 0);
@@ -236,12 +240,14 @@ begin
     port map(
         reset => reset,
         adhoc => adhoc,
-        st_config => st_config, 
+        st_config => st_config, -- CIEMAT (Nacho) 
+        threshold_xc => threshold_xc,
         slot_id => slot_id,
         crate_id => crate_id,
         detector_id => detector_id,
         version_id => version_id,
         enable => st_enable,
+        filter_output_selector => filter_output_selector,
         self_trigger_test_selector => self_trigger_test_selector,
         aclk => mclk,
         timestamp => timestamp,
