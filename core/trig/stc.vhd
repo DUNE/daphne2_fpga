@@ -26,9 +26,9 @@ port(
     detector_id: std_logic_vector(5 downto 0);
     version_id: std_logic_vector(5 downto 0);
     adhoc: std_logic_vector(7 downto 0); -- command for adhoc trigger
-    st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
-    threshold_xc: in std_logic_vector(41 downto 0); -- trig threshold relative to calculated baseline
-    filter_output_selector: in std_logic_vector(1 downto 0); --Esteban 
+    st_config: in std_logic_vector(23 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
+    threshold_xc: in std_logic_vector(37 downto 0); -- matching trigger threshold window
+    filter_output_selector: in std_logic_vector(1 downto 0); -- trigger filters 
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
     ti_trigger_stbr: in std_logic;  -------------------------
     trig_rst_count: in std_logic;
@@ -134,7 +134,7 @@ architecture stc_arch of stc is
         clock:                          in  std_logic;                                              -- AFE clock
         reset:                          in  std_logic;                                              -- Reset signal. ACTIVE HIGH
         din:                            in  std_logic_vector(13 downto 0);                          -- Data coming from the Filter Block / Raw data from AFEs
-        Config_Param:                   in  std_logic_vector(13 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
+        Config_Param:                   in  std_logic_vector(23 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
         Self_trigger:                   out std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
         Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
         Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
@@ -177,7 +177,7 @@ architecture stc_arch of stc is
         dout: out std_logic_vector(13 downto 0);
         baseline: out std_logic_vector(13 downto 0);
         adhoc: in std_logic_vector(7 downto 0);
-        threshold_xc: in std_logic_vector(41 downto 0);
+        threshold_xc: in std_logic_vector(37 downto 0);
         filter_output_selector: in std_logic_vector(1 downto 0);
         triggered: out std_logic;
         triggered_internal: out std_logic;        
@@ -612,7 +612,7 @@ begin
          ts_reg(31 downto 0)  when (state=hdr1) else
          ts_reg(63 downto 32) when (state=hdr2) else
          (X"0000" & Info_Previous_aux & "00000" & "0001" & ch_id(5 downto 0)) when (state=hdr3) else  -- trigger sample and channel ID
-         ("00" & baseline & "00" & threshold_xc(41 downto 28)) when (state=hdr4) else -- average baseline and user-threshold
+         ("00" & baseline & "00" & threshold_xc(37 downto 24)) when (state=hdr4) else -- average baseline and user-threshold
          (afe_dly0( 3 downto 0) & afe_dly1(13 downto 0) & afe_dly2(13 downto  0))                          when (state=dat0) else  -- sample2(3..0) & sample1(13..0) & sample0(13..0) 
          (afe_dly0( 7 downto 0) & afe_dly1(13 downto 0) & afe_dly2(13 downto  4))                          when (state=dat2) else  -- sample4(7..0) & sample3(13..0) & sample2(13..4) 
          (afe_dly0(11 downto 0) & afe_dly1(13 downto 0) & afe_dly2(13 downto  8))                          when (state=dat4) else  -- sample6(11..0) & sample5(13..0) & sample4(13..8) 

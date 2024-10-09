@@ -12,6 +12,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_unsigned.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -296,12 +297,10 @@ architecture DAPHNE2_arch of DAPHNE2 is
         detector_id: in std_logic_vector(5 downto 0);
         version_id: in std_logic_vector(5 downto 0);
         st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
-        st_config: in std_logic_vector(13 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
-        filter_output_selector: in std_logic_vector(1 downto 0); -- filter signal type selector
+        st_config: in array_40x64_type; -- for self-trig senders, config parameters for trigger filters, trigger primitives and matching trigger
         self_trigger_test_selector: in std_logic;
         outmode: in std_logic_vector(7 downto 0); -- choose streaming or self-trig sender for each output
         adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
-        threshold_xc: in std_logic_vector(41 downto 0); -- for self-trig senders, threshold relative to average baseline
         --
         ti_trigger: in std_logic_vector(7 downto 0); -- WARNING
         ti_trigger_stbr: in std_logic; -- WARNING
@@ -403,8 +402,8 @@ architecture DAPHNE2_arch of DAPHNE2 is
     -- signal threshold_reg: std_logic_vector(13 downto 0);
     -- signal threshold_we: std_logic;
 
-    signal threshold_xc_reg: std_logic_vector(41 downto 0);
-    signal threshold_xc_we: std_logic;
+    signal st_config_reg: array_40x64_type;
+    signal st_config_we: std_logic_vector(39 downto 0);
     
     signal adhoc_reg: std_logic_vector(7 downto 0);
     signal adhoc_we: std_logic;
@@ -416,8 +415,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal ti_trigger_en0, ti_trigger_en1, ti_trigger_en2, trig_en_total: std_logic;    
     
     signal st_enable_reg: std_logic_vector(39 downto 0);
-    signal st_config_reg: std_logic_vector(31 downto 0);
-    signal st_enable_we, st_config_we: std_logic;
+    signal st_enable_we: std_logic;
 
     signal self_trigger_test_selector: std_logic := '1';
     signal self_trigger_test_reg_we: std_logic;
@@ -824,9 +822,49 @@ begin
                (X"000000000000" & "000" & mclk_stat_reg) when std_match(rx_addr_reg, MCLK_STAT_ADDR) else
                (X"000000000000" & mclk_ctrl_reg) when std_match(rx_addr_reg, MCLK_CTRL_ADDR) else 
                (X"00000000000000" & spi_res_fifo_data) when std_match(rx_addr_reg, SPI_FIFO_ADDR) else 
-               (X"00000" & "00" & threshold_xc_reg(41 downto 0)) when std_match(rx_addr_reg, THRESHOLD_XC_BASEADDR) else
-               (X"00000000" & st_config_reg) when std_match(rx_addr_reg, ST_CONFIG_ADDR) else  
                (X"00000000000000" & adhoc_reg(7 downto 0)) when std_match(rx_addr_reg, ST_ADHOC_BASEADDR) else 
+               
+               (st_config_reg( 0)) when std_match(rx_addr_reg, ST_CONFIG_CH00_ADDR) else  
+               (st_config_reg( 1)) when std_match(rx_addr_reg, ST_CONFIG_CH01_ADDR) else  
+               (st_config_reg( 2)) when std_match(rx_addr_reg, ST_CONFIG_CH02_ADDR) else  
+               (st_config_reg( 3)) when std_match(rx_addr_reg, ST_CONFIG_CH03_ADDR) else  
+               (st_config_reg( 4)) when std_match(rx_addr_reg, ST_CONFIG_CH04_ADDR) else  
+               (st_config_reg( 5)) when std_match(rx_addr_reg, ST_CONFIG_CH05_ADDR) else  
+               (st_config_reg( 6)) when std_match(rx_addr_reg, ST_CONFIG_CH06_ADDR) else  
+               (st_config_reg( 7)) when std_match(rx_addr_reg, ST_CONFIG_CH07_ADDR) else  
+               (st_config_reg( 8)) when std_match(rx_addr_reg, ST_CONFIG_CH08_ADDR) else  
+               (st_config_reg( 9)) when std_match(rx_addr_reg, ST_CONFIG_CH09_ADDR) else  
+               (st_config_reg(10)) when std_match(rx_addr_reg, ST_CONFIG_CH10_ADDR) else  
+               (st_config_reg(11)) when std_match(rx_addr_reg, ST_CONFIG_CH11_ADDR) else  
+               (st_config_reg(12)) when std_match(rx_addr_reg, ST_CONFIG_CH12_ADDR) else  
+               (st_config_reg(13)) when std_match(rx_addr_reg, ST_CONFIG_CH13_ADDR) else  
+               (st_config_reg(14)) when std_match(rx_addr_reg, ST_CONFIG_CH14_ADDR) else  
+               (st_config_reg(15)) when std_match(rx_addr_reg, ST_CONFIG_CH15_ADDR) else  
+               (st_config_reg(16)) when std_match(rx_addr_reg, ST_CONFIG_CH16_ADDR) else  
+               (st_config_reg(17)) when std_match(rx_addr_reg, ST_CONFIG_CH17_ADDR) else  
+               (st_config_reg(18)) when std_match(rx_addr_reg, ST_CONFIG_CH18_ADDR) else  
+               (st_config_reg(19)) when std_match(rx_addr_reg, ST_CONFIG_CH19_ADDR) else  
+               (st_config_reg(20)) when std_match(rx_addr_reg, ST_CONFIG_CH20_ADDR) else  
+               (st_config_reg(21)) when std_match(rx_addr_reg, ST_CONFIG_CH21_ADDR) else  
+               (st_config_reg(22)) when std_match(rx_addr_reg, ST_CONFIG_CH22_ADDR) else  
+               (st_config_reg(23)) when std_match(rx_addr_reg, ST_CONFIG_CH23_ADDR) else  
+               (st_config_reg(24)) when std_match(rx_addr_reg, ST_CONFIG_CH24_ADDR) else  
+               (st_config_reg(25)) when std_match(rx_addr_reg, ST_CONFIG_CH25_ADDR) else  
+               (st_config_reg(26)) when std_match(rx_addr_reg, ST_CONFIG_CH26_ADDR) else  
+               (st_config_reg(27)) when std_match(rx_addr_reg, ST_CONFIG_CH27_ADDR) else  
+               (st_config_reg(28)) when std_match(rx_addr_reg, ST_CONFIG_CH28_ADDR) else  
+               (st_config_reg(29)) when std_match(rx_addr_reg, ST_CONFIG_CH29_ADDR) else  
+               (st_config_reg(30)) when std_match(rx_addr_reg, ST_CONFIG_CH30_ADDR) else  
+               (st_config_reg(31)) when std_match(rx_addr_reg, ST_CONFIG_CH31_ADDR) else  
+               (st_config_reg(32)) when std_match(rx_addr_reg, ST_CONFIG_CH32_ADDR) else  
+               (st_config_reg(33)) when std_match(rx_addr_reg, ST_CONFIG_CH33_ADDR) else  
+               (st_config_reg(34)) when std_match(rx_addr_reg, ST_CONFIG_CH34_ADDR) else  
+               (st_config_reg(35)) when std_match(rx_addr_reg, ST_CONFIG_CH35_ADDR) else  
+               (st_config_reg(36)) when std_match(rx_addr_reg, ST_CONFIG_CH36_ADDR) else  
+               (st_config_reg(37)) when std_match(rx_addr_reg, ST_CONFIG_CH37_ADDR) else  
+               (st_config_reg(38)) when std_match(rx_addr_reg, ST_CONFIG_CH38_ADDR) else  
+               (st_config_reg(39)) when std_match(rx_addr_reg, ST_CONFIG_CH39_ADDR) else  
+                               
                (X"00000000000000" & outmode_reg(7 downto 0)) when std_match(rx_addr_reg, DAQ_OUTMODE_BASEADDR) else 
                (X"00000000000000" & "00" & inmux_dout(5 downto 0)) when std_match(rx_addr_reg, CORE_INMUX_ADDR) else
                (X"000000" & st_enable_reg) when std_match(rx_addr_reg, ST_ENABLE_ADDR) else
@@ -977,21 +1015,25 @@ begin
         end if;
     end process outmode_proc;
 
-    -- register for setting threshold (related to cross correlation matching filter output) and trigger enabler threshold for self triggered senders
-    -- register is 28 bits, R/W from GBE
+    -- register for setting configuration of self triggered senders/channels
+    -- register are 64 bits, R/W from GBE
+    
+    st_config_reg_gen: for i in 0 to 39 generate
 
-    threshold_xc_we <= '1' when (std_match(rx_addr,THRESHOLD_XC_BASEADDR) and rx_wren='1') else '0';
+        st_config_we(i) <= '1' when (std_match(rx_addr,(ST_CONFIG_CH00_ADDR + std_logic_vector(to_unsigned(i,32)))) and rx_wren='1') else '0';
 
-    thresh_xc_proc: process(oeiclk)
-    begin
-        if rising_edge(oeiclk) then
-            if (reset_async='1') then
-                threshold_xc_reg <= DEFAULT_THRESHOLD_XC;
-            elsif (threshold_xc_we='1') then
-                threshold_xc_reg <= rx_data(41 downto 0);
+        st_config_proc: process(oeiclk)
+        begin
+            if rising_edge(oeiclk) then
+                if (reset_async='1') then
+                    st_config_reg(i) <= DEFAULT_ST_CONFIG;
+                elsif (st_config_we(i)='1') then
+                    st_config_reg(i) <= rx_data(63 downto 0);
+                end if;
             end if;
-        end if;
-    end process thresh_xc_proc;
+        end process st_config_proc;
+
+    end generate st_config_reg_gen;
 
     -- register for setting the adhoc trigger command for the self triggered senders
     -- register is 8 bits, R/W from GBE
@@ -1015,7 +1057,6 @@ begin
 
     st_enable_we <= '1' when (std_match(rx_addr,ST_ENABLE_ADDR) and rx_wren='1') else '0';
     
-
     st_enable_proc: process(oeiclk)
     begin
         if rising_edge(oeiclk) then
@@ -1026,19 +1067,6 @@ begin
             end if;
         end if;
     end process st_enable_proc;
-
-    st_config_we <= '1' when (std_match(rx_addr,ST_CONFIG_ADDR) and rx_wren='1') else '0';
-
-    st_config_proc: process(oeiclk)
-    begin
-        if rising_edge(oeiclk) then
-            if (reset_async='1') then
-                st_config_reg <= DEFAULT_ST_CONFIG;
-            elsif (st_config_we='1') then
-                st_config_reg <= rx_data(31 downto 0);
-            end if;
-        end if;
-    end process st_config_proc;
 
     -- decode write enable for core inmux control register block of 40 6-bit registers
 
@@ -1057,8 +1085,7 @@ begin
 
         outmode => outmode_reg,
         adhoc => adhoc_reg,
-        threshold_xc => threshold_xc_reg,
-        st_config => st_config_reg(15 downto 2), -- Self-Trigger Config CIEMAT (Nacho)
+        st_config => st_config_reg,
         --
         ti_trigger => ti_trigger_reg, --------------------
         ti_trigger_stbr => ti_trigger_stbr_reg, -------------------
@@ -1069,7 +1096,6 @@ begin
         detector_id => daq_out_param_reg(11 downto 6), -- 6 bits
         version_id => daq_out_param_reg(5 downto 0), -- 6 bits
         st_enable => st_enable_reg,
-        filter_output_selector => st_config_reg(1 downto 0), -- filter type selector
         self_trigger_test_selector => self_trigger_test_selector,
    
         oeiclk => oeiclk,

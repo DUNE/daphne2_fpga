@@ -19,8 +19,7 @@ port(
     reset: in std_logic;
 
     adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
-    st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
-    threshold_xc: in std_logic_vector(41 downto 0); -- user defined threshold relative to avg baseline
+    st_config: in array_40x64_type; -- for self-trig senders, config parameters for trigger filters, trigger primitives and matching trigger
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
     ti_trigger_stbr: in std_logic;  -------------------------
     trig_rst_count: in std_logic;
@@ -29,7 +28,6 @@ port(
     detector_id: in std_logic_vector(5 downto 0);
     version_id: in std_logic_vector(5 downto 0);
     enable: in std_logic_vector(39 downto 0);
-    filter_output_selector: in std_logic_vector(1 downto 0);
     self_trigger_test_selector: in std_logic;
 
     aclk: in std_logic; -- AFE clock 62.500 MHz
@@ -73,15 +71,15 @@ architecture st40_top_arch of st40_top is
     generic( link_id: std_logic_vector(5 downto 0) := "000000"; ch_id: std_logic_vector(5 downto 0) := "000000" );
     port(
         reset: in std_logic;
-        st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
+        st_config: in std_logic_vector(23 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
         adhoc: in std_logic_vector(7 downto 0);
-        threshold_xc: std_logic_vector(41 downto 0);
+        threshold_xc: std_logic_vector(37 downto 0); -- matching trigger threshold window
         slot_id: std_logic_vector(3 downto 0);
         crate_id: std_logic_vector(9 downto 0);
         detector_id: std_logic_vector(5 downto 0);
         version_id: std_logic_vector(5 downto 0);
         enable: std_logic;
-        filter_output_selector: in std_logic_vector(1 downto 0);
+        filter_output_selector: in std_logic_vector(1 downto 0); -- trigger filters configuration
         triggered_internal: out std_logic;
         aclk: in std_logic; -- AFE clock 62.500 MHz
         timestamp: in std_logic_vector(63 downto 0);
@@ -111,7 +109,7 @@ begin
             port map(
                 reset => reset,
                 adhoc => adhoc,
-                threshold_xc => threshold_xc,
+                threshold_xc => st_config(8*a+c)(63 downto 26), -- eia matching trigger
                 ti_trigger => ti_trigger, -------------------------
                 ti_trigger_stbr => ti_trigger_stbr,  -------------------------
                 trig_rst_count => trig_rst_count,
@@ -120,8 +118,8 @@ begin
                 detector_id => detector_id,
                 version_id => version_id,
                 enable => enable(8*a+c),
-                st_config => st_config, -- CIEMAT (Nacho)
-                filter_output_selector => filter_output_selector,
+                st_config => st_config(8*a+c)(25 downto 2), -- ciemat primitives
+                filter_output_selector => st_config(8*a+c)(1 downto 0), -- bicocca Filters
                 aclk => aclk,
                 timestamp => timestamp,
             	afe_dat => rerouted_signal(a)(c),
