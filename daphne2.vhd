@@ -985,7 +985,7 @@ begin
     port map(
         mclk => mclk,
         sclk100 => sclk100,
-        reset => reset_async,
+        reset => reset_async or reset_mmcm1,
 
         afe_dat => afe_dout,
         timestamp => timestamp,
