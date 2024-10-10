@@ -980,7 +980,7 @@ begin
     inmux_we <= '1' when (std_match(rx_addr,CORE_INMUX_ADDR) and rx_wren='1') else '0';
 
     -- combo core logic, streaming and self-trig
-    reset_core <= reset_async;
+    reset_core <= reset_async or trig_rst_count;
 
     core_inst: core
     port map(
