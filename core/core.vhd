@@ -232,7 +232,7 @@ begin
     st40_sender_inst: st40_top 
     generic map( link_id => "000000" )
     port map(
-        reset => reset,
+        reset => trig_rst_count,
         adhoc => adhoc,
         threshold => threshold,
         slot_id => slot_id,

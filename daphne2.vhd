@@ -788,7 +788,7 @@ begin
              '1' when (tx_rden='1') else  -- no wait for reads
              '0';
 
-    trig_rst_count <= '1' when (std_match(rx_addr,FE_RST_ADDR) and rx_wren='1') else '0';
+    trig_rst_count <= reset_fe_mclk;
 
     -- 64-bit R/W dummy register for testing reads and writes
 
@@ -980,7 +980,7 @@ begin
     inmux_we <= '1' when (std_match(rx_addr,CORE_INMUX_ADDR) and rx_wren='1') else '0';
 
     -- combo core logic, streaming and self-trig
-    reset_core <= reset_async or reset_mmcm1;
+    reset_core <= reset_async;
 
     core_inst: core
     port map(
