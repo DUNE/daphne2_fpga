@@ -38,12 +38,12 @@ signal fe_rst1_reg, fe_rst2_reg: std_logic;
 signal reset_fe_mclk_reg, reset_fe_sclk200_reg: std_logic;
 
 signal mmcm1_rst_decode, mmcm1_rst_decode_reg: std_logic;
-signal mmcm1_rst_count: std_logic_vector(3 downto 0);
+signal mmcm1_rst_count: std_logic_vector(5 downto 0);
 signal mmcm1_rst_reg: std_logic;
 signal mmcm1_rst_sclk100_reg: std_logic;
 
 signal ep_rst_decode, ep_rst_decode_reg: std_logic;
-signal ep_rst_count: std_logic_vector(5 downto 0);
+signal ep_rst_count: std_logic_vector(3 downto 0);
 signal ep_rst_reg: std_logic;
 signal ep_rst_sclk100_reg: std_logic;
 
@@ -112,9 +112,9 @@ begin
     if rising_edge(oeiclk) then
         mmcm1_rst_decode_reg <= mmcm1_rst_decode;
         if (mmcm1_rst_decode_reg='1') then
-            mmcm1_rst_count <= "0000";
+            mmcm1_rst_count <= "000000";
             mmcm1_rst_reg <= '1';
-        elsif (mmcm1_rst_count /= "1111") then
+        elsif (mmcm1_rst_count /= "111111") then
             mmcm1_rst_count <= std_logic_vector(unsigned(mmcm1_rst_count)+1);
             mmcm1_rst_reg <= '1';
         else
@@ -132,9 +132,9 @@ begin
     if rising_edge(oeiclk) then
         ep_rst_decode_reg <= ep_rst_decode;
         if (ep_rst_decode_reg='1') then
-            ep_rst_count <= "000000";
+            ep_rst_count <= "0000";
             ep_rst_reg <= '1';
-        elsif (ep_rst_count /= "111111") then
+        elsif (ep_rst_count /= "1111") then
             ep_rst_count <= std_logic_vector(unsigned(ep_rst_count)+1);
             ep_rst_reg <= '1';
         else
