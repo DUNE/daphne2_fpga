@@ -43,7 +43,7 @@ signal mmcm1_rst_reg: std_logic;
 signal mmcm1_rst_sclk100_reg: std_logic;
 
 signal ep_rst_decode, ep_rst_decode_reg: std_logic;
-signal ep_rst_count: std_logic_vector(5 downto 0);
+signal ep_rst_count: std_logic_vector(3 downto 0);
 signal ep_rst_reg: std_logic;
 signal ep_rst_sclk100_reg: std_logic;
 
@@ -132,9 +132,9 @@ begin
     if rising_edge(oeiclk) then
         ep_rst_decode_reg <= ep_rst_decode;
         if (ep_rst_decode_reg='1') then
-            ep_rst_count <= "000000";
+            ep_rst_count <= "0000";
             ep_rst_reg <= '1';
-        elsif (ep_rst_count /= "111111") then
+        elsif (ep_rst_count /= "1111") then
             ep_rst_count <= std_logic_vector(unsigned(ep_rst_count)+1);
             ep_rst_reg <= '1';
         else
