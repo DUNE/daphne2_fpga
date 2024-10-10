@@ -303,7 +303,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
         ti_trigger: in std_logic_vector(7 downto 0); -- WARNING
         ti_trigger_stbr: in std_logic; -- WARNING
         --
-        trig_rst_count:in std_logic;
+        --trig_rst_count:in std_logic;
 
         oeiclk: in std_logic; -- interface used to read output spy buffer and to r/w input mux control regs
         trig: in std_logic;
@@ -997,7 +997,7 @@ begin
         --
         ti_trigger => ti_trigger_reg, --------------------
         ti_trigger_stbr => ti_trigger_stbr_reg, -------------------
-        trig_rst_count => trig_rst_count,
+        --trig_rst_count => trig_rst_count,
 
         slot_id => daq_out_param_reg(25 downto 22),  -- 4 bits
         crate_id => daq_out_param_reg(21 downto 12), -- 10 bits

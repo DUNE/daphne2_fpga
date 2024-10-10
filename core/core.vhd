@@ -40,7 +40,7 @@ port(
 
     ti_trigger: in std_logic_vector(7 downto 0); ------------------------
     ti_trigger_stbr: in std_logic; -------------------------------------
-    trig_rst_count: in std_logic;
+    --trig_rst_count: in std_logic;
     
     slot_id: in std_logic_vector(3 downto 0); -- used in output header
     crate_id: in std_logic_vector(9 downto 0); -- used in output header
@@ -103,7 +103,8 @@ architecture core_arch of core is
     component st40_top -- 40 channel self-triggered sender
     generic( link_id: std_logic_vector(5 downto 0)  := "000000" );
     port(
-        reset: in std_logic;    
+        reset_aclk: in std_logic;    
+        reset_fclk: in std_logic;   
         adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
         threshold: in std_logic_vector(13 downto 0); -- user defined threshold relative to baseline
         ti_trigger: in std_logic_vector(7 downto 0); -------------------------
@@ -177,6 +178,10 @@ architecture core_arch of core is
     signal selftrig_sender_kout: std_logic_vector(3 downto 0);
     signal trig_fclk_reg: std_logic;
 
+    signal reset_reg, reset_fclk_reg, reset_aclk_reg: std_logic;
+    signal reset_count: std_logic_vector(5 downto 0);
+    signal mgt4_reset_reg, reset_logic_reg: std_logic;
+
 begin
     
     -- big mux to determine which input channels are connected to which streaming sender module
@@ -205,7 +210,7 @@ begin
         stream_sender_inst: dstr4 
         generic map( link_id => std_logic_vector( to_unsigned(i,6)) )
         port map(
-            reset => reset,
+            reset => reset_fclk_reg,
             slot_id => slot_id,
             crate_id => crate_id,
             detector_id => detector_id,
@@ -232,7 +237,8 @@ begin
     st40_sender_inst: st40_top 
     generic map( link_id => "000000" )
     port map(
-        reset => trig_rst_count,
+        reset_aclk => reset_aclk_reg,
+        reset_fclk => reset_fclk_reg,
         adhoc => adhoc,
         threshold => threshold,
         slot_id => slot_id,
@@ -244,7 +250,7 @@ begin
         timestamp => timestamp,
         ti_trigger => ti_trigger, ------------------------------
         ti_trigger_stbr => ti_trigger_stbr, -------------------------
-        trig_rst_count => trig_rst_count,
+        trig_rst_count => reset_fclk_reg,
     	afe_dat => afe_dat, -- AFE raw data after alignment all 40 channels
         oeiclk => oeiclk,
         fclk => fclk(0), 
@@ -279,8 +285,16 @@ begin
     begin
         if rising_edge(fclk(0)) then
             trig_fclk_reg <= trig;
+            reset_fclk_reg <= reset_logic_reg;
         end if;
     end process trig_fclk_proc;
+
+    reset_mclk_proc: process(mclk)
+    begin
+        if rising_edge(mclk) then
+            reset_aclk_reg <= reset_logic_reg;
+        end if;
+    end process reset_mclk_proc;
 
     -- insert some spy buffers to capture the output of sender0
     -- stores the 32 bit data prior to 8b/10b encoding, depth is 4k
@@ -289,7 +303,7 @@ begin
     sender0_spy_hi_inst: spy
     port map(
         clka  => fclk(0),
-        reset => reset,
+        reset => reset_fclk_reg,
         trig  => trig_fclk_reg,
         dia   => sender_dout(0)(31 downto 16),
 
@@ -301,7 +315,7 @@ begin
     sender0_spy_lo_inst: spy
     port map(
         clka  => fclk(0),
-        reset => reset,
+        reset => reset_fclk_reg,
         trig  => trig_fclk_reg,
         dia   => sender_dout(0)(15 downto 0),
 
@@ -310,12 +324,40 @@ begin
         dob   => spy_dout(15 downto 0)
       );
 
+    -- reset distribution for core_mgt4 and st40_top modules
+
+    sclk100_rst_proc: process(sclk100)
+    begin
+        if rising_edge(sclk100) then
+        reset_reg <= reset;  -- register and pulse stretch in the oeiclk domain
+
+        if (reset_reg='1') then
+            reset_count <= "000000";
+        elsif (reset_count /= "111111") then
+            reset_count <= std_logic_vector(unsigned(reset_count)+1);
+        end if;
+
+        if (reset_count(5 downto 4)="00") then -- each pulse is ~128ns
+            mgt4_reset_reg <= '1';
+        else
+            mgt4_reset_reg <= '0';
+        end if;
+
+        if (reset_count(5)='0') then
+            reset_logic_reg <= '1';
+        else
+            reset_logic_reg <= '0';
+        end if;
+
+    end if;
+    end process sclk100_rst_proc;
+
     -- wrapper for Xilinx MGT IP core. One MGT quad, for channels TX only, no DRP
 
     core_mgt4_inst: core_mgt4
     port map(
         sysclk_in => sclk100, -- system clock constant 100MHz
-        soft_reset_tx_in => reset,
+        soft_reset_tx_in => mgt4_reset_reg,
        
         gt0_txdata_in => sender_dout(0),
         gt1_txdata_in => sender_dout(1),
