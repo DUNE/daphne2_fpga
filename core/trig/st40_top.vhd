@@ -16,7 +16,8 @@ use work.daphne2_package.all;
 entity st40_top is
 generic( link_id: std_logic_vector(5 downto 0)  := "000000" ); -- this is the OUTPUT link ID that goes into the header
 port(
-    reset: in std_logic;
+    reset_aclk: in std_logic;
+    reset_fclk: in std_logic;
 
     adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
     st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
@@ -109,12 +110,12 @@ begin
             stc_inst: stc 
             generic map( link_id => link_id, ch_id => std_logic_vector(to_unsigned(10*a+c,6)) ) 
             port map(
-                reset => reset,
+                reset => reset_aclk,
                 adhoc => adhoc,
                 threshold_xc => threshold_xc,
                 ti_trigger => ti_trigger, -------------------------
                 ti_trigger_stbr => ti_trigger_stbr,  -------------------------
-                trig_rst_count => trig_rst_count,
+                trig_rst_count => reset_aclk,
                 slot_id => slot_id,
                 crate_id => crate_id,
                 detector_id => detector_id,
@@ -271,7 +272,7 @@ begin
     fsm_proc: process(fclk)
     begin
         if rising_edge(fclk) then
-            if (reset='1' or trig_rst_count='1') then 
+            if (reset_fclk='1' or trig_rst_count='1') then 
                 state <= rst;
                 --sendCount <= (others => '0');
             else
