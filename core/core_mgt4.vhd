@@ -26,6 +26,23 @@ port(
     gt1_txusrclk2_out: out std_logic;
     gt2_txusrclk2_out: out std_logic;
     gt3_txusrclk2_out: out std_logic;
+
+    GT0_TX_FSM_RESET_DONE_OUT: out std_logic;
+    GT1_TX_FSM_RESET_DONE_OUT: out std_logic;
+    GT2_TX_FSM_RESET_DONE_OUT: out std_logic;
+    GT3_TX_FSM_RESET_DONE_OUT: out std_logic;
+
+    GT0_TX_MMCM_LOCK_OUT: out std_logic;
+    GT1_TX_MMCM_LOCK_OUT: out std_logic;
+    GT2_TX_MMCM_LOCK_OUT: out std_logic;
+    GT3_TX_MMCM_LOCK_OUT: out std_logic;
+
+    gt0_txresetdone_out: out std_logic;
+    gt1_txresetdone_out: out std_logic;
+    gt2_txresetdone_out: out std_logic;
+    gt3_txresetdone_out: out std_logic;
+
+    GT0_PLL0LOCK_OUT: out std_logic;
    
     gt0_gtptxp_out, gt0_gtptxn_out: out std_logic;
     gt1_gtptxp_out, gt1_gtptxn_out: out std_logic;
@@ -261,7 +278,7 @@ begin
         gt0_txuserrdy_in => '1',
         gt0_txoutclkfabric_out => open,
         gt0_txoutclkpcs_out => open,
-        gt0_txresetdone_out => open,
+        gt0_txresetdone_out => gt0_txresetdone_out,
 
         gt1_txdata_in => gt1_txdata_in,
         gt1_txcharisk_in => gt1_txcharisk_in,
@@ -283,7 +300,7 @@ begin
         gt1_txuserrdy_in => '1',
         gt1_txoutclkfabric_out => open,
         gt1_txoutclkpcs_out => open,
-        gt1_txresetdone_out => open,
+        gt1_txresetdone_out => gt1_txresetdone_out,
 
         gt2_txdata_in => gt2_txdata_in,
         gt2_txcharisk_in => gt2_txcharisk_in,
@@ -305,7 +322,7 @@ begin
         gt2_txuserrdy_in => '1',
         gt2_txoutclkfabric_out => open,
         gt2_txoutclkpcs_out => open,
-        gt2_txresetdone_out => open,
+        gt2_txresetdone_out => gt2_txresetdone_out,
 
         gt3_txdata_in => gt3_txdata_in,
         gt3_txcharisk_in => gt3_txcharisk_in,
@@ -327,7 +344,7 @@ begin
         gt3_txuserrdy_in => '1',
         gt3_txoutclkfabric_out => open,
         gt3_txoutclkpcs_out => open,
-        gt3_txresetdone_out => open,
+        gt3_txresetdone_out => gt3_txresetdone_out,
 
         sysclk_in => sysclk_in, -- must supply this 100MHz clock even tho DRP is not used...
    
@@ -340,28 +357,28 @@ begin
 
         GT0_PLL0OUTCLK_OUT  => open,
         GT0_PLL0OUTREFCLK_OUT  => open,
-        GT0_PLL0LOCK_OUT  => open,
+        GT0_PLL0LOCK_OUT  => GT0_PLL0LOCK_OUT,
         GT0_PLL0REFCLKLOST_OUT  => open,    
         GT0_PLL1OUTCLK_OUT  => open,
         GT0_PLL1OUTREFCLK_OUT  => open,
 
-        GT0_TX_MMCM_LOCK_OUT => open,
-        GT0_TX_FSM_RESET_DONE_OUT => open,
+        GT0_TX_MMCM_LOCK_OUT => GT0_TX_MMCM_LOCK_OUT,
+        GT0_TX_FSM_RESET_DONE_OUT => GT0_TX_FSM_RESET_DONE_OUT,
         GT0_RX_FSM_RESET_DONE_OUT => open,
         GT0_DATA_VALID_IN => '0',
 
-        GT1_TX_MMCM_LOCK_OUT => open,
-        GT1_TX_FSM_RESET_DONE_OUT => open,
+        GT1_TX_MMCM_LOCK_OUT => GT1_TX_MMCM_LOCK_OUT,
+        GT1_TX_FSM_RESET_DONE_OUT => GT1_TX_FSM_RESET_DONE_OUT,
         GT1_RX_FSM_RESET_DONE_OUT => open,
         GT1_DATA_VALID_IN => '0',
 
-        GT2_TX_MMCM_LOCK_OUT => open,
-        GT2_TX_FSM_RESET_DONE_OUT => open,
+        GT2_TX_MMCM_LOCK_OUT => GT2_TX_MMCM_LOCK_OUT,
+        GT2_TX_FSM_RESET_DONE_OUT => GT2_TX_FSM_RESET_DONE_OUT,
         GT2_RX_FSM_RESET_DONE_OUT => open,
         GT2_DATA_VALID_IN => '0',
 
-        GT3_TX_MMCM_LOCK_OUT => open,
-        GT3_TX_FSM_RESET_DONE_OUT => open,
+        GT3_TX_MMCM_LOCK_OUT => GT3_TX_MMCM_LOCK_OUT,
+        GT3_TX_FSM_RESET_DONE_OUT => GT3_TX_FSM_RESET_DONE_OUT,
         GT3_RX_FSM_RESET_DONE_OUT => open,
         GT3_DATA_VALID_IN => '0',
 

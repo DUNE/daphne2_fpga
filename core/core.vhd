@@ -161,6 +161,23 @@ architecture core_arch of core is
         gt1_txusrclk2_out: out std_logic;
         gt2_txusrclk2_out: out std_logic;
         gt3_txusrclk2_out: out std_logic;
+
+        GT0_TX_FSM_RESET_DONE_OUT: out std_logic;
+        GT1_TX_FSM_RESET_DONE_OUT: out std_logic;
+        GT2_TX_FSM_RESET_DONE_OUT: out std_logic;
+        GT3_TX_FSM_RESET_DONE_OUT: out std_logic;
+
+        GT0_TX_MMCM_LOCK_OUT: out std_logic;
+        GT1_TX_MMCM_LOCK_OUT: out std_logic;
+        GT2_TX_MMCM_LOCK_OUT: out std_logic;
+        GT3_TX_MMCM_LOCK_OUT: out std_logic;
+
+        gt0_txresetdone_out: out std_logic;
+        gt1_txresetdone_out: out std_logic;
+        gt2_txresetdone_out: out std_logic;
+        gt3_txresetdone_out: out std_logic;
+
+        GT0_PLL0LOCK_OUT: out std_logic;
        
         gt0_gtptxp_out, gt0_gtptxn_out: out std_logic;
         gt1_gtptxp_out, gt1_gtptxn_out: out std_logic;
@@ -181,6 +198,9 @@ architecture core_arch of core is
     signal reset_reg, reset_fclk_reg, reset_aclk_reg: std_logic;
     signal reset_count: std_logic_vector(5 downto 0);
     signal mgt4_reset_reg, reset_logic_reg: std_logic;
+    signal gt0_txresetdone_out, GT0_TX_MMCM_LOCK_OUT, GT0_TX_FSM_RESET_DONE_OUT, GT0_PLL0LOCK_OUT: std_logic;
+    type state_type is (reset_gtp, wait_for_reset, wait_pll_lock, wait_tx_mmcm_lock, wait_fsm_ready,wait_txreset_done,reset_logic);
+    signal state: state_type := wait_for_reset;
 
 begin
     
@@ -326,31 +346,91 @@ begin
 
     -- reset distribution for core_mgt4 and st40_top modules
 
-    sclk100_rst_proc: process(sclk100)
-    begin
+    core_reset_proc: process(sclk100)
+    begin 
         if rising_edge(sclk100) then
-        reset_reg <= reset;  -- register and pulse stretch in the oeiclk domain
-
-        if (reset_reg='1') then
-            reset_count <= "000000";
-        elsif (reset_count /= "111111") then
-            reset_count <= std_logic_vector(unsigned(reset_count)+1);
+            reset_reg <= reset;
+            case(state) is
+                when wait_for_reset =>
+                    if(reset_reg = '1') then
+                        state <= reset_gtp;
+                        reset_count <= "000000";
+                    else
+                        state <= wait_for_reset;
+                    end if;
+                when reset_gtp =>
+                    if(reset_count(5) = '1') then
+                        state <= wait_pll_lock;
+                        reset_count <= "000000";
+                    else
+                        state <= reset_gtp;
+                        reset_count <= std_logic_vector(unsigned(reset_count)+1);
+                    end if;
+                when wait_pll_lock =>
+                    if(GT0_PLL0LOCK_OUT = '1') then
+                        state <= wait_tx_mmcm_lock;
+                    else
+                        state <= wait_pll_lock;
+                    end if;
+                when wait_tx_mmcm_lock =>
+                    if(GT0_TX_MMCM_LOCK_OUT = '1') then 
+                        state <= wait_fsm_ready;
+                    else
+                        state <= wait_tx_mmcm_lock;
+                    end if;
+                when wait_fsm_ready =>
+                    if(GT0_TX_FSM_RESET_DONE_OUT = '1') then
+                        state <= wait_txreset_done;
+                    else 
+                        state <= wait_fsm_ready;
+                    end if;
+                when wait_txreset_done =>
+                    if(gt0_txresetdone_out = '1') then
+                        state <= reset_logic;
+                    else 
+                        state <= wait_txreset_done;
+                    end if;
+                when reset_logic => 
+                    if(reset_count(5) = '1') then
+                        state <= wait_for_reset;
+                    else 
+                        state <= reset_logic;
+                        reset_count <= std_logic_vector(unsigned(reset_count)+1);
+                    end if;
+                when others =>
+                    state <= wait_for_reset;
+            end case;
         end if;
+    end process core_reset_proc;
 
-        if (reset_count(5 downto 4)="00") then -- each pulse is ~128ns
-            mgt4_reset_reg <= '1';
-        else
-            mgt4_reset_reg <= '0';
-        end if;
+    mgt4_reset_reg <= '1' when (state = reset_gtp) else '0';
+    reset_logic_reg <= '1' when ((state = reset_gtp) and (state = wait_pll_lock) and (state = wait_tx_mmcm_lock) and (state = wait_fsm_ready) and (state = wait_txreset_done) and (state = reset_logic)) else '0';
 
-        if (reset_count(5)='0') then
-            reset_logic_reg <= '1';
-        else
-            reset_logic_reg <= '0';
-        end if;
-
-    end if;
-    end process sclk100_rst_proc;
+    --sclk100_rst_proc: process(sclk100)
+    --begin
+    --    if rising_edge(sclk100) then
+    --    reset_reg <= reset;  -- register and pulse stretch in the oeiclk domain
+    --
+    --    if (reset_reg='1') then
+    --        reset_count <= "000000";
+    --    elsif (reset_count /= "111111") then
+    --        reset_count <= std_logic_vector(unsigned(reset_count)+1);
+    --    end if;
+    --
+    --    if (reset_count(5 downto 4)="00") then -- each pulse is ~128ns
+    --        mgt4_reset_reg <= '1';
+    --    else
+    --        mgt4_reset_reg <= '0';
+    --    end if;
+    --
+    --    if (reset_count(5)='0') then
+    --        reset_logic_reg <= '1';
+    --    else
+    --        reset_logic_reg <= '0';
+    --    end if;
+    --
+    --end if;
+    --end process sclk100_rst_proc;
 
     -- wrapper for Xilinx MGT IP core. One MGT quad, for channels TX only, no DRP
 
@@ -376,6 +456,23 @@ begin
 
         q0_clk0_gtrefclk_pad_p_in => daq_refclk_p,  -- 120.237MHz for FELIX links
         q0_clk0_gtrefclk_pad_n_in => daq_refclk_n,
+
+        GT0_TX_FSM_RESET_DONE_OUT => GT0_TX_FSM_RESET_DONE_OUT,
+        GT1_TX_FSM_RESET_DONE_OUT => open,
+        GT2_TX_FSM_RESET_DONE_OUT => open,
+        GT3_TX_FSM_RESET_DONE_OUT => open,
+
+        GT0_TX_MMCM_LOCK_OUT => GT0_TX_MMCM_LOCK_OUT,
+        GT1_TX_MMCM_LOCK_OUT => open,
+        GT2_TX_MMCM_LOCK_OUT => open,
+        GT3_TX_MMCM_LOCK_OUT => open,
+
+        gt0_txresetdone_out => gt0_txresetdone_out,
+        gt1_txresetdone_out => open,
+        gt2_txresetdone_out => open,
+        gt3_txresetdone_out => open,
+
+        GT0_PLL0LOCK_OUT => GT0_PLL0LOCK_OUT,
       
         gt0_gtptxp_out => daq0_tx_p,
         gt0_gtptxn_out => daq0_tx_n,
