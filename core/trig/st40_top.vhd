@@ -463,7 +463,7 @@ begin
                 when X"40800280" =>
                     Rcount <= std_logic_vector(sendCount);
                 when others => 
-                    Rcount <= (others => '1');
+                    Rcount <= X"DEADBEEF";
             end case;
         end if;
     end process rcount_mux_proc;
