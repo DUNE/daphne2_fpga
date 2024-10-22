@@ -422,7 +422,7 @@ begin
     reg_fe_reset_proc: process(sclk100)
     begin
         if rising_edge(sclk100) then
-            if (reset_fe_mclk = 1) then
+            if (reset_fe_mclk = '1') then
                 reset_fe_mclk_reg <= '1';
             elsif (state = wait_fe_done) then
                 reset_fe_mclk_reg <= '0';
