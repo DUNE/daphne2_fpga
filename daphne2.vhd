@@ -422,7 +422,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal self_trigger_test_selector: std_logic := '1';
     signal self_trigger_test_reg_we: std_logic;
 
-    signal Rcount_reg: std_logic_vector(31 downto 0) := (others=>'0');
+    signal Rcount_reg: std_logic_vector(31 downto 0);
     signal trig_rst_count: std_logic;
 
 begin
