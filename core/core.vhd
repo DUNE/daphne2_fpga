@@ -208,7 +208,7 @@ architecture core_arch of core is
 
     signal reset_reg, reset_fclk_reg, reset_aclk_reg: std_logic;
     signal reset_count: std_logic_vector(5 downto 0);
-    signal mgt4_reset_reg, reset_logic_reg: std_logic;
+    signal mgt4_reset_reg, reset_logic_reg, reset_fe_mclk_reg: std_logic;
     signal gt0_txresetdone_out, GT0_TX_MMCM_LOCK_OUT, GT0_TX_FSM_RESET_DONE_OUT, GT0_PLL0LOCK_OUT: std_logic;
     type state_type is (reset_gtp, wait_for_reset, wait_gtp_ready, wait_mclk_ep_ready,wait_fe_reset,reset_logic,wait_fe_done);
     signal state: state_type := wait_for_reset;
@@ -394,7 +394,7 @@ begin
                         state <= wait_mclk_ep_ready;
                     end if;
                 when wait_fe_reset =>
-                    if(reset_fe_mclk = '1') then
+                    if(reset_fe_mclk_reg = '1') then
                         state <= wait_fe_done;
                     else
                         state <= wait_fe_reset;
@@ -418,6 +418,17 @@ begin
             end case;
         end if;
     end process core_reset_proc;
+
+    reg_fe_reset_proc: process(sclk100)
+    begin
+        if rising_edge(sclk100) then
+            if (reset_fe_mclk = 1) then
+                reset_fe_mclk_reg <= '1';
+            elsif (state = wait_fe_done) then
+                reset_fe_mclk_reg <= '0';
+            end if;
+        end if;
+    end process reg_fe_reset_proc;
 
     mgt4_reset_reg <= '1' when (state = reset_gtp) else '0';
     reset_logic_reg <= '1' when ((state = reset_gtp) and (state = wait_gtp_ready) and (state = wait_mclk_ep_ready) and (state = wait_fe_reset) 
