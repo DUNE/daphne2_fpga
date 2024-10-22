@@ -59,8 +59,8 @@ port(
     inmux_we: in std_logic; -- write enable for inmux control regs
     inmux_dout: out std_logic_vector(5 downto 0); -- read inmux control regs
 
-    --Rcount_addr: in std_logic_vector(31 downto 0);
-    --Rcount: out std_logic_vector(1 downto 0);
+    Rcount_addr: in std_logic_vector(31 downto 0);
+    Rcount: out std_logic_vector(31 downto 0);
 
     daq_refclk_p, daq_refclk_n: in std_logic; -- MGT REFCLK for DAQ, LVDS, quad 213, refclk0, 120.237MHz
     daq0_tx_p, daq0_tx_n: out std_logic;
@@ -127,9 +127,9 @@ architecture core_arch of core is
         --oeiclk: in std_logic;
         fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
         dout: out std_logic_vector(31 downto 0);
-        kout: out std_logic_vector(3 downto 0)
-        --Rcount_addr: in std_logic_vector(31 downto 0);
-        --Rcount: out std_logic_vector(1 downto 0)
+        kout: out std_logic_vector(3 downto 0);
+        Rcount_addr: in std_logic_vector(31 downto 0);
+        Rcount: out std_logic_vector(31 downto 0)
     );
     end component;
 
@@ -284,9 +284,9 @@ begin
         --oeiclk => oeiclk,
         fclk => fclk(0), 
         dout => selftrig_sender_dout,
-        kout => selftrig_sender_kout
-        --Rcount_addr => Rcount_addr,
-        --Rcount => Rcount
+        kout => selftrig_sender_kout,
+        Rcount_addr => Rcount_addr,
+        Rcount => Rcount
     );
 
     -- there are four outputs (sender_kout and sender_dout) and these muxes 
@@ -454,7 +454,7 @@ begin
         gt1_txresetdone_out => open,
         gt2_txresetdone_out => open,
         gt3_txresetdone_out => open,
-        
+
         GT0_PLL0LOCK_OUT => GT0_PLL0LOCK_OUT,
       
         gt0_gtptxp_out => daq0_tx_p,
