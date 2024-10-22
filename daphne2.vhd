@@ -289,6 +289,10 @@ architecture DAPHNE2_arch of DAPHNE2 is
         mclk: in std_logic; -- master clock 62.5MHz
         sclk100: in std_logic; -- system clock 100MHz
         reset: in std_logic; -- for sender logic and for GTP quad
+        fe_done: in std_logic_vector(4 downto 0);
+        mmcm0_locked: in std_logic;
+        mmcm1_locked: in std_logic;
+        ep_ts_rdy: in std_logic;
         afe_dat: in array_5x9x14_type;  -- AFE data synchronized to clock
         timestamp: in std_logic_vector(63 downto 0);
         slot_id: in std_logic_vector(3 downto 0);
@@ -423,7 +427,6 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal self_trigger_test_reg_we: std_logic;
 
     signal Rcount_reg: std_logic_vector(31 downto 0);
-    signal trig_rst_count: std_logic;
 
 begin
 
@@ -839,8 +842,6 @@ begin
              '1' when (tx_rden='1') else  -- no wait for reads
              '0';
 
-    trig_rst_count <= reset_fe_mclk;
-
     -- 64-bit R/W dummy register for testing reads and writes
 
     testreg_we <= '1' when (std_match(rx_addr,TESTREG_ADDR) and rx_wren='1') else '0';
@@ -1045,13 +1046,17 @@ begin
     inmux_we <= '1' when (std_match(rx_addr,CORE_INMUX_ADDR) and rx_wren='1') else '0';
 
     -- combo core logic, streaming and self-trig
-    reset_core <= reset_async or trig_rst_count;
+    reset_core <= reset_async or reset_ep;
 
     core_inst: core
     port map(
         mclk => mclk,
         sclk100 => sclk100,
         reset => reset_core,
+        fe_done => fe_done,
+        mmcm0_locked => mmcm0_locked,
+        mmcm1_locked => mmcm1_locked,
+        ep_ts_rdy => ep_ts_rdy,
 
         afe_dat => afe_dout,
         timestamp => timestamp,
