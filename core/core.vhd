@@ -129,7 +129,7 @@ architecture core_arch of core is
         aclk: in std_logic; -- AFE clock 62.500 MHz
         timestamp: in std_logic_vector(63 downto 0);
     	afe_dat: in array_5x9x14_type; -- ADC data all 40 input streams
-        --oeiclk: in std_logic;
+        oeiclk: in std_logic;
         fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
         dout: out std_logic_vector(31 downto 0);
         kout: out std_logic_vector(3 downto 0);
