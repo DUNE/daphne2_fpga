@@ -286,7 +286,7 @@ begin
         ti_trigger_stbr => ti_trigger_stbr, -------------------------
         trig_rst_count => reset_fclk_reg,
     	afe_dat => afe_dat, -- AFE raw data after alignment all 40 channels
-        --oeiclk => oeiclk,
+        oeiclk => oeiclk,
         fclk => fclk(0), 
         dout => selftrig_sender_dout,
         kout => selftrig_sender_kout,
