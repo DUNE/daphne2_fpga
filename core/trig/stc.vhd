@@ -654,8 +654,8 @@ begin
 
     fifo_do(31 downto 0) <= DO(3)(7 downto 0) & DO(2)(7 downto 0) & DO(1)(7 downto 0) & DO(0)(7 downto 0);
     fifo_ko( 3 downto 0) <= DOP(3)(0) & DOP(2)(0) & DOP(1)(0) & DOP(0)(0);
-    --TCount <= std_logic_vector(trigCount); 
-    --Pcount <= std_logic_vector(packCount); 
+    TCount <= std_logic_vector(trigCount); 
+    Pcount <= std_logic_vector(packCount); 
 
 
 end stc_arch;
