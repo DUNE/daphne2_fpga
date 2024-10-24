@@ -31,10 +31,6 @@ port(
     mclk: in std_logic; -- master clock 62.5MHz
     sclk100: in std_logic; -- system clock 100MHz 
     reset: in std_logic; -- for sender logic and for GTP quad
-    fe_done: in std_logic_vector(4 downto 0);
-    mmcm0_locked: in std_logic;
-    mmcm1_locked: in std_logic;
-    ep_ts_rdy: in std_logic;
     afe_dat: in array_5x9x14_type;  -- AFE data synch to mclk
     timestamp: in std_logic_vector(63 downto 0); -- sync to mclk
 
@@ -209,7 +205,7 @@ architecture core_arch of core is
     signal reset_count: std_logic_vector(5 downto 0);
     signal mgt4_reset_reg, reset_logic_reg: std_logic;
     signal gt0_txresetdone_out, GT0_TX_MMCM_LOCK_OUT, GT0_TX_FSM_RESET_DONE_OUT, GT0_PLL0LOCK_OUT: std_logic;
-    type state_type is (reset_gtp, wait_for_reset, wait_gtp_ready, wait_mclk_ep_ready,reset_logic,wait_fe_done);
+    type state_type is (reset_gtp, wait_for_reset, wait_pll_lock, wait_tx_mmcm_lock, wait_fsm_ready,wait_txreset_done,reset_logic);
     signal state: state_type := wait_for_reset;
 
 begin
@@ -374,29 +370,35 @@ begin
                     end if;
                 when reset_gtp =>
                     if(reset_count(5) = '1') then
-                        state <= wait_gtp_ready;
+                        state <= wait_pll_lock;
                         reset_count <= "000000";
                     else
                         state <= reset_gtp;
                         reset_count <= std_logic_vector(unsigned(reset_count)+1);
                     end if;
-                when wait_gtp_ready =>
-                    if(GT0_PLL0LOCK_OUT = '1' and GT0_TX_MMCM_LOCK_OUT = '1' and GT0_TX_FSM_RESET_DONE_OUT = '1' and gt0_txresetdone_out = '1') then
-                        state <= wait_mclk_ep_ready;
+                when wait_pll_lock =>
+                    if(GT0_PLL0LOCK_OUT = '1') then
+                        state <= wait_tx_mmcm_lock;
                     else
-                        state <= wait_gtp_ready;
+                        state <= wait_pll_lock;
                     end if;
-                when wait_mclk_ep_ready =>
-                    if(mmcm0_locked = '1' and mmcm1_locked = '1' and ep_ts_rdy = '1') then
-                        state <= wait_fe_done;
+                when wait_tx_mmcm_lock =>
+                    if(GT0_TX_MMCM_LOCK_OUT = '1') then 
+                        state <= wait_fsm_ready;
                     else
-                        state <= wait_mclk_ep_ready;
+                        state <= wait_tx_mmcm_lock;
                     end if;
-                when wait_fe_done =>
-                    if(fe_done = "11111") then
+                when wait_fsm_ready =>
+                    if(GT0_TX_FSM_RESET_DONE_OUT = '1') then
+                        state <= wait_txreset_done;
+                    else 
+                        state <= wait_fsm_ready;
+                    end if;
+                when wait_txreset_done =>
+                    if(gt0_txresetdone_out = '1') then
                         state <= reset_logic;
                     else 
-                        state <= wait_fe_done;
+                        state <= wait_txreset_done;
                     end if;
                 when reset_logic => 
                     if(reset_count(5) = '1') then
@@ -405,7 +407,6 @@ begin
                         state <= reset_logic;
                         reset_count <= std_logic_vector(unsigned(reset_count)+1);
                     end if;
-                
                 when others =>
                     state <= wait_for_reset;
             end case;
@@ -413,8 +414,7 @@ begin
     end process core_reset_proc;
 
     mgt4_reset_reg <= '1' when (state = reset_gtp) else '0';
-    reset_logic_reg <= '1' when ((state = reset_gtp) and (state = wait_gtp_ready) and (state = wait_mclk_ep_ready) 
-                                                     and (state = reset_logic)) and (state = wait_fe_done) else '0';
+    reset_logic_reg <= '1' when ((state = reset_gtp) and (state = wait_pll_lock) and (state = wait_tx_mmcm_lock) and (state = wait_fsm_ready) and (state = wait_txreset_done) and (state = reset_logic)) else '0';
 
 
     core_mgt4_inst: core_mgt4
