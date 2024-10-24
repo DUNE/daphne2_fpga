@@ -289,7 +289,6 @@ architecture DAPHNE2_arch of DAPHNE2 is
         mclk: in std_logic; -- master clock 62.5MHz
         sclk100: in std_logic; -- system clock 100MHz
         reset: in std_logic; -- for sender logic and for GTP quad
-        reset_fe_mclk: in std_logic;
         fe_done: in std_logic_vector(4 downto 0);
         mmcm0_locked: in std_logic;
         mmcm1_locked: in std_logic;
@@ -1054,7 +1053,6 @@ begin
         mclk => mclk,
         sclk100 => sclk100,
         reset => reset_core,
-        reset_fe_mclk => reset_fe_mclk,
         fe_done => fe_done,
         mmcm0_locked => mmcm0_locked,
         mmcm1_locked => mmcm1_locked,
