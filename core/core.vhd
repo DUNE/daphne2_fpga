@@ -41,7 +41,7 @@ port(
 
     ti_trigger: in std_logic_vector(7 downto 0); ------------------------
     ti_trigger_stbr: in std_logic; -------------------------------------
-    trig_rst_count: in std_logic;
+    --trig_rst_count: in std_logic;
     
     slot_id: in std_logic_vector(3 downto 0); -- used in output header
     crate_id: in std_logic_vector(9 downto 0); -- used in output header
@@ -105,7 +105,9 @@ architecture core_arch of core is
     component st40_top -- 40 channel self-triggered sender
     generic( link_id: std_logic_vector(5 downto 0)  := "000000" );
     port(
-        reset: in std_logic; 
+        --reset: in std_logic;
+        reset_aclk: in std_logic;    
+        reset_fclk: in std_logic; 
         st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)   
         adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
         threshold_xc: in std_logic_vector(41 downto 0); -- user defined threshold relative to baseline
@@ -159,6 +161,23 @@ architecture core_arch of core is
         gt1_txcharisk_in: in std_logic_vector(3 downto 0);
         gt2_txcharisk_in: in std_logic_vector(3 downto 0);
         gt3_txcharisk_in: in std_logic_vector(3 downto 0);
+
+        GT0_TX_FSM_RESET_DONE_OUT: out std_logic;
+        GT1_TX_FSM_RESET_DONE_OUT: out std_logic;
+        GT2_TX_FSM_RESET_DONE_OUT: out std_logic;
+        GT3_TX_FSM_RESET_DONE_OUT: out std_logic;
+
+        GT0_TX_MMCM_LOCK_OUT: out std_logic;
+        GT1_TX_MMCM_LOCK_OUT: out std_logic;
+        GT2_TX_MMCM_LOCK_OUT: out std_logic;
+        GT3_TX_MMCM_LOCK_OUT: out std_logic;
+
+        gt0_txresetdone_out: out std_logic;
+        gt1_txresetdone_out: out std_logic;
+        gt2_txresetdone_out: out std_logic;
+        gt3_txresetdone_out: out std_logic;
+
+        GT0_PLL0LOCK_OUT: out std_logic;
     
         gt0_txusrclk2_out: out std_logic;
         gt1_txusrclk2_out: out std_logic;
@@ -180,6 +199,13 @@ architecture core_arch of core is
     signal selftrig_sender_dout: std_logic_vector(31 downto 0);
     signal selftrig_sender_kout: std_logic_vector(3 downto 0);
     signal trig_fclk_reg: std_logic;
+
+    signal reset_reg, reset_fclk_reg, reset_aclk_reg: std_logic;
+    signal reset_count: std_logic_vector(5 downto 0);
+    signal mgt4_reset_reg, reset_logic_reg: std_logic;
+    signal gt0_txresetdone_out, GT0_TX_MMCM_LOCK_OUT, GT0_TX_FSM_RESET_DONE_OUT, GT0_PLL0LOCK_OUT: std_logic;
+    type state_type is (reset_gtp, wait_for_reset, wait_pll_lock, wait_tx_mmcm_lock, wait_fsm_ready,wait_txreset_done,reset_logic);
+    signal state: state_type := wait_for_reset;
 
 begin
     
@@ -209,7 +235,7 @@ begin
         stream_sender_inst: dstr4 
         generic map( link_id => std_logic_vector( to_unsigned(i,6)) )
         port map(
-            reset => reset,
+            reset => reset_fclk_reg,
             slot_id => slot_id,
             crate_id => crate_id,
             detector_id => detector_id,
@@ -236,7 +262,8 @@ begin
     st40_sender_inst: st40_top 
     generic map( link_id => "000000" )
     port map(
-        reset => reset,
+        reset_aclk => reset_aclk_reg,
+        reset_fclk => reset_fclk_reg,
         adhoc => adhoc,
         st_config => st_config, -- CIEMAT (Nacho) 
         threshold_xc => threshold_xc,
@@ -250,7 +277,7 @@ begin
         timestamp => timestamp,
         ti_trigger => ti_trigger, ------------------------------
         ti_trigger_stbr => ti_trigger_stbr, -------------------------
-        trig_rst_count => trig_rst_count,
+        trig_rst_count => reset_fclk_reg,
     	afe_dat => afe_dat, -- AFE raw data after alignment all 40 channels
         oeiclk => oeiclk,
         fclk => fclk(0), 
@@ -285,8 +312,16 @@ begin
     begin
         if rising_edge(fclk(0)) then
             trig_fclk_reg <= trig;
+            reset_fclk_reg <= reset_logic_reg;
         end if;
     end process trig_fclk_proc;
+
+    reset_mclk_proc: process(mclk)
+    begin
+        if rising_edge(mclk) then
+            reset_aclk_reg <= reset_logic_reg;
+        end if;
+    end process reset_mclk_proc;
 
     -- insert some spy buffers to capture the output of sender0
     -- stores the 32 bit data prior to 8b/10b encoding, depth is 4k
@@ -295,7 +330,7 @@ begin
     sender0_spy_hi_inst: spy
     port map(
         clka  => fclk(0),
-        reset => reset,
+        reset => reset_fclk_reg,
         trig  => trig_fclk_reg,
         dia   => sender_dout(0)(31 downto 16),
 
@@ -307,7 +342,7 @@ begin
     sender0_spy_lo_inst: spy
     port map(
         clka  => fclk(0),
-        reset => reset,
+        reset => reset_fclk_reg,
         trig  => trig_fclk_reg,
         dia   => sender_dout(0)(15 downto 0),
 
@@ -318,10 +353,71 @@ begin
 
     -- wrapper for Xilinx MGT IP core. One MGT quad, for channels TX only, no DRP
 
+    -- reset distribution for core_mgt4 and st40_top modules
+    core_reset_proc: process(sclk100)
+    begin
+        if rising_edge(sclk100) then
+            reset_reg <= reset;
+            case(state) is
+                when wait_for_reset =>
+                    if(reset_reg = '1') then
+                        state <= reset_gtp;
+                        reset_count <= "000000";
+                    else
+                        state <= wait_for_reset;
+                    end if;
+                when reset_gtp =>
+                    if(reset_count(5) = '1') then
+                        state <= wait_pll_lock;
+                        reset_count <= "000000";
+                    else
+                        state <= reset_gtp;
+                        reset_count <= std_logic_vector(unsigned(reset_count)+1);
+                    end if;
+                when wait_pll_lock =>
+                    if(GT0_PLL0LOCK_OUT = '1') then
+                        state <= wait_tx_mmcm_lock;
+                    else
+                        state <= wait_pll_lock;
+                    end if;
+                when wait_tx_mmcm_lock =>
+                    if(GT0_TX_MMCM_LOCK_OUT = '1') then 
+                        state <= wait_fsm_ready;
+                    else
+                        state <= wait_tx_mmcm_lock;
+                    end if;
+                when wait_fsm_ready =>
+                    if(GT0_TX_FSM_RESET_DONE_OUT = '1') then
+                        state <= wait_txreset_done;
+                    else 
+                        state <= wait_fsm_ready;
+                    end if;
+                when wait_txreset_done =>
+                    if(gt0_txresetdone_out = '1') then
+                        state <= reset_logic;
+                    else 
+                        state <= wait_txreset_done;
+                    end if;
+                when reset_logic => 
+                    if(reset_count(5) = '1') then
+                        state <= wait_for_reset;
+                    else 
+                        state <= reset_logic;
+                        reset_count <= std_logic_vector(unsigned(reset_count)+1);
+                    end if;
+                when others =>
+                    state <= wait_for_reset;
+            end case;
+        end if;
+    end process core_reset_proc;
+    
+    mgt4_reset_reg <= '1' when (state = reset_gtp) else '0';
+    reset_logic_reg <= '1' when ((state = reset_gtp) and (state = wait_pll_lock) and (state = wait_tx_mmcm_lock) and (state = wait_fsm_ready) and (state = wait_txreset_done) and (state = reset_logic)) else '0';
+
     core_mgt4_inst: core_mgt4
     port map(
         sysclk_in => sclk100, -- system clock constant 100MHz
-        soft_reset_tx_in => reset,
+        soft_reset_tx_in => mgt4_reset_reg,
        
         gt0_txdata_in => sender_dout(0),
         gt1_txdata_in => sender_dout(1),
@@ -340,6 +436,23 @@ begin
 
         q0_clk0_gtrefclk_pad_p_in => daq_refclk_p,  -- 120.237MHz for FELIX links
         q0_clk0_gtrefclk_pad_n_in => daq_refclk_n,
+
+        GT0_TX_FSM_RESET_DONE_OUT => GT0_TX_FSM_RESET_DONE_OUT,
+        GT1_TX_FSM_RESET_DONE_OUT => open,
+        GT2_TX_FSM_RESET_DONE_OUT => open,
+        GT3_TX_FSM_RESET_DONE_OUT => open,
+
+        GT0_TX_MMCM_LOCK_OUT => GT0_TX_MMCM_LOCK_OUT,
+        GT1_TX_MMCM_LOCK_OUT => open,
+        GT2_TX_MMCM_LOCK_OUT => open,
+        GT3_TX_MMCM_LOCK_OUT => open,
+        
+        gt0_txresetdone_out => gt0_txresetdone_out,
+        gt1_txresetdone_out => open,
+        gt2_txresetdone_out => open,
+        gt3_txresetdone_out => open,
+        
+        GT0_PLL0LOCK_OUT => GT0_PLL0LOCK_OUT,
       
         gt0_gtptxp_out => daq0_tx_p,
         gt0_gtptxn_out => daq0_tx_n,
