@@ -49,7 +49,7 @@ end stc;
 
 architecture stc_arch of stc is
 
-    signal afe_dly32_i, afe_dly64_i, afe_dly96_i, afe_dly: std_logic_vector(13 downto 0);
+    signal afe_dly32_i, afe_dly64_i, afe_dly96_i, afe_dly128_i, afe_dly160_i, afe_dly192_i, afe_dly224_i, afe_dly: std_logic_vector(13 downto 0);
     signal afe_dly0, afe_dly1, afe_dly2: std_logic_vector(13 downto 0);
     signal block_count: std_logic_vector(5 downto 0);
 
@@ -242,8 +242,55 @@ begin
             a => "11111",
             d => afe_dly96_i(i),
             q => open,
-            q31 => afe_dly(i) -- AFE data 128 clocks ago
+            q31 => afe_dly128_i(i) -- AFE data 128 clocks ago
         );
+
+        -- add around 150 delays
+
+        srlc32e_4_inst : srlc32e --32
+        port map(
+            clk => aclk,
+            ce => '1',
+            a => "11111",
+            d => afe_dly128_i(i),
+            q => open,
+            q31 => afe_dly160_i(i) -- AFE data 128 clocks ago
+        );
+
+        srlc32e_5_inst : srlc32e --64
+        port map(
+            clk => aclk,
+            ce => '1',
+            a => "11111",
+            d => afe_dly160_i(i),
+            q => open,
+            q31 => afe_dly192_i(i) -- AFE data 128 clocks ago
+        );
+
+        srlc32e_6_inst : srlc32e --96
+        port map(
+            clk => aclk,
+            ce => '1',
+            a => "11111",
+            d => afe_dly192_i(i),
+            q => open,
+            q31 => afe_dly224_i(i) -- AFE data 128 clocks ago
+        );
+
+        srlc32e_7_inst : srlc32e -- 20
+        port map(
+            clk => aclk,
+            ce => '1',
+            a => "10100",
+            d => afe_dly224_i(i),
+            q => afe_dly(i),
+            q31 => open -- AFE data 128 clocks ago
+        );
+
+        
+    -- add around 116 delays
+
+
 
     end generate gendelay;
 

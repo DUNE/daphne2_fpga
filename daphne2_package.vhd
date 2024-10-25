@@ -114,7 +114,7 @@ package daphne2_package is
  
     constant THRESHOLD_XC_BASEADDR: std_logic_vector(31 downto 0) := X"00006100";
    
-    constant DEFAULT_THRESHOLD_XC: std_logic_vector(41 downto 0) := "111111101100000000000000000000000011001000";
+    constant DEFAULT_THRESHOLD_XC: std_logic_vector(41 downto 0) := "100000000000010000000000000000010001111110"; -- 0x2001000047E 
 
     -- enable disable individual input channels for self triggered sender only
 
@@ -126,7 +126,7 @@ package daphne2_package is
 
     constant ST_CONFIG_ADDR: std_logic_vector(31 downto 0) := X"00006002";
 
-    constant DEFAULT_ST_CONFIG: std_logic_vector(31 downto 0) := X"00000003"; -- all self triggered channels OFF 
+    constant DEFAULT_ST_CONFIG: std_logic_vector(31 downto 0) := X"0000DB35"; -- all self triggered channels OFF 
 
     -- address of the ad hoc command for the self trig senders
 
