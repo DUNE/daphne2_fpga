@@ -71,6 +71,7 @@ architecture st_xc_arch of st_xc is
     -- signals to enable the trigger
     signal trig_en: std_logic := '1'; 
     signal din_reg0, din_reg1, din_reg2: std_logic_vector(13 downto 0) := (others => '0');
+    signal din_reg3, din_reg4, din_reg5, din_reg6: std_logic_vector(13 downto 0) := (others => '0');
     signal s_din, s_din_reg0, s_din_reg1, s_din_reg2: signed(13 downto 0) := (others => '0');
     signal s_din_reg3, s_din_reg4, s_din_reg5, s_din_reg6: signed(13 downto 0) := (others => '0');
     signal slope: signed(14 downto 0) := (others => '0');
