@@ -687,7 +687,7 @@ gendelay: for i in 13 downto 0 generate
         
         srlc32e_1_inst : srlc32e
         port map(
-            clk => aclk,
+            clk => clock_aux,
             ce => '1',
             a => "11111",
             d => filtered_dout_aux_delay_32(i),
@@ -697,7 +697,7 @@ gendelay: for i in 13 downto 0 generate
         
         srlc32e_2_inst : srlc32e
         port map(
-            clk => aclk,
+            clk => clock_aux,
             ce => '1',
             a => "11111",
             d => filtered_dout_aux_delay_64(i),
@@ -707,7 +707,7 @@ gendelay: for i in 13 downto 0 generate
 
         srlc32e_3_inst : srlc32e
         port map(
-            clk => aclk,
+            clk => clock_aux,
             ce => '1',
             a => "11111",
             d => filtered_dout_aux_delay_96(i),
