@@ -288,9 +288,10 @@ begin
     end case;
 end process Next_State_Detection;
 
-FFs_Detection: process(clock, reset, Amplitude_Current, Peak_Current, High_Freq_Noise_aux)
+FFs_Detection: process(clock, reset, Amplitude_Current, Peak_Current)--, High_Freq_Noise_aux)
 begin
-    if ((reset='1') or (High_Freq_Noise_aux='1'))  then
+    --if ((reset='1') or (High_Freq_Noise_aux='1'))  then
+    if (reset='1')  then
         CurrentState_Detection      <= No_Detection;                 -- Primitives calculation available. Active HIGH
         Time_Peak_Current           <= (others=>'0');       -- Time in Samples to achieve de Max peak
         Time_Pulse_UB_Current       <= (others=>'0');       -- Time in Samples of the light pulse (without undershoot)
