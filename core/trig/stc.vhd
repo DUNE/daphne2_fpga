@@ -134,6 +134,7 @@ architecture stc_arch of stc is
         reset:                          in  std_logic;                                              -- Reset signal. ACTIVE HIGH
         din:                            in  std_logic_vector(13 downto 0);                          -- Data coming from the Filter Block / Raw data from AFEs
         Config_Param:                   in  std_logic_vector(13 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
+        Ext_Self_Trigger:               in  std_logic;                                              -- External Self-Trigger coming from another block
         Self_trigger:                   out std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
         Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
         Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
@@ -339,9 +340,10 @@ begin
     port map(
         clock                       => aclk,                           -- AFE clock
         reset                       => reset,                          -- Reset signal. ACTIVE HIGH
-        din                         => afe_dat_filtered,                        -- Data coming from the Filter Block / Raw data from AFEs
+        din                         => afe_dat_filtered,               -- Data coming from the Filter Block / Raw data from AFEs
         Config_Param                => st_config,                      -- Configure parameters for filtering & self-trigger bloks
-        Self_trigger                => triggered_ciemat,                      -- Self-Trigger signal comming from the Self-Trigger block
+        Ext_Self_Trigger            => triggered_bicocca,              --External Self-Trigger coming from another block
+        Self_trigger                => open,               -- Self-Trigger signal comming from the Self-Trigger block
         Data_Available              => open,                           -- ACTIVE HIGH when LOCAL primitives are calculated
         Time_Peak                   => open,                           -- Time in Samples to achieve de Max peak
         Time_Pulse_UB               => open,                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)

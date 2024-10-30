@@ -42,6 +42,7 @@ port(
     reset:                          in  std_logic;                                              -- Reset signal. ACTIVE HIGH
     din:                            in  std_logic_vector(13 downto 0);                          -- Data coming from the Filter Block / Raw data from AFEs
     Config_Param:                   in  std_logic_vector(13 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
+    Ext_Self_Trigger:               in  std_logic;                                              -- External Self-Trigger coming from another block
     Self_trigger:                   out std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
     Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
     Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
@@ -135,7 +136,7 @@ SIGNAL Config_Param_Reg: std_logic_vector (13 downto 0);
 SIGNAL din_aux : std_logic_vector(13 downto 0):= "00000000000000";
 SIGNAL Config_Param_FILTER_aux: std_logic_vector(3 downto 0);
 SIGNAL filtered_dout_aux: std_logic_vector(13 downto 0);
-SIGNAL filtered_dout_aux_delay: std_logic_vector(13 downto 0);
+SIGNAL filtered_dout_aux_delay_32, filtered_dout_aux_delay_64, filtered_dout_aux_delay_96, filtered_dout_aux_delay_Extra : std_logic_vector(13 downto 0);
 
 -- SELF TRIGGER SIGNALS
 SIGNAL Config_Param_SELF_aux: std_logic_vector(9 downto 0);
@@ -226,14 +227,14 @@ UUT2 : PeakDetector_SelfTrigger_CIEMAT
       Config_Param  => Config_Param_SELF_aux, 
       Interface_LOCAL_Primitves_IN => Interface_LOCAL_Primitves_IN_aux,
       Interface_LOCAL_Primitves_OUT => Interface_LOCAL_Primitves_OUT_aux,
-      Self_trigger => Self_trigger_aux);
+      Self_trigger => open);
       
 UUT3 : LocalPrimitives_CIEMAT
     PORT MAP ( 
     clock =>  clock_aux,                                                -- AFE clock
     reset=>  reset_aux,                                                 -- Reset signal. ACTIVE HIGH
-    Self_trigger=> Self_trigger_aux,                                    -- Self-Trigger signal comming from the Self-Trigger block
-    din=>  filtered_dout_aux_delay,                                                     -- Data coming from the Filter Block / Raw data from AFEs
+    Self_trigger=> Ext_Self_Trigger,                                    -- Self-Trigger signal comming from the Self-Trigger block
+    din=>  filtered_dout_aux_delay_Extra,                               -- Data coming from the Filter Block / Raw data from AFEs
     Interface_LOCAL_Primitves_IN=>  Interface_LOCAL_Primitves_OUT_aux,   -- Interface with Local Primitives calculation BLOCK --> DEPENDS ON SELF-TRIGGER ALGORITHM 
     Interface_LOCAL_Primitves_OUT=>  Interface_LOCAL_Primitves_IN_aux, -- Interface with Local Primitives calculation BLOCK --> DEPENDS ON SELF-TRIGGER ALGORITHM 
     Data_Available=>  Data_Available_aux,                               -- ACTIVE HIGH when LOCAL primitives are calculated
@@ -678,10 +679,40 @@ gendelay: for i in 13 downto 0 generate
         port map(
             clk => clock_aux,
             ce => '1',
-            a => "00010",
+            a => "11111",
             d => din_aux(i), -- real time filtered data
-            q => filtered_dout_aux_delay(i), -- Filtered data 8 cycles ago 
-            q31 => open 
+            q => open, 
+            q31 => filtered_dout_aux_delay_32(i) -- DIN data 32 clocks ago 
+        );
+        
+        srlc32e_1_inst : srlc32e
+        port map(
+            clk => aclk,
+            ce => '1',
+            a => "11111",
+            d => filtered_dout_aux_delay_32(i),
+            q => open,
+            q31 => filtered_dout_aux_delay_64(i) -- DIN data 64 clocks ago
+        );
+        
+        srlc32e_2_inst : srlc32e
+        port map(
+            clk => aclk,
+            ce => '1',
+            a => "11111",
+            d => filtered_dout_aux_delay_64(i),
+            q => open,
+            q31 => filtered_dout_aux_delay_96(i) -- DIN data 96 clocks ago
+        );
+
+        srlc32e_3_inst : srlc32e
+        port map(
+            clk => aclk,
+            ce => '1',
+            a => "11111",
+            d => filtered_dout_aux_delay_96(i),
+            q => filtered_dout_aux_delay_Extra(i),
+            q31 => open -- AFE data 96 clocks ago
         );
 end generate gendelay;
 ----------------------- INPUT SIGNALS   -----------------------
