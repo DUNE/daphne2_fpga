@@ -136,7 +136,7 @@ SIGNAL Config_Param_Reg: std_logic_vector (13 downto 0);
 SIGNAL din_aux : std_logic_vector(13 downto 0):= "00000000000000";
 SIGNAL Config_Param_FILTER_aux: std_logic_vector(3 downto 0);
 SIGNAL filtered_dout_aux: std_logic_vector(13 downto 0);
-SIGNAL filtered_dout_aux_delay_32, filtered_dout_aux_delay_64, filtered_dout_aux_delay_96, filtered_dout_aux_delay_Extra : std_logic_vector(13 downto 0);
+SIGNAL filtered_dout_aux_delay_32, filtered_dout_aux_delay_64, filtered_dout_aux_delay_96, filtered_dout_aux_delay_128, filtered_dout_aux_delay_160, filtered_dout_aux_delay_Extra : std_logic_vector(13 downto 0);
 
 -- SELF TRIGGER SIGNALS
 SIGNAL Config_Param_SELF_aux: std_logic_vector(9 downto 0);
@@ -711,8 +711,28 @@ gendelay: for i in 13 downto 0 generate
             ce => '1',
             a => "11111",
             d => filtered_dout_aux_delay_96(i),
+            q => filtered_dout_aux_delay_128(i),
+            q31 => open 
+        );
+
+        srlc32e_4_inst : srlc32e
+        port map(
+            clk => clock_aux,
+            ce => '1',
+            a => "11111",
+            d => filtered_dout_aux_delay_128(i),
+            q => filtered_dout_aux_delay_160(i),
+            q31 => open 
+        );
+
+       srlc32e_5_inst : srlc32e
+        port map(
+            clk => clock_aux,
+            ce => '1',
+            a => "01011",
+            d => filtered_dout_aux_delay_160(i),
             q => filtered_dout_aux_delay_Extra(i),
-            q31 => open -- AFE data 96 clocks ago
+            q31 => open 
         );
 end generate gendelay;
 ----------------------- INPUT SIGNALS   -----------------------
