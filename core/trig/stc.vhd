@@ -94,6 +94,7 @@ architecture stc_arch of stc is
     signal    Number_Peaks_OB_aux:                 std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
     --signal    filtered_dout_aux:                   std_logic_vector (13 downto 0);                         -- HIGH PASS Filtered signal
     --signal    Baseline_aux:                        std_logic_vector(14 downto 0);                          -- Real Time calculated BASELINE
+    signal    EndStop_aux:                         std_logic;                                              -- ACTIVE HIGH when event has finished or was stopped
     signal    Amplitude_aux:                       std_logic_vector(14 downto 0);                          -- Real Time calculated AMPLITUDE
     signal    Peak_Current_aux:                    std_logic;                                              -- ACTIVE HIGH when a peak is detected
     signal    Slope_Current_aux:                   std_logic_vector(13 downto 0);                          -- Real Time calculated SLOPE
@@ -145,6 +146,7 @@ architecture stc_arch of stc is
         Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
         Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
         --filtered_dout:                  out std_logic_vector (13 downto 0);                         -- HIGH PASS Filtered signal
+        EndStop:                        out std_logic;                                              -- ACTIVE HIGH when event has finished or was stopped
         Baseline:                       in std_logic_vector(13 downto 0);                          -- Real Time calculated BASELINE
         Amplitude:                      out std_logic_vector(14 downto 0);                          -- Real Time calculated AMPLITUDE
         Peak_Current:                   out std_logic;                                              -- ACTIVE HIGH when a peak is detected
@@ -177,6 +179,7 @@ architecture stc_arch of stc is
         dout: out std_logic_vector(13 downto 0);
         baseline: out std_logic_vector(13 downto 0);
         adhoc: in std_logic_vector(7 downto 0);
+        event_flag: in std_logic;
         threshold_xc: in std_logic_vector(41 downto 0);
         filter_output_selector: in std_logic_vector(1 downto 0);
         triggered: out std_logic;        
@@ -327,6 +330,7 @@ begin
         dout => afe_dat_filtered,
         adhoc => adhoc,
         baseline => baseline,
+        event_flag => EndStop_aux,
         threshold_xc => threshold_xc,
         filter_output_selector => filter_output_selector,
         triggered => triggered_bicocca,
@@ -353,6 +357,7 @@ begin
         Number_Peaks_UB             => open,                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
         Number_Peaks_OB             => open,                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
         --filtered_dout               => open,                           -- HIGH PASS Filtered signal
+        EndStop                     => EndStop_aux,                    -- ACTIVE HIGH when event has finished or was stopped
         Baseline                    => baseline,                           
         Amplitude                   => open,                           -- Real Time calculated AMPLITUDE
         Peak_Current                => open,                           -- ACTIVE HIGH when a peak is detected

@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------
 -- Company: CIEMAT
--- Engineer: Ignacio López de Rego
+-- Engineer: Ignacio LÃ³pez de Rego
 -- 
 -- Create Date: 25.04.2024 14:10:45
 -- Design Name: 
@@ -53,6 +53,7 @@ port(
     Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
     --filtered_dout:                  out std_logic_vector (13 downto 0);                         -- HIGH PASS Filtered signal
+    EndStop:                        out std_logic;                                              -- ACTIVE HIGH when event has finished or was stopped
     Baseline:                       in std_logic_vector(13 downto 0);                          -- Real Time calculated BASELINE
     Amplitude:                      out std_logic_vector(14 downto 0);                          -- Real Time calculated AMPLITUDE
     Peak_Current:                   out std_logic;                                              -- ACTIVE HIGH when a peak is detected
@@ -124,7 +125,8 @@ COMPONENT LocalPrimitives_CIEMAT IS
     Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
     Baseline:                       in std_logic_vector(13 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
     Amplitude:                      out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
-    High_Freq_Noise:                out std_logic);                                                 -- ACTIVE HIGH when high freq noise is detected 
+    High_Freq_Noise:                out std_logic;                                                 -- ACTIVE HIGH when high freq noise is detected 
+    Event_EndStop:                  out std_logic);                                                -- ACTIVE HIGH when event has finished or was stopped
 END component;
 
 -- Common signals for three blocks
@@ -247,7 +249,8 @@ UUT3 : LocalPrimitives_CIEMAT
     Number_Peaks_OB=>  Number_Peaks_OB_aux,                             -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
     Baseline=>  Baseline,                                           -- TO BE REMOVED AFTER DEBUGGING
     Amplitude=>  Amplitude_aux,                                        -- TO BE REMOVED AFTER DEBUGGING
-    High_Freq_Noise=> Noise_aux);
+    High_Freq_Noise=> Noise_aux,
+    Event_EndStop=> EndStop);
 
 ---------------------- GET (Synchronous) AND UPDATE CONFIGURATION PARAMETERS     -----------------------
 
