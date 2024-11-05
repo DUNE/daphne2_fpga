@@ -325,11 +325,11 @@ Allow_Previous_Info <= Config_Param_SELF_aux(1);
 -- This Finite Sate controls when data is being sent 
 --      * Not_Sending Data --> Data is not being sent 
 --      * Sending_Data --> Remeains in this state for Framse_Size tics when a self-trigger event has occured
-Next_State_Sending: process(CurrentState_Data,self_trigger_aux, Data_Sent_Count,Noise_aux)
+Next_State_Sending: process(CurrentState_Data,Ext_Self_Trigger, Data_Sent_Count,Noise_aux)
 begin
     case CurrentState_Data is
         when Not_Sending_Data =>
-            if(self_trigger_aux = '1') then
+            if(Ext_Self_Trigger = '1') then
                 NextState_Data <= Sending_Data;
             else
                 NextState_Data <= Not_Sending_Data; 
