@@ -729,7 +729,7 @@ gendelay: for i in 13 downto 0 generate
         port map(
             clk => clock_aux,
             ce => '1',
-            a => "11111",
+            a => "10000",
             d => filtered_dout_aux_delay_160(i),
             q => filtered_dout_aux_delay_Extra(i), -- DIN data 192 clocks ago
             q31 => open 

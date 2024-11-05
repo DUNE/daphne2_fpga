@@ -265,7 +265,7 @@ begin
                 NextState_Detection <= No_Detection; 
             end if;
         when Detection_UB =>
-            if ((signed(Amplitude_Current)>0) and (signed(Amplitude_Current_reg2)>0) and (signed(Amplitude_Current_reg4)>=0)) then
+            if ((signed(Amplitude_Current)>0) and (signed(Amplitude_Current_reg2)>0) and (signed(Amplitude_Current_reg4)>=0) and (unsigned(Time_Pulse_UB_Current) > Minimum_Time_UB)) then
                 NextState_Detection <= Detection_OB;
             elsif (Detection_Time<=0) then
                 NextState_Detection <= No_Detection;
