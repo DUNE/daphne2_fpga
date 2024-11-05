@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------
 -- Company: CIEMAT
--- Engineer: Ignacio López de Rego
+-- Engineer: Ignacio Lï¿½pez de Rego
 -- 
 -- Create Date: 25.04.2024 14:10:45
 -- Design Name: 
@@ -711,8 +711,8 @@ gendelay: for i in 13 downto 0 generate
             ce => '1',
             a => "11111",
             d => filtered_dout_aux_delay_96(i),
-            q => filtered_dout_aux_delay_128(i),
-            q31 => open 
+            q => open,
+            q31 => filtered_dout_aux_delay_128(i) -- DIN data 128 clocks ago
         );
 
         srlc32e_4_inst : srlc32e
@@ -721,17 +721,17 @@ gendelay: for i in 13 downto 0 generate
             ce => '1',
             a => "11111",
             d => filtered_dout_aux_delay_128(i),
-            q => filtered_dout_aux_delay_160(i),
-            q31 => open 
+            q => open,
+            q31 => filtered_dout_aux_delay_160(i) -- DIN data 160 clocks ago
         );
 
        srlc32e_5_inst : srlc32e
         port map(
             clk => clock_aux,
             ce => '1',
-            a => "01011",
+            a => "11111",
             d => filtered_dout_aux_delay_160(i),
-            q => filtered_dout_aux_delay_Extra(i),
+            q => filtered_dout_aux_delay_Extra(i), -- DIN data 192 clocks ago
             q31 => open 
         );
 end generate gendelay;

@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------
 -- Company: CIEMAT
--- Engineer: Ignacio López de Rego Benedi
+-- Engineer: Ignacio Lï¿½pez de Rego Benedi
 -- 
 -- Create Date: 15.04.2024 11:04:11
 -- Design Name: 
@@ -108,7 +108,8 @@ signal din_delay1 : std_logic_vector(13 downto 0);
 --signal Baseline_delay13, Baseline_delay14, Baseline_delay15, Baseline_delay16:std_logic_vector(13 downto 0):= (others=>'0');
 --signal Baseline_delay17, Baseline_delay18, Baseline_delay19, Baseline_delay20:std_logic_vector(13 downto 0):= (others=>'0');  
 signal Amplitude_Aux: std_logic_vector(14 downto 0):= (others=>'0'); 
-signal Amplitude_current:std_logic_vector(14 downto 0):= (others=>'0'); 
+signal Amplitude_current, Amplitude_current_reg1, Amplitude_current_reg2: std_logic_vector(14 downto 0):= (others=>'0'); 
+signal Amplitude_current_reg3, Amplitude_current_reg4: std_logic_vector(14 downto 0):= (others=>'0'); 
 
 -- LOCAL TRIGGER PRIMITIVES CALCULATION signals
 signal Time_Peak_Current:   std_logic_vector(8 downto 0):= (others=>'0');       -- Time in Samples to achieve de Max peak
@@ -159,7 +160,7 @@ Amplitude_Aux        <= std_logic_vector(signed('0' & din) - signed('0' & Baseli
 
 --Baseline            <= ('0' & Baseline_delay4); -- TO BE REMOVED AFTER DEBUGGING
 Amplitude           <= Amplitude_current; -- TO BE REMOVED AFTER DEBUGGING
-Baseline_Amplitude: process(clock, reset)
+Baseline_Amplitude: process(clock, reset, Amplitude_Current, Amplitude_Current_reg1, Amplitude_Current_reg2, Amplitude_Current_reg3)
 begin
     if (clock'event and clock='1') then
         din_delay1 <= din;
@@ -185,9 +186,17 @@ begin
             --Baseline_delay18     <= din;
             --Baseline_delay19     <= din;
             --Baseline_delay20     <= din;
-            Amplitude_Current    <= (others=>'0');  
+            Amplitude_Current       <= (others=>'0'); 
+            Amplitude_Current_reg1  <= (others=>'0'); 
+            Amplitude_Current_reg2  <= (others=>'0'); 
+            Amplitude_Current_reg3  <= (others=>'0'); 
+            Amplitude_Current_reg4  <= (others=>'0');  
         else
-            Amplitude_Current    <= Amplitude_Aux;
+            Amplitude_Current       <= Amplitude_Aux;
+            Amplitude_Current_reg1  <= Amplitude_Current;
+            Amplitude_Current_reg2  <= Amplitude_Current_reg1;
+            Amplitude_Current_reg3  <= Amplitude_Current_reg2;
+            Amplitude_Current_reg4  <= Amplitude_Current_reg3;
             --if(Peak_Detection='1')then
                 --Baseline_Current    <= Baseline_delay20;
                 --Baseline_delay1     <= Baseline_delay20;
@@ -256,7 +265,7 @@ begin
                 NextState_Detection <= No_Detection; 
             end if;
         when Detection_UB =>
-            if(signed(Amplitude_Current)>=0) then
+            if ((signed(Amplitude_Current)>0) and (signed(Amplitude_Current_reg2)>0) and (signed(Amplitude_Current_reg4)>=0)) then
                 NextState_Detection <= Detection_OB;
             elsif (Detection_Time<=0) then
                 NextState_Detection <= No_Detection;
@@ -317,7 +326,9 @@ begin
             Detection_Time          <= Max_Detection_Time; 
         elsif(CurrentState_Detection=Detection_UB) then
             Time_Pulse_UB_Current <= std_logic_vector(unsigned(Time_Pulse_UB_Current) + to_unsigned(1,9));
-            Charge_Current<= std_logic_vector(signed(Charge_Current) - signed(Amplitude_Current));
+            if (signed(Amplitude_Current)<0) then
+                Charge_Current<= std_logic_vector(signed(Charge_Current) - signed(Amplitude_Current));
+            end if;
             Detection_Time <= Detection_Time - 1;
             if (signed(Max_Peak_Current)<= (- signed(Amplitude_Current))) then 
                 Time_Peak_Current <= Time_Pulse_UB_Current(8 downto 0); 
@@ -394,8 +405,8 @@ begin
             Peak_Detection <= '0';
             Data_Available <= '1';                  -- Primitives calculation available. Active HIGH
             Time_Peak <= Time_Peak_Current;                                                -- Time in Samples to achieve de Max peak
-            Time_Pulse_UB <= Time_Pulse_UB_Current;                          -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-            Time_Pulse_OB <= Time_Pulse_OB_Current;                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
+            Time_Pulse_UB <= std_logic_vector(unsigned(Time_Pulse_UB_Current) - to_unsigned(6,9));                          -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+            Time_Pulse_OB <= std_logic_vector(unsigned(Time_Pulse_OB_Current) + to_unsigned(6,10));                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
             Max_Peak <= Max_Peak_Current(13 downto 0);                          -- Amplitude in ADC counts od the peak
             Charge <= Charge_Current;                          -- Charge of the light pulse (without undershoot) in ADC*samples
             Number_Peaks_UB <= Number_Peaks_UB_Current;                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
