@@ -71,6 +71,7 @@ architecture stc_arch of stc is
     signal almostempty: std_logic_vector(3 downto 0);
     signal almostfull: std_logic_vector(3 downto 0);
     signal fifo_af: std_logic;
+    signal reset_ciemat, triggered_bicocca_reg_1, triggered_bicocca_reg_2: std_logic;
     signal trigCount: unsigned(63 downto 0) := (others => '0');
     signal packCount: unsigned(63 downto 0) := (others => '0');
 
@@ -313,6 +314,9 @@ begin
             afe_dly0 <= afe_dly;
             afe_dly1 <= afe_dly0;
             afe_dly2 <= afe_dly1;
+            -- selftrigger delay for Nacho's module
+            triggered_bicocca_reg_1 <= triggered_bicocca;
+            triggered_bicocca_reg_2 <= triggered_bicocca_reg_1;
         end if;
     end process pack_proc;       
 
@@ -336,13 +340,14 @@ begin
     );
 
         ------------------- SELF-TRIGGER AND LOCAL PRIMITIVE CALCULATION DEVELOPED AT CIEMAT ---------
+    reset_ciemat <= '1' when (reset='1' or state=wait4trig) else '0';
     ciemat_trig_inst: Self_Trigger_Primitive_Calculation
     port map(
         clock                       => aclk,                           -- AFE clock
-        reset                       => reset,                          -- Reset signal. ACTIVE HIGH
+        reset                       => reset_ciemat,                          -- Reset signal. ACTIVE HIGH
         din                         => afe_dat_filtered,               -- Data coming from the Filter Block / Raw data from AFEs
         Config_Param                => st_config,                      -- Configure parameters for filtering & self-trigger bloks
-        Ext_Self_Trigger            => triggered_bicocca,              --External Self-Trigger coming from another block
+        Ext_Self_Trigger            => triggered_bicocca_reg_2,              --External Self-Trigger coming from another block
         Self_trigger                => open,               -- Self-Trigger signal comming from the Self-Trigger block
         Data_Available              => open,                           -- ACTIVE HIGH when LOCAL primitives are calculated
         Time_Peak                   => open,                           -- Time in Samples to achieve de Max peak
@@ -378,19 +383,34 @@ begin
     -- Prepare data for the data format 
     Local_primitives_frame: process(aclk,Data_Available_Trailer_aux)
     begin
-        if (rising_edge(aclk) and (Data_Available_Trailer_aux ='1')) then
-           Trailer_Word_0_reg <= Trailer_Word_0_aux;
-           Trailer_Word_1_reg <= Trailer_Word_1_aux;
-           Trailer_Word_2_reg <= Trailer_Word_2_aux;
-           Trailer_Word_3_reg <= Trailer_Word_3_aux;
-           Trailer_Word_4_reg <= Trailer_Word_4_aux;
-           Trailer_Word_5_reg <= Trailer_Word_5_aux;
-           Trailer_Word_6_reg <= Trailer_Word_6_aux;
-           Trailer_Word_7_reg <= Trailer_Word_7_aux;
-           Trailer_Word_8_reg <= Trailer_Word_8_aux;
-           Trailer_Word_9_reg <= Trailer_Word_9_aux;
-           Trailer_Word_10_reg <= Trailer_Word_10_aux;
-           Trailer_Word_11_reg <= Trailer_Word_11_aux;
+        if (rising_edge(aclk)) then
+            if (reset_ciemat ='1') then
+               Trailer_Word_0_reg <= (others => '0');
+               Trailer_Word_1_reg <= (others => '0');
+               Trailer_Word_2_reg <= (others => '0');
+               Trailer_Word_3_reg <= (others => '0');
+               Trailer_Word_4_reg <= (others => '0');
+               Trailer_Word_5_reg <= (others => '0');
+               Trailer_Word_6_reg <= (others => '0');
+               Trailer_Word_7_reg <= (others => '0');
+               Trailer_Word_8_reg <= (others => '0');
+               Trailer_Word_9_reg <= (others => '0');
+               Trailer_Word_10_reg <= (others => '0');
+               Trailer_Word_11_reg <= (others => '0');
+            elsif (Data_Available_Trailer_aux ='1') then
+               Trailer_Word_0_reg <= Trailer_Word_0_aux;
+               Trailer_Word_1_reg <= Trailer_Word_1_aux;
+               Trailer_Word_2_reg <= Trailer_Word_2_aux;
+               Trailer_Word_3_reg <= Trailer_Word_3_aux;
+               Trailer_Word_4_reg <= Trailer_Word_4_aux;
+               Trailer_Word_5_reg <= Trailer_Word_5_aux;
+               Trailer_Word_6_reg <= Trailer_Word_6_aux;
+               Trailer_Word_7_reg <= Trailer_Word_7_aux;
+               Trailer_Word_8_reg <= Trailer_Word_8_aux;
+               Trailer_Word_9_reg <= Trailer_Word_9_aux;
+               Trailer_Word_10_reg <= Trailer_Word_10_aux;
+               Trailer_Word_11_reg <= Trailer_Word_11_aux;
+            end if;
         end if;
     end process Local_primitives_frame;      
 

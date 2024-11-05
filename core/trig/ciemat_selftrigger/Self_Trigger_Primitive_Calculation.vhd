@@ -332,7 +332,7 @@ begin
                 NextState_Data <= Not_Sending_Data; 
             end if;
         when Sending_Data =>
-            if((Data_Sent_Count>1)and (Noise_aux='0')) then
+            if(Data_Sent_Count>1) then
                 NextState_Data <= Sending_Data;
             else
                 NextState_Data <= Not_Sending_Data;
