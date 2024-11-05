@@ -44,8 +44,8 @@ architecture st_xc_arch of st_xc is
     -- self trigger input data and finite state machine signals 
     signal din_xcorr: std_logic_vector(13 downto 0) := (others => '0');
     signal data_sel, rst_xcorr_regs: std_logic := '0';
-    signal event_timer: integer := 894;
-    constant event_timer_limit : integer := 894;
+    signal event_timer: integer := 300;
+    constant event_timer_limit : integer := 300;
     
     -- finite state machine states
     type state_type is (reset_st, stand_by, self_triggered, peak_finder, peak_found, event_finished);
