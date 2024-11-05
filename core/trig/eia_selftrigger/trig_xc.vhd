@@ -25,7 +25,6 @@ port(
     din: in std_logic_vector(13 downto 0);
     din_sub: in std_logic_vector(13 downto 0);
 --    din_delayed: in std_logic_vector(13 downto 0);
-    event_flag: in std_logic; -- event flag indicates whether calculation of trigger pritmitives has stopped or finished
     threshold: in std_logic_vector(41 downto 0); -- matching filter trigger threshold values
     xcorr_calc: out std_logic_vector(27 downto 0); -- matching filter cross correlation calculated value
 --    dout_movmean_32: out std_logic_vector(13 downto 0);
@@ -56,7 +55,6 @@ architecture trig_xc_arch of trig_xc is
         enable: in std_logic;
         din: in std_logic_vector(13 downto 0);
         din_mm: in std_logic_vector(13 downto 0);
-        event_flag: in std_logic; 
         threshold: in std_logic_vector(41 downto 0); 
         xcorr_calc: out std_logic_vector(27 downto 0);
         triggered: out std_logic);
@@ -110,7 +108,6 @@ begin
         enable => enable,
         din => din,
         din_mm => din_sub,
-        event_flag => event_flag,
         xcorr_calc => xcorr_calc,
         threshold => threshold,
         triggered => triggered_core

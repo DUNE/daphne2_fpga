@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------
 -- Company: CIEMAT
--- Engineer: Ignacio LÃ³pez de Rego Benedi
+-- Engineer: Ignacio López de Rego Benedi
 -- 
 -- Create Date: 15.04.2024 11:04:11
 -- Design Name: 
@@ -54,8 +54,7 @@ port(
     Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
     Baseline:                       in std_logic_vector(13 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
     Amplitude:                      out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
-    High_Freq_Noise:                out std_logic;                                               -- ACTIVE HIGH when high freq noise is detected 
-    Event_EndStop:                  out std_logic                                                -- ACTIVE HIGH when event has finished or was stopped
+    High_Freq_Noise:                out std_logic                                                 -- ACTIVE HIGH when high freq noise is detected 
 --    Trailer_Word_0:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
 --    Trailer_Word_1:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
 --    Trailer_Word_2:                 out std_logic_vector(31 downto 0);                          -- TRAILER WORD with metada (Local Trigger Primitives)
@@ -122,9 +121,6 @@ signal Number_Peaks_UB_Current:   std_logic_vector(3 downto 0):= (others=>'0'); 
 signal Number_Peaks_OB_Current:   std_logic_vector(3 downto 0):= (others=>'0'); -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
 -- NOISE CHECK signals
 signal High_Freq_Noise_aux: std_logic:='0'; -- ACTIVE HIGH when high freq noise is detected  
--- "EVENT" FINISHED signals
--- note that a calculation has finished or stopped after a self trigger
-signal event_endstop_aux: std_logic:='0'; -- ACTIVE HIGH when a trigger primitive calculation has stopped or finished 
 
 type Detection_State is   (No_Detection, Detection_UB, Detection_OB, Detection_UB_2, Data);
 signal CurrentState_Detection, NextState_Detection: Detection_State;
@@ -448,20 +444,6 @@ begin
 end process Noise_Check;
 
 High_Freq_Noise <= High_Freq_Noise_aux;
-
------------------------------ SELF TRIGGER EVENT FINISHED CONDITION --------------------------------
-Event_End: process(clock, NextState_Detection, CurrentState_Detection)
-begin
-    if (clock'event and clock='1') then
-        if ((CurrentState_Detection/=No_Detection) and (NextState_Detection=No_Detection)) then
-            event_endstop_aux <= '1';
-        else
-            event_endstop_aux <= '0';
-        end if;
-    end if;
-end process Event_End;
-
-Event_EndStop <= event_endstop_aux;
 
 ----------------------- INTERFACE WITH LOCAL PRIMITIVES CALCULATION BLOCK    -----------------------
 
