@@ -44,9 +44,8 @@ architecture st_xc_arch of st_xc is
     -- self trigger input data and finite state machine signals 
     signal din_xcorr: std_logic_vector(13 downto 0) := (others => '0');
     signal data_sel, rst_xcorr_regs: std_logic := '0';
-    signal event_modifier: std_logic := '0';
     signal event_timer: integer := 894;
-    constant event_timer_limit: integer := 894;
+    constant event_timer_limit : integer := 894;
     
     -- finite state machine states
     type state_type is (reset_st, stand_by, self_triggered, peak_finder, peak_found, event_finished);
@@ -72,9 +71,6 @@ architecture st_xc_arch of st_xc is
     signal trig_en: std_logic := '1'; 
     signal din_reg0, din_reg1, din_reg2: std_logic_vector(13 downto 0) := (others => '0');
     signal s_din, s_din_reg0, s_din_reg1, s_din_reg2: signed(13 downto 0) := (others => '0');
-    signal s_din_reg3, s_din_reg4, s_din_reg5, s_din_reg6: signed(13 downto 0) := (others => '0');
-    signal slope: signed(14 downto 0) := (others => '0');
-    signal data_avg_sum, data_avg: signed(17 downto 0) := (others => '0');
     
     -- final calculation buffer delays
     signal xcorr_o_reg0, xcorr_o_reg1: signed(27 downto 0) := (others => '0');
@@ -135,25 +131,17 @@ begin
     -- disable the trigger feature
 -------------------------------------------------------------------------------------------------------------------
     -- generate some delays to see how the signal is behaving 
-    din_reg_proc: process(clock, reset, enable, s_din_reg0, s_din_reg1, s_din_reg2,s_din_reg3,s_din_reg4, s_din_reg5)
+    din_reg_proc: process(clock, reset, enable, s_din_reg0, s_din_reg1)
     begin
         if rising_edge(clock) then
             if (reset='1') then
                 din_reg0 <= (others => '0');
                 din_reg1 <= (others => '0');
                 din_reg2 <= (others => '0');
-                din_reg3 <= (others => '0');
-                din_reg4 <= (others => '0');
-                din_reg5 <= (others => '0');
-                din_reg6 <= (others => '0');
             elsif (enable = '1') then
                 din_reg0 <= din;
                 din_reg1 <= din_reg0;
                 din_reg2 <= din_reg1;
-                din_reg3 <= din_reg2;
-                din_reg4 <= din_reg3;
-                din_reg5 <= din_reg4;
-                din_reg6 <= din_reg5;
             end if;
         end if;
     end process din_reg_proc;
@@ -163,10 +151,6 @@ begin
     s_din_reg0 <= signed(din_reg0);
     s_din_reg1 <= signed(din_reg1);
     s_din_reg2 <= signed(din_reg2);
-    s_din_reg3 <= signed(din_reg3);
-    s_din_reg4 <= signed(din_reg4);
-    s_din_reg5 <= signed(din_reg5);
-    s_din_reg6 <= signed(din_reg6);
 
     -- compare the registers with the enabling threshold
     -- if the signal is smaller than the threshold, it means there is a big event therefore the trigger should be disabled
@@ -352,7 +336,7 @@ begin
     end process reg_states;
     
     -- process to define why the states change
-    mod_states: process(current_state, r_st_xc_add, xcorr_o_reg0, xcorr_o_reg1, s_threshold, trig_en, event_modifier) --filt_ready)
+    mod_states: process(current_state, r_st_xc_add, xcorr_o_reg0, xcorr_o_reg1, s_threshold, trig_en, event_timer) --filt_ready)
     begin
         next_state <= current_state; -- Declare default state for current_state to avoid latches, default is to stay in current state
         case (current_state) is
@@ -366,7 +350,7 @@ begin
             when self_triggered =>
                 next_state <= peak_finder;
             when peak_finder =>
-                if ( ( event_timer<=0 ) or ( event_modifier='1' ) ) then
+                if ( event_timer<=0 ) then
                     next_state <= event_finished;
                 else
                     if ( ( r_st_xc_add(r_st_xc_add'HIGH)>s_threshold ) and ( xcorr_o_reg0>s_threshold ) 
@@ -417,42 +401,19 @@ begin
     end process; 
     
     -- clocked process to count the length of the event
-    event_modifier_proc: process(clock, reset, enable, current_state, event_modifier, event_timer)
+    event_timer_proc: process(clock, reset, enable, current_state, event_timer)
     begin
         if rising_edge(clock) then
             if ( ( reset='1' ) or ( current_state=reset_st ) or ( current_state=stand_by ) 
                    or ( current_state=self_triggered ) or ( current_state=event_finished ) ) then
-                event_modifier <= '0';
                 event_timer <= event_timer_limit;
             elsif (enable = '1') then
                 if ( ( current_state=peak_finder ) or ( current_state=peak_found ) ) then
-                    -- count a maximum value for the event if the baseline is never reached
                     event_timer <= event_timer - 1;
-
-                    -- use the last 8 samples to compute an average of the signal, it should have no baseline
-                    -- therefore, the signal must be within the range of 0 +/- 5 ADUs
-                    -- this means we have reached a steady state again (approximately)
-                    -- the signal must be positive coming from a negative value, it should be rising!
-
-                    -- first add the registers
-                    data_avg_sum <= s_din + s_din_reg0 + s_din_reg1 + s_din_reg2 +
-                                    s_din_reg3 + s_din_reg4 + s_din_reg5 + s_din_reg6;
-
-                    -- then compute the average
-                    data_avg <= shift_right(data_avg_sum,3);
-
-                    -- if the signal is rising, it means it has a positive slope
-                    -- we only care about the sign!
-                    slope <= s_din - s_din_reg6; 
-
-                    -- activate the flag signal to change states if it meets the condition
-                    if ( ( slope>0 ) and ( data_avg>to_signed(-5,17) or data_avg=to_signed(5,17) ) and ( data_avg<to_signed(5,17) or data_avg=to_signed(5,17) ) ) then
-                        event_modifier <= '1';
-                    end if;
                 end if;
             end if;
         end if;
-    end process event_modifier_proc;
+    end process event_timer_proc;
     
     -- -- clocked process to disable the trigger while the filter stabilizes after a reset
     -- trig_disable_filt_proc: process(clock, reset, filt_timer)
