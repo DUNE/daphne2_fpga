@@ -32,11 +32,12 @@ module IIRFilter_afe_integrator_optimized(
   	initial begin 
   		reset_reg <= 1'b0; 
 	    enable_reg <= 1'b0;
-	    n1 <= {3'b000,15'b111100010110100}; 
-		n2 <= {3'b110,15'b001011010011110};
-		n3 <= {3'b000,15'b111000010101100}; 
-		d1 <= {3'b001,15'b111000010110100}; 
-		d2 <= {3'b111,15'b000111100110000};
+	    // These coefficients correspond to the AFE compesator filter
+	    n1 <= {3'b001,15'b000000000000000}; 
+		n2 <= {3'b110,15'b000100101101100};
+		n3 <= {3'b000,15'b111011010101110}; 
+		d1 <= {3'b001,15'b110111101000100}; 
+		d2 <= {3'b111,15'b001000010011110};
 		x_i <= 16'b0;
 	    x_1 <= 25'b0;
 	    x_2 <= 25'b0;
@@ -52,11 +53,12 @@ module IIRFilter_afe_integrator_optimized(
 
 	always @(posedge clk) begin
 		if(reset_reg) begin
-			n1 <= {3'b000,15'b111100010110100}; 
-			n2 <= {3'b110,15'b001011010011110};
-			n3 <= {3'b000,15'b111000010101100}; 
-			d1 <= {3'b001,15'b111000010110100}; 
-			d2 <= {3'b111,15'b000111100110000};
+			// These coefficients correspond to the AFE compesator filter
+			n1 <= {3'b001,15'b000000000000000}; 
+			n2 <= {3'b110,15'b000100101101100};
+			n3 <= {3'b000,15'b111011010101110}; 
+			d1 <= {3'b001,15'b110111101000100}; 
+			d2 <= {3'b111,15'b001000010011110};
 			x_i <= 16'b0;
             x_1 <= 25'b0;
             x_2 <= 25'b0;
