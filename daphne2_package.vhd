@@ -126,7 +126,7 @@ package daphne2_package is
 
     constant ST_CONFIG_ADDR: std_logic_vector(31 downto 0) := X"00006002";
 
-    constant DEFAULT_ST_CONFIG: std_logic_vector(31 downto 0) := X"0000DB35"; -- all self triggered channels OFF 
+    constant DEFAULT_ST_CONFIG: std_logic_vector(31 downto 0) := X"0010DB34"; 
 
     -- address of the ad hoc command for the self trig senders
 

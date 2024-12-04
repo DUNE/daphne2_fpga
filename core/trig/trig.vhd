@@ -20,7 +20,8 @@ port(
     reset: in std_logic;
     enable: in std_logic;
     din: in std_logic_vector(13 downto 0); -- raw AFE data
-    dout: out std_logic_vector(13 downto 0); -- Filtered AFE data
+    dout1: out std_logic_vector(13 downto 0); -- Filtered AFE data: selected data. To see filter process
+    dout2: out std_logic_vector(13 downto 0); -- Filtered AFE data: movmean data. To use with Nacho's module 
     adhoc: in std_logic_vector(7 downto 0); -- command value for adhoc trigger
     threshold_xc: in std_logic_vector(41 downto 0); -- trigger threshold relative to baseline
     filter_output_selector: in std_logic_vector(1 downto 0);
@@ -36,7 +37,7 @@ architecture trig_arch of trig is
 
     signal din0, din1, din2: std_logic_vector(13 downto 0) := "00000000000000";
     signal din_trig: std_logic_vector(15 downto 0) := "0000000000000000";
-    signal dout_filter, k_lpf_baseline: std_logic_vector(15 downto 0);
+    signal dout_filter1, dout_filter2, k_lpf_baseline: std_logic_vector(15 downto 0);
     signal trig_thresh, trigsample_reg: std_logic_vector(13 downto 0);
     signal triggered_i, triggered_i_module, triggered_dly32_i: std_logic;
 
@@ -51,7 +52,8 @@ architecture trig_arch of trig is
         baseline: out std_logic_vector(15 downto 0);
         x:  in std_logic_vector(15 downto 0);
         trigger_output: out std_logic;
-        y: out std_logic_vector(15 downto 0)
+        y1: out std_logic_vector(15 downto 0);
+        y2: out std_logic_vector(15 downto 0)
     );
     end component;
 
@@ -86,7 +88,8 @@ begin
         baseline => k_lpf_baseline,
         x => din_trig,
         trigger_output => triggered_i_module,
-        y => dout_filter
+        y1 => dout_filter1,
+        y2 => dout_filter2
     );
     -- triggered_i <= '1' when ( ti_trigger=adhoc and ti_trigger_stbr='1' ) else '0';
 
@@ -127,7 +130,8 @@ begin
     end process samplecap_proc;
 
     trigsample <= trigsample_reg;
-    dout <= dout_filter(13 downto 0);
+    dout1 <= dout_filter1(13 downto 0);
+    dout2 <= dout_filter2(13 downto 0);
     baseline <= k_lpf_baseline(13 downto 0); 
     din_trig(13 downto 0) <= din;
     

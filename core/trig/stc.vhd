@@ -27,6 +27,7 @@ port(
     version_id: std_logic_vector(5 downto 0);
     adhoc: std_logic_vector(7 downto 0); -- command for adhoc trigger
     st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
+    signal_delay: in std_logic_vector(4 downto 0);
     threshold_xc: in std_logic_vector(41 downto 0); -- trig threshold relative to calculated baseline
     filter_output_selector: in std_logic_vector(1 downto 0); --Esteban 
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
@@ -83,6 +84,7 @@ architecture stc_arch of stc is
 
     signal baseline, trigsample: std_logic_vector(13 downto 0);
     signal afe_dat_filtered: std_logic_vector(13 downto 0);
+    signal afe_dat_filtered_TP: std_logic_vector(13 downto 0);
 
     --signal    Self_trigger_aux:                    std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
     signal    Data_Available_aux:                  std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
@@ -175,7 +177,8 @@ architecture stc_arch of stc is
         reset: in std_logic;
         enable: in std_logic;
         din: in std_logic_vector(13 downto 0);
-        dout: out std_logic_vector(13 downto 0);
+        dout1: out std_logic_vector(13 downto 0);
+        dout2: out std_logic_vector(13 downto 0);
         baseline: out std_logic_vector(13 downto 0);
         adhoc: in std_logic_vector(7 downto 0);
         threshold_xc: in std_logic_vector(41 downto 0);
@@ -211,8 +214,8 @@ begin
         port map(
             clk => aclk,
             ce => '1',
-            a => "11111",
-            d => afe_dat(i), -- real time AFE data
+            a => signal_delay,
+            d => afe_dat_filtered(i), -- real time AFE data
             q => open,
             q31 => afe_dly32_i(i) -- AFE data 32 clocks ago 
         );
@@ -221,7 +224,7 @@ begin
         port map(
             clk => aclk,
             ce => '1',
-            a => "11111",
+            a => signal_delay,
             d => afe_dly32_i(i),
             q => open,
             q31 => afe_dly64_i(i) -- AFE data 64 clocks ago
@@ -231,7 +234,7 @@ begin
         port map(
             clk => aclk,
             ce => '1',
-            a => "11111",
+            a => signal_delay,
             d => afe_dly64_i(i),
             q => open,
             q31 => afe_dly96_i(i) -- AFE data 96 clocks ago
@@ -241,7 +244,7 @@ begin
         port map(
             clk => aclk,
             ce => '1',
-            a => "11111",
+            a => signal_delay,
             d => afe_dly96_i(i),
             q => open,
             q31 => afe_dly128_i(i) -- AFE data 128 clocks ago
@@ -253,7 +256,7 @@ begin
         port map(
             clk => aclk,
             ce => '1',
-            a => "11111",
+            a => signal_delay,
             d => afe_dly128_i(i),
             q => open,
             q31 => afe_dly160_i(i) -- AFE data 128 clocks ago
@@ -263,7 +266,7 @@ begin
         port map(
             clk => aclk,
             ce => '1',
-            a => "11111",
+            a => signal_delay,
             d => afe_dly160_i(i),
             q => open,
             q31 => afe_dly192_i(i) -- AFE data 128 clocks ago
@@ -273,7 +276,7 @@ begin
         port map(
             clk => aclk,
             ce => '1',
-            a => "11111",
+            a => signal_delay,
             d => afe_dly192_i(i),
             q => open,
             q31 => afe_dly224_i(i) -- AFE data 128 clocks ago
@@ -283,7 +286,7 @@ begin
         port map(
             clk => aclk,
             ce => '1',
-            a => "10100",
+            a => signal_delay,
             d => afe_dly224_i(i),
             q => afe_dly(i),
             q31 => open -- AFE data 128 clocks ago
@@ -328,7 +331,8 @@ begin
         reset => reset,
         enable => enable,
         din => afe_dat, -- watching live AFE data
-        dout => afe_dat_filtered,
+        dout1 => afe_dat_filtered,
+        dout2 => afe_dat_filtered_TP,
         adhoc => adhoc,
         baseline => baseline,
         threshold_xc => threshold_xc,
@@ -345,7 +349,7 @@ begin
     port map(
         clock                       => aclk,                           -- AFE clock
         reset                       => reset_ciemat,                          -- Reset signal. ACTIVE HIGH
-        din                         => afe_dat_filtered,               -- Data coming from the Filter Block / Raw data from AFEs
+        din                         => afe_dat_filtered_TP,               -- Data coming from the Filter Block / Raw data from AFEs
         Config_Param                => st_config,                      -- Configure parameters for filtering & self-trigger bloks
         Ext_Self_Trigger            => triggered_bicocca_reg_2,              --External Self-Trigger coming from another block
         Self_trigger                => open,               -- Self-Trigger signal comming from the Self-Trigger block

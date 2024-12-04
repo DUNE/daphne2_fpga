@@ -20,7 +20,8 @@ module hpf_pedestal_recovery_filter_trigger(
     output wire signed [15:0] baseline,
 	input wire signed [15:0] x,
     output wire trigger_output,
-	output wire signed [15:0] y
+	output wire signed [15:0] y1,
+    output wire signed [15:0] y2
 );
 	
 	wire signed [15:0] hpf_out;
@@ -128,7 +129,8 @@ module hpf_pedestal_recovery_filter_trigger(
    
 
     assign x_i = x;
-    assign y = w_out;
+    assign y1 = w_out;
+    assign y2 = lpf_out + movmean_out;
     assign baseline = lpf_out;
     //assign movmean_out = $signed(movmean_out_14);
 	

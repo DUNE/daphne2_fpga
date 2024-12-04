@@ -37,6 +37,7 @@ port(
     outmode: in std_logic_vector(7 downto 0); -- output link mode control
     adhoc: in std_logic_vector(7 downto 0); -- command for adhoc trigger
     st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)
+    signal_delay: in std_logic_vector(4 downto 0);
     threshold_xc: in std_logic_vector(41 downto 0); -- for self-triggered mode, relative to average baseline
 
     ti_trigger: in std_logic_vector(7 downto 0); ------------------------
@@ -109,6 +110,7 @@ architecture core_arch of core is
         reset_aclk: in std_logic;    
         reset_fclk: in std_logic; 
         st_config: in std_logic_vector(13 downto 0); -- Config param for Self-Trigger and Local Primitive Calculation, CIEMAT (Nacho)   
+        signal_delay: in std_logic_vector(4 downto 0);
         adhoc: in std_logic_vector(7 downto 0); -- user defined command for adhoc trigger
         threshold_xc: in std_logic_vector(41 downto 0); -- user defined threshold relative to baseline
         ti_trigger: in std_logic_vector(7 downto 0); -------------------------
@@ -265,7 +267,8 @@ begin
         reset_aclk => reset_aclk_reg,
         reset_fclk => reset_fclk_reg,
         adhoc => adhoc,
-        st_config => st_config, -- CIEMAT (Nacho) 
+        st_config => st_config, -- CIEMAT (Nacho)
+        signal_delay => signal_delay, 
         threshold_xc => threshold_xc,
         slot_id => slot_id,
         crate_id => crate_id,
