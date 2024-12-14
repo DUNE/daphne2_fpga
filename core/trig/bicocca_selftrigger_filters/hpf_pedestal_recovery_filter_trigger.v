@@ -26,7 +26,7 @@ module hpf_pedestal_recovery_filter_trigger(
 	wire signed [15:0] hpf_out;
     wire signed [15:0] movmean_out;
     wire signed [13:0] movmean_out_14;
-	wire signed [15:0] x_i, x_delayed, sub;
+	wire signed [15:0] x_i, x_delayed;
     //wire signed [15:0] w_resta_out [4:0][7:0];
     wire signed [15:0] w_out;
 	wire signed [15:0] resta_out, lpf_out, cfd_out;
@@ -85,7 +85,6 @@ module hpf_pedestal_recovery_filter_trigger(
         .x(hpf_out),
         .y(movmean_out),
         .x_delayed(x_delayed),
-        .sub(sub)
         );
 
     trig_xc matching_trigger(
@@ -93,10 +92,8 @@ module hpf_pedestal_recovery_filter_trigger(
         .clock(clk),
         .enable(enable),
         .din(x_delayed[13:0]),
-        .din_sub(sub[13:0]),
         .threshold(threshold_xc),
         .xcorr_calc(xcorr_calc),
-        //.dout_movmean_32(movmean_out_14),
         .triggered(triggered_xc)
     );
 

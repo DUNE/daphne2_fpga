@@ -5,10 +5,6 @@
 -- data coming from one channel in order to generate a self trigger signal output
 -- whenever simple events occur. This matching filter is capable of detecting
 -- Single PhotonElectrons, Double PhotonElectrons, Triple PhotonElectrons 
--- The filtered "always-zero" data is data that has almost no overshoot nor undershoot
--- it is used to calculate local peaks inside the waveform. Changing the data causes another 
--- trigger when it should not since it's the same peak, therefore this value must be adjusted
--- in the trigger primitives calculation
 --
 -- Daniel Avila Gomez <daniel.avila@eia.edu.co> & Edgar Rincon Gil <edgar.rincon.g@gmail.com>
 
@@ -26,9 +22,7 @@ port(
     clock: in std_logic; -- AFE clock 62.500 MHz
     enable: in std_logic;
     din: in std_logic_vector(13 downto 0); -- filtered AFE data (no baseline)
-    din_mm: in std_logic_vector(13 downto 0); -- filtered "always-zero" data
     threshold: in std_logic_vector(41 downto 0); -- matching filter trigger threshold values
---    filt_ready: in std_logic;
     triggered: out std_logic;
     xcorr_calc: out std_logic_vector(27 downto 0)
 );
@@ -36,19 +30,11 @@ end st_xc;
 
 architecture st_xc_arch of st_xc is
 
-    -- timer to enable the self trigger (stabilization time of the filter)
-    -- signal filt_ready: std_logic := '0';
-    -- signal filt_timer: integer := 6250;
-    -- constant filt_timer_stable: integer := 6250;
-
     -- self trigger input data and finite state machine signals 
     signal din_xcorr: std_logic_vector(13 downto 0) := (others => '0');
-    signal data_sel, rst_xcorr_regs: std_logic := '0';
-    signal event_timer: integer := 894;
-    constant event_timer_limit : integer := 894;
     
     -- finite state machine states
-    type state_type is (reset_st, stand_by, self_triggered, peak_finder, peak_found, event_finished);
+    type state_type is (reset_st, stand_by, self_triggered); 
     signal current_state, next_state : state_type;
     
     -- cross correlator inner signals
@@ -185,10 +171,9 @@ begin
         end if;
     end process en_trig_proc;
     
-    -- input data mux selector 
+    -- input data 
 -------------------------------------------------------------------------------------------------------------------
-    -- NOTE: This mux is used to change the input data between normal data and "always-zero" data
-    din_xcorr <= din_mm when (data_sel = '1') else din;
+    din_xcorr <= din;
     
     -- use "for generates" in order to create a pipeline with a desired amount of registers
     -- fill all of the registers by using 4 clock ticks delays
@@ -282,7 +267,7 @@ begin
     add_proc: process(clock, reset, enable, r_st_xc_mult_dsp, r_st_xc_mult_log, r_st_xc_add, xcorr_o_reg0)
     begin
         if rising_edge(clock) then
-            if ( ( reset='1' ) or ( rst_xcorr_regs='1' ) ) then
+            if ( ( reset='1' ) ) then 
                 r_st_xc_add <= (others => (others => '0'));
                 xcorr_o_reg0 <= (others => '0');
                 xcorr_o_reg1 <= (others => '0');
@@ -318,10 +303,7 @@ begin
     -- it starts again to look for a trigger
     -- State 0: reset
     -- State 1: trigger finder (searchs for a main self trigger signal)
-    -- State 1: self triggered (once inside spends 1 clk cycle and informs of the trigger)
-    -- State 2: peak finder (after the main trigger was asserted, it starts to find for peaks)
-    -- State 3: peak was found (spends 1 cycle here, then returns to scan for more peaks)
-    -- after the baseline is fully regained, it comes back again to State 0
+    -- State 2: self triggered (once inside spends 1 clk cycle and informs of the trigger)
     
     -- process to sync change the states of the FSM
     reg_states: process(clock, reset, enable, next_state)
@@ -336,7 +318,7 @@ begin
     end process reg_states;
     
     -- process to define why the states change
-    mod_states: process(current_state, r_st_xc_add, xcorr_o_reg0, xcorr_o_reg1, s_threshold, trig_en, event_timer) --filt_ready)
+    mod_states: process(current_state, r_st_xc_add, xcorr_o_reg0, xcorr_o_reg1, s_threshold, trig_en) 
     begin
         next_state <= current_state; -- Declare default state for current_state to avoid latches, default is to stay in current state
         case (current_state) is
@@ -344,24 +326,10 @@ begin
                 next_state <= stand_by;
             when stand_by =>
                 if ( ( r_st_xc_add(r_st_xc_add'HIGH)>s_threshold ) and ( xcorr_o_reg0>s_threshold ) 
-                       and ( xcorr_o_reg1<s_threshold or xcorr_o_reg1=s_threshold ) and ( trig_en='1' )  ) then --and ( filt_ready='1' ) ) then
+                       and ( xcorr_o_reg1<s_threshold or xcorr_o_reg1=s_threshold ) and ( trig_en='1' )  ) then 
                     next_state <= self_triggered;
                 end if;
             when self_triggered =>
-                next_state <= peak_finder;
-            when peak_finder =>
-                if ( event_timer<=0 ) then
-                    next_state <= event_finished;
-                else
-                    if ( ( r_st_xc_add(r_st_xc_add'HIGH)>s_threshold ) and ( xcorr_o_reg0>s_threshold ) 
-                           and ( xcorr_o_reg1<s_threshold or xcorr_o_reg1=s_threshold ) ) then
-                        next_state <= peak_found;
-                    end if;
-                end if;
-            when peak_found =>
-                next_state <= peak_finder;
-            when event_finished =>
-                -- spend one cycle here to restart cross correlation values
                 next_state <= stand_by;
             when others =>
                 -- do nothing
@@ -374,65 +342,11 @@ begin
         case (current_state) is
             when self_triggered =>
                 triggered <= '1';
-                data_sel <= '0';
-                rst_xcorr_regs <= '0'; 
-            when peak_finder =>
-                triggered <= '0';
-                data_sel <= '1';
-                rst_xcorr_regs <= '0';
-            when peak_found =>
-                triggered <= '1';
-                data_sel <= '1';
-                rst_xcorr_regs <= '0';
-            when event_finished =>
-                triggered <= '0';
-                data_sel <= '0';
-                -- cross correlation values must be reset since the input data will be different next cycle
-                -- this happens too in self_triggered state, however, the change in the data shows that the
-                -- cross correlation values are on the same region of above the threshold, therefore no need
-                -- to reset and update its registers
-                rst_xcorr_regs <= '1';
             when others =>
                 -- includes reset_st and stand_by states
                 triggered <= '0';
-                data_sel <= '0';
-                rst_xcorr_regs <= '0';
         end case;
     end process; 
-    
-    -- clocked process to count the length of the event
-    event_timer_proc: process(clock, reset, enable, current_state, event_timer)
-    begin
-        if rising_edge(clock) then
-            if ( ( reset='1' ) or ( current_state=reset_st ) or ( current_state=stand_by ) 
-                   or ( current_state=self_triggered ) or ( current_state=event_finished ) ) then
-                event_timer <= event_timer_limit;
-            elsif (enable = '1') then
-                if ( ( current_state=peak_finder ) or ( current_state=peak_found ) ) then
-                    event_timer <= event_timer - 1;
-                end if;
-            end if;
-        end if;
-    end process event_timer_proc;
-    
-    -- -- clocked process to disable the trigger while the filter stabilizes after a reset
-    -- trig_disable_filt_proc: process(clock, reset, filt_timer)
-    -- begin
-    --     if rising_edge(clock) then
-    --         if (reset='1') then
-    --             filt_timer <= filt_timer_stable;
-    --             filt_ready <= '0';
-    --         else
-    --             if (filt_timer>0) then
-    --                 filt_timer <= filt_timer - 1;
-    --                 filt_ready <= '0';
-    --             else
-    --                 filt_timer <= filt_timer;
-    --                 filt_ready <= '1';
-    --             end if;
-    --         end if;
-    --     end if;
-    -- end process trig_disable_filt_proc;
     
     xcorr_calc <= std_logic_vector(r_st_xc_add(4)); 
 
