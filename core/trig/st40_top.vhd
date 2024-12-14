@@ -138,98 +138,51 @@ begin
 
     end generate gen_stc_c;
     end generate gen_stc_a;
-    ----------------- AFE 0 ----------------------
-    rerouted_signal(0)(0) <= afe_dat(0)(0) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(0)(1);
-    rerouted_signal(0)(2) <= afe_dat(0)(2) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(0)(3);
-    rerouted_signal(0)(5) <= afe_dat(0)(5) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(0)(4);
-    rerouted_signal(0)(7) <= afe_dat(0)(7) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(0)(6);
-    ----------------- AFE 1 ----------------------
-    rerouted_signal(1)(0) <= afe_dat(1)(0) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(1)(1);
-    rerouted_signal(1)(2) <= afe_dat(1)(2) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(1)(3);
-    rerouted_signal(1)(5) <= afe_dat(1)(5) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(1)(4);
-    rerouted_signal(1)(7) <= afe_dat(1)(7) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(1)(6);
-    ----------------- AFE 2 ----------------------
-    rerouted_signal(2)(0) <= afe_dat(2)(0) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(2)(1);
-    rerouted_signal(2)(2) <= afe_dat(2)(2) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(2)(3);
-    rerouted_signal(2)(5) <= afe_dat(2)(5) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(2)(4);
-    rerouted_signal(2)(7) <= afe_dat(2)(7) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(2)(6);
-    ----------------- AFE 3 ----------------------
-    rerouted_signal(3)(0) <= afe_dat(3)(0) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(3)(1);
-    rerouted_signal(3)(2) <= afe_dat(3)(2) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(3)(3);
-    rerouted_signal(3)(5) <= afe_dat(3)(5) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(3)(4);
-    rerouted_signal(3)(7) <= afe_dat(3)(7) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(3)(6);
-    ----------------- AFE 4 ----------------------
-    rerouted_signal(4)(0) <= afe_dat(4)(0) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(4)(1);
-    rerouted_signal(4)(2) <= afe_dat(4)(2) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(4)(3);
-    rerouted_signal(4)(5) <= afe_dat(4)(5) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(4)(4);
-    rerouted_signal(4)(7) <= afe_dat(4)(7) when self_trigger_test_selector = '1'
-                           else "0000000000000" & triggered_internal(4)(6);
-    --------------------------------------------------------------------
-    --------------------------------------------------------------------
-    ----------------- AFE 0 ----------------------
-    rerouted_signal(0)(1) <= "0000000000000" & triggered_internal(0)(0) when self_trigger_test_selector = '1'
-                           else afe_dat(0)(1);
-    rerouted_signal(0)(3) <= "0000000000000" & triggered_internal(0)(2) when self_trigger_test_selector = '1'
-                           else afe_dat(0)(3);
-    rerouted_signal(0)(4) <= "0000000000000" & triggered_internal(0)(5) when self_trigger_test_selector = '1'
-                           else afe_dat(0)(4);
-    rerouted_signal(0)(6) <= "0000000000000" & triggered_internal(0)(7) when self_trigger_test_selector = '1'
-                           else afe_dat(0)(6);
-    ----------------- AFE 1 ----------------------
-    rerouted_signal(1)(1) <= "0000000000000" & triggered_internal(1)(0) when self_trigger_test_selector = '1'
-                           else afe_dat(1)(1);
-    rerouted_signal(1)(3) <= "0000000000000" & triggered_internal(1)(2) when self_trigger_test_selector = '1'
-                           else afe_dat(1)(3);
-    rerouted_signal(1)(4) <= "0000000000000" & triggered_internal(1)(5) when self_trigger_test_selector = '1'
-                           else afe_dat(1)(4);
-    rerouted_signal(1)(6) <= "0000000000000" & triggered_internal(1)(7) when self_trigger_test_selector = '1'
-                           else afe_dat(1)(6);
-    ----------------- AFE 2 ----------------------
-    rerouted_signal(2)(1) <= "0000000000000" & triggered_internal(2)(0) when self_trigger_test_selector = '1'
-                           else afe_dat(2)(1);
-    rerouted_signal(2)(3) <= "0000000000000" & triggered_internal(2)(2) when self_trigger_test_selector = '1'
-                           else afe_dat(2)(3);
-    rerouted_signal(2)(4) <= "0000000000000" & triggered_internal(2)(5) when self_trigger_test_selector = '1'
-                           else afe_dat(2)(4);
-    rerouted_signal(2)(6) <= "0000000000000" & triggered_internal(2)(7) when self_trigger_test_selector = '1'
-                           else afe_dat(2)(6);
-    ----------------- AFE 3 ----------------------
-    rerouted_signal(3)(1) <= "0000000000000" & triggered_internal(3)(0) when self_trigger_test_selector = '1'
-                           else afe_dat(3)(1);
-    rerouted_signal(3)(3) <= "0000000000000" & triggered_internal(3)(2) when self_trigger_test_selector = '1'
-                           else afe_dat(3)(3);
-    rerouted_signal(3)(4) <= "0000000000000" & triggered_internal(3)(5) when self_trigger_test_selector = '1'
-                           else afe_dat(3)(4);
-    rerouted_signal(3)(6) <= "0000000000000" & triggered_internal(3)(7) when self_trigger_test_selector = '1'
-                           else afe_dat(3)(6);
-    ----------------- AFE 4 ----------------------
-    rerouted_signal(4)(1) <= "0000000000000" & triggered_internal(4)(0) when self_trigger_test_selector = '1'
-                           else afe_dat(4)(1);
-    rerouted_signal(4)(3) <= "0000000000000" & triggered_internal(4)(2) when self_trigger_test_selector = '1'
-                           else afe_dat(4)(3);
-    rerouted_signal(4)(4) <= "0000000000000" & triggered_internal(4)(5) when self_trigger_test_selector = '1'
-                           else afe_dat(4)(4);
-    rerouted_signal(4)(6) <= "0000000000000" & triggered_internal(4)(7) when self_trigger_test_selector = '1'
-                           else afe_dat(4)(6);
+    ----------------- AFE 0 HD Electronics----------------------
+    rerouted_signal(0)(0) <= afe_dat(0)(0);
+    rerouted_signal(0)(1) <= afe_dat(0)(1);
+    rerouted_signal(0)(6) <= afe_dat(0)(6);
+    rerouted_signal(0)(7) <= afe_dat(0)(7);
+    rerouted_signal(0)(2) <= "0000000000000" & triggered_internal(0)(0);
+    rerouted_signal(0)(3) <= "0000000000000" & triggered_internal(0)(1);
+    rerouted_signal(0)(4) <= "0000000000000" & triggered_internal(0)(6);
+    rerouted_signal(0)(5) <= "0000000000000" & triggered_internal(0)(7);
+    ----------------- AFE 1 HD Electronics trigger--------------
+    rerouted_signal(1)(0) <= afe_dat(1)(0);
+    rerouted_signal(1)(1) <= afe_dat(1)(1);
+    rerouted_signal(1)(6) <= afe_dat(1)(6);
+    rerouted_signal(1)(7) <= afe_dat(1)(7);
+    rerouted_signal(1)(2) <= "0000000000000" & triggered_internal(1)(0);
+    rerouted_signal(1)(3) <= "0000000000000" & triggered_internal(1)(1);
+    rerouted_signal(1)(4) <= "0000000000000" & triggered_internal(1)(6);
+    rerouted_signal(1)(5) <= "0000000000000" & triggered_internal(1)(7);
+    ----------------- AFE 2 VD Electronics---------------------
+    rerouted_signal(2)(0) <= afe_dat(2)(0);
+    rerouted_signal(2)(1) <= afe_dat(2)(1);
+    rerouted_signal(2)(6) <= afe_dat(2)(6);
+    rerouted_signal(2)(7) <= afe_dat(2)(7);
+    rerouted_signal(2)(2) <= "0000000000000" & triggered_internal(2)(0);
+    rerouted_signal(2)(3) <= "0000000000000" & triggered_internal(2)(1);
+    rerouted_signal(2)(4) <= "0000000000000" & triggered_internal(2)(6);
+    rerouted_signal(2)(5) <= "0000000000000" & triggered_internal(2)(7);
+    ----------------- AFE 3 SoF Receiver-------------
+    rerouted_signal(3)(0) <= afe_dat(3)(0);
+    rerouted_signal(3)(1) <= afe_dat(3)(1);
+    rerouted_signal(3)(6) <= afe_dat(3)(6);
+    rerouted_signal(3)(7) <= afe_dat(3)(7);
+    rerouted_signal(3)(2) <= "0000000000000" & triggered_internal(3)(0);
+    rerouted_signal(3)(3) <= "0000000000000" & triggered_internal(3)(1);
+    rerouted_signal(3)(4) <= "0000000000000" & triggered_internal(3)(6);
+    rerouted_signal(3)(5) <= "0000000000000" & triggered_internal(3)(7);
+    ----------------- AFE 4 SoF Receiver----------------------
+    rerouted_signal(4)(0) <= afe_dat(4)(0);
+    rerouted_signal(4)(1) <= afe_dat(4)(1);
+    rerouted_signal(4)(6) <= afe_dat(4)(6);
+    rerouted_signal(4)(7) <= afe_dat(4)(7);
+    rerouted_signal(4)(2) <= "0000000000000" & triggered_internal(4)(0);
+    rerouted_signal(4)(3) <= "0000000000000" & triggered_internal(4)(1);
+    rerouted_signal(4)(4) <= "0000000000000" & triggered_internal(4)(6);
+    rerouted_signal(4)(5) <= "0000000000000" & triggered_internal(4)(7);
 
     -- fifo read enable and fifo flag selection
 
