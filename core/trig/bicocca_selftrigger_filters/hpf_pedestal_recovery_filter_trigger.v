@@ -84,7 +84,7 @@ module hpf_pedestal_recovery_filter_trigger(
         .enable(enable),
         .x(hpf_out),
         .y(movmean_out),
-        .x_delayed(x_delayed),
+        .x_delayed(x_delayed)
         );
 
     trig_xc matching_trigger(
