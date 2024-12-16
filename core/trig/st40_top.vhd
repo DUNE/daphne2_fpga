@@ -141,12 +141,12 @@ begin
     ----------------- AFE 0 HD Electronics----------------------
     rerouted_signal(0)(0) <= afe_dat(0)(0);
     rerouted_signal(0)(1) <= afe_dat(0)(1);
-    rerouted_signal(0)(6) <= afe_dat(0)(6);
-    rerouted_signal(0)(7) <= afe_dat(0)(7);
-    rerouted_signal(0)(2) <= "0000000000000" & triggered_internal(0)(0);
-    rerouted_signal(0)(3) <= "0000000000000" & triggered_internal(0)(1);
-    rerouted_signal(0)(4) <= "0000000000000" & triggered_internal(0)(6);
-    rerouted_signal(0)(5) <= "0000000000000" & triggered_internal(0)(7);
+    rerouted_signal(0)(2) <= afe_dat(0)(2);
+    rerouted_signal(0)(3) <= afe_dat(0)(3);
+    rerouted_signal(0)(4) <= "0000000000000" & triggered_internal(0)(0);
+    rerouted_signal(0)(5) <= "0000000000000" & triggered_internal(0)(1);
+    rerouted_signal(0)(6) <= "0000000000000" & triggered_internal(0)(2);
+    rerouted_signal(0)(7) <= "0000000000000" & triggered_internal(0)(3);
     ----------------- AFE 1 HD Electronics trigger--------------
     rerouted_signal(1)(0) <= afe_dat(1)(0);
     rerouted_signal(1)(1) <= afe_dat(1)(1);
