@@ -35,6 +35,7 @@ module hpf_pedestal_recovery_filter_trigger(
 	wire signed [15:0] resta_out, lpf_out, cfd_out;
 	wire signed [15:0] suma_out;
     wire tm_output_selector;
+    wire internal_afe_comp_enable;
 
     wire triggered_xc;
     wire signed [27:0] xcorr_calc;
@@ -65,7 +66,7 @@ module hpf_pedestal_recovery_filter_trigger(
     IIRFilter_afe_integrator_optimized hpf(
         .clk(clk),
         .reset(reset),
-        .enable(afe_comp_enable),
+        .enable(internal_afe_comp_enable),
         .x(resta_out),
         .y(hpf_out)
     );
@@ -125,12 +126,20 @@ module hpf_pedestal_recovery_filter_trigger(
                    (output_selector == 2'b10) ?   lpf_out + xcorr_calc[15:0] : //+ xcorr_calc : //cfd_out : //movmean cfd
                    (output_selector == 2'b11) ?   x_i :
                    16'bx;
-   
+    // Daniel:
+    // En el selector w_out podriamos incluir la inversión de la señal de salida que va al DAQ porque presiento que nos lo 
+    // solicitarán. Podríamos reemplazar "lpf_out + movmean_out" por "2**14 - suma_out".
+    // 2**14 - suma_out = 2**14 - lpf_out - hpf_out.
+    // Inversion del pedestal: 2**14 - lpf_out.
+    // Inversion de la señal: - hpf_out.
 
     assign x_i = x;
-    assign y1 = w_out;
-    assign y2 = lpf_out + movmean_out;
-    assign baseline = lpf_out;
+    assign y1 = w_out; //Esta señal va al DAQ.
+    assign y2 = hpf_out; // Esta señal va al Selftrigger. Aqui podriamos colocar la logica
+                         // condicional de la inversión segun el estado invert_enable, similar al condicional suma_out. 
+                         // La inversion es directa porque la señal esta centrada en cero.
+    assign baseline = lpf_out; // Aqui también habrá que modificar el baseline según la condicion invert_enable.
+    assign internal_afe_comp_enable = (enable & afe_comp_enable);
     //assign movmean_out = $signed(movmean_out_14);
 	
     assign tm_output_selector = (output_selector == 2'b00) ?   1'b0 : //hpf 
