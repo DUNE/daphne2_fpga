@@ -36,6 +36,7 @@ port(
     aclk: in std_logic; -- AFE clock 62.500 MHz
     timestamp: in std_logic_vector(63 downto 0);
 	afe_dat: in std_logic_vector(13 downto 0); -- aligned AFE data
+    st_afe_dat_filtered: out std_logic_vector(13 downto 0); -- aligned AFE data filtered
     enable: in std_logic;
     afe_comp_enable: in std_logic;
     invert_enable: in std_logic;
@@ -835,6 +836,7 @@ begin
     end generate genfifo;
 
     triggered <= triggered_bicocca;
+    st_afe_dat_filtered <= afe_dly;
 
     fifo_ae <= '1' when (almostempty="0000") else '0';
     fifo_af <= '1' when (almostfull="0000") else '0';

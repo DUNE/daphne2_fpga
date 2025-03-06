@@ -290,6 +290,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
         sclk100: in std_logic; -- system clock 100MHz
         reset: in std_logic; -- for sender logic and for GTP quad
         afe_dat: in array_5x9x14_type;  -- AFE data synchronized to clock
+        afe_dat_filtered: out array_5x9x14_type;
         timestamp: in std_logic_vector(63 downto 0);
         slot_id: in std_logic_vector(3 downto 0);
         crate_id: in std_logic_vector(9 downto 0);
@@ -373,7 +374,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal trig_spybuffer_read_dead_time_ON, trig_spybuffer_read_dead_time_OFF: std_logic;
 
     signal afe_dout: array_5x9x14_type;
-    --signal afe_dout_filtered: array_5x9x14_type;
+    signal afe_dout_filtered: array_5x9x14_type;
     signal afe_dout_pad: array_5x9x16_type;
     signal fe_done, fe_warn: std_logic_vector(4 downto 0);
     signal spy_bufr: array_5x9x16_type;
@@ -589,7 +590,7 @@ begin
     -- pad this out to make it 5x9x16
     gen_a: for a in 4 downto 0 generate
         gen_b: for b in 8 downto 0 generate
-            afe_dout_pad(a)(b) <= "00" & afe_dout(a)(b);
+            afe_dout_pad(a)(b) <= "00" & afe_dout_filtered(a)(b);
         end generate gen_b;
     end generate gen_a;
 
@@ -1072,6 +1073,7 @@ begin
         reset => reset_core,
 
         afe_dat => afe_dout,
+        afe_dat_filtered => afe_dout_filtered,
         timestamp => timestamp,
 
         outmode => outmode_reg,
