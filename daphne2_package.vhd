@@ -126,7 +126,15 @@ package daphne2_package is
 
     constant ST_CONFIG_ADDR: std_logic_vector(31 downto 0) := X"00006002";
 
-    constant DEFAULT_ST_CONFIG: std_logic_vector(31 downto 0) := X"0010DB34"; 
+    constant DEFAULT_ST_CONFIG: std_logic_vector(31 downto 0) := X"0010DB34";
+
+    constant ST_AFE_COMP_ENABLE_ADDR: std_logic_vector(31 downto 0) := X"00006003";
+
+    constant DEFAULT_ST_AFE_COMP_ENABLE_CONFIG: std_logic_vector(39 downto 0) := X"0000000000";
+
+    constant ST_INVERT_ENABLE_ADDR: std_logic_vector(31 downto 0) := X"00006004";
+
+    constant DEFAULT_ST_INVERT_ENABLE_CONFIG: std_logic_vector(39 downto 0) := X"0000000000";  
 
     -- address of the ad hoc command for the self trig senders
 

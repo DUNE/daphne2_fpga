@@ -296,6 +296,8 @@ architecture DAPHNE2_arch of DAPHNE2 is
         detector_id: in std_logic_vector(5 downto 0);
         version_id: in std_logic_vector(5 downto 0);
         st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
+        st_afe_comp_enable: in std_logic_vector(39 downto 0);
+        st_invert_enable: in std_logic_vector(39 downto 0);
         st_config: in std_logic_vector(13 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
         signal_delay: in std_logic_vector(4 downto 0);
         filter_output_selector: in std_logic_vector(1 downto 0); -- filter signal type selector
@@ -417,7 +419,9 @@ architecture DAPHNE2_arch of DAPHNE2 is
     
     signal st_enable_reg: std_logic_vector(39 downto 0);
     signal st_config_reg: std_logic_vector(31 downto 0);
-    signal st_enable_we, st_config_we: std_logic;
+    signal st_afe_comp_enable_reg: std_logic_vector(39 downto 0);
+    signal st_invert_enable_reg: std_logic_vector(39 downto 0);
+    signal st_enable_we, st_config_we, st_afe_comp_enable_we, st_invert_enable_we: std_logic;
 
     signal Rcount_reg: std_logic_vector(63 downto 0);
     signal trig_rst_count: std_logic;
@@ -816,6 +820,8 @@ begin
                (X"00000000000000" & outmode_reg(7 downto 0)) when std_match(rx_addr_reg, DAQ_OUTMODE_BASEADDR) else 
                (X"00000000000000" & "00" & inmux_dout(5 downto 0)) when std_match(rx_addr_reg, CORE_INMUX_ADDR) else
                (X"000000" & st_enable_reg) when std_match(rx_addr_reg, ST_ENABLE_ADDR) else
+               (X"000000" & st_afe_comp_enable_reg) when std_match(rx_addr_reg, ST_AFE_COMP_ENABLE_ADDR) else
+               (X"000000" & st_invert_enable_reg) when std_match(rx_addr_reg, ST_INVERT_ENABLE_ADDR) else
                Rcount_reg when std_match(rx_addr_reg, RCOUNT_ADDR) else
 
                (others=>'0');
@@ -1025,6 +1031,32 @@ begin
         end if;
     end process st_config_proc;
 
+    st_afe_comp_enable_we <= '1' when (std_match(rx_addr,ST_AFE_COMP_ENABLE_ADDR) and rx_wren='1') else '0';
+
+    st_afe_comp_enable_proc: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            if (reset_async='1') then
+                st_afe_comp_enable_reg <= DEFAULT_ST_AFE_COMP_ENABLE_CONFIG;
+            elsif (st_afe_comp_enable_we='1') then
+                st_afe_comp_enable_reg <= rx_data(39 downto 0);
+            end if;
+        end if;
+    end process st_afe_comp_enable_proc;
+
+    st_invert_enable_we <= '1' when (std_match(rx_addr,ST_INVERT_ENABLE_ADDR) and rx_wren='1') else '0';
+
+    st_invert_enable_proc: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            if (reset_async='1') then
+                st_invert_enable_reg <= DEFAULT_ST_INVERT_ENABLE_CONFIG;
+            elsif (st_invert_enable_we='1') then
+                st_invert_enable_reg <= rx_data(39 downto 0);
+            end if;
+        end if;
+    end process st_invert_enable_proc;
+
     -- decode write enable for core inmux control register block of 40 6-bit registers
 
     inmux_we <= '1' when (std_match(rx_addr,CORE_INMUX_ADDR) and rx_wren='1') else '0';
@@ -1057,6 +1089,8 @@ begin
         detector_id => daq_out_param_reg(11 downto 6), -- 6 bits
         version_id => daq_out_param_reg(5 downto 0), -- 6 bits
         st_enable => st_enable_reg,
+        st_afe_comp_enable => st_afe_comp_enable_reg,
+        st_invert_enable => st_invert_enable_reg,
         filter_output_selector => st_config_reg(1 downto 0), -- filter type selector
    
         oeiclk => oeiclk,

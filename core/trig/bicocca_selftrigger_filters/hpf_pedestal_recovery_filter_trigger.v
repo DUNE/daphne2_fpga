@@ -14,6 +14,8 @@ module hpf_pedestal_recovery_filter_trigger(
 	input wire clk,
 	input wire reset,
 	input wire enable,
+    input wire afe_comp_enable,
+    input wire invert_enable,
     //input wire signed [13:0] threshold_value,
     input wire [41:0] threshold_xc,
     input wire [1:0] output_selector,
@@ -63,7 +65,7 @@ module hpf_pedestal_recovery_filter_trigger(
     IIRFilter_afe_integrator_optimized hpf(
         .clk(clk),
         .reset(reset),
-        .enable(enable),
+        .enable(afe_comp_enable),
         .x(resta_out),
         .y(hpf_out)
     );

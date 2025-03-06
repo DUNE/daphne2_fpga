@@ -19,6 +19,8 @@ port(
     clock: in std_logic;
     reset: in std_logic;
     enable: in std_logic;
+    afe_comp_enable: in std_logic;
+    invert_enable: in std_logic;
     din: in std_logic_vector(13 downto 0); -- raw AFE data
     dout1: out std_logic_vector(13 downto 0); -- Filtered AFE data: selected data. To see filter process
     dout2: out std_logic_vector(13 downto 0); -- Filtered AFE data: movmean data. To use with Nacho's module 
@@ -46,6 +48,8 @@ architecture trig_arch of trig is
         clk: in std_logic;
         reset: in std_logic;
         enable: in std_logic;
+        afe_comp_enable: in std_logic;
+        invert_enable: in std_logic;
         -- threshold_value: in std_logic_vector(13 downto 0);
         threshold_xc: in std_logic_vector(41 downto 0);
         output_selector: in std_logic_vector(1 downto 0);
@@ -82,6 +86,8 @@ begin
         clk => clock,
         reset => reset,
         enable => enable,
+        afe_comp_enable => afe_comp_enable,
+        invert_enable => invert_enable,
         -- threshold_value => threshold,
         threshold_xc => threshold_xc,
         output_selector => filter_output_selector,

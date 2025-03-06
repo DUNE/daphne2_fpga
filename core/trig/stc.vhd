@@ -37,6 +37,8 @@ port(
     timestamp: in std_logic_vector(63 downto 0);
 	afe_dat: in std_logic_vector(13 downto 0); -- aligned AFE data
     enable: in std_logic;
+    afe_comp_enable: in std_logic;
+    invert_enable: in std_logic;
     
     fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
     fifo_rden: in std_logic;
@@ -176,6 +178,8 @@ architecture stc_arch of stc is
         clock: in std_logic;
         reset: in std_logic;
         enable: in std_logic;
+        afe_comp_enable: in std_logic;
+        invert_enable: in std_logic;
         din: in std_logic_vector(13 downto 0);
         dout1: out std_logic_vector(13 downto 0);
         dout2: out std_logic_vector(13 downto 0);
@@ -330,6 +334,8 @@ begin
         clock => aclk,
         reset => reset,
         enable => enable,
+        afe_comp_enable => afe_comp_enable,
+        invert_enable => invert_enable,
         din => afe_dat, -- watching live AFE data
         dout1 => afe_dat_filtered,
         dout2 => afe_dat_filtered_TP,
