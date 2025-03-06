@@ -26,10 +26,11 @@ module hpf_pedestal_recovery_filter_trigger(
     output wire signed [15:0] y2
 );
 	
-	wire signed [15:0] hpf_out;
+	wire signed [15:0] hpf_out, hpf_out_aux;
     wire signed [15:0] movmean_out;
     wire signed [13:0] movmean_out_14;
 	wire signed [15:0] x_i, x_delayed;
+    wire signed [15:0] baseline_aux;
     //wire signed [15:0] w_resta_out [4:0][7:0];
     wire signed [15:0] w_out;
 	wire signed [15:0] resta_out, lpf_out, cfd_out;
@@ -86,7 +87,7 @@ module hpf_pedestal_recovery_filter_trigger(
         .clk(clk),
         .reset(reset),
         .enable(enable),
-        .x(hpf_out),
+        .x(hpf_out_aux),
         .y(movmean_out),
         .x_delayed(x_delayed)
         );
@@ -120,9 +121,16 @@ module hpf_pedestal_recovery_filter_trigger(
                       (enable==1) ?   (hpf_out + lpf_out) : 
                       16'bx;
 
+    assign hpf_out_aux = (invert_enable==0) ?   hpf_out :
+                         (invert_enable==1) ?   (~(hpf_out) + 16'b0000000000000001) :
+                         16'b0000000000000000;
+                    
+    assign baseline_aux = (invert_enable==0) ?   lpf_out :
+                          (invert_enable==1) ?   (16'b0100000000000000 - lpf_out);
+                          16'bx;
 
     assign w_out = (output_selector == 2'b00) ?   suma_out : 
-                   (output_selector == 2'b01) ?   lpf_out + movmean_out : //movmean
+                   (output_selector == 2'b01) ?   baseline_aux + hpf_out_aux : //lpf_out + movmean_out : //movmean
                    (output_selector == 2'b10) ?   lpf_out + xcorr_calc[15:0] : //+ xcorr_calc : //cfd_out : //movmean cfd
                    (output_selector == 2'b11) ?   x_i :
                    16'bx;
@@ -135,10 +143,10 @@ module hpf_pedestal_recovery_filter_trigger(
 
     assign x_i = x;
     assign y1 = w_out; //Esta señal va al DAQ.
-    assign y2 = hpf_out; // Esta señal va al Selftrigger. Aqui podriamos colocar la logica
+    assign y2 = hpf_out_aux; // Esta señal va al Selftrigger. Aqui podriamos colocar la logica
                          // condicional de la inversión segun el estado invert_enable, similar al condicional suma_out. 
                          // La inversion es directa porque la señal esta centrada en cero.
-    assign baseline = lpf_out; // Aqui también habrá que modificar el baseline según la condicion invert_enable.
+    assign baseline = baseline_aux; //lpf_out; // Aqui también habrá que modificar el baseline según la condicion invert_enable.
     assign internal_afe_comp_enable = (enable & afe_comp_enable);
     //assign movmean_out = $signed(movmean_out_14);
 	
