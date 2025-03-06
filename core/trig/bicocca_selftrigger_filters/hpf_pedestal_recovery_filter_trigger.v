@@ -126,7 +126,7 @@ module hpf_pedestal_recovery_filter_trigger(
                          16'b0000000000000000;
                     
     assign baseline_aux = (invert_enable==0) ?   lpf_out :
-                          (invert_enable==1) ?   (16'b0100000000000000 - lpf_out);
+                          (invert_enable==1) ?   (16'b0100000000000000 - lpf_out) :
                           16'bx;
 
     assign w_out = (output_selector == 2'b00) ?   suma_out : 
