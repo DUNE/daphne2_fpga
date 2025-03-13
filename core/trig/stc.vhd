@@ -144,12 +144,11 @@ architecture stc_arch of stc is
         Self_trigger:                   out std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
         Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
         Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
-        Time_Pulse_UB:                  out std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-        Time_Pulse_OB:                  out std_logic_vector(9 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-        Max_Peak:                       out std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
-        Charge:                         out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
-        Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-        Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+        Time_Over_Baseline:             out std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+        Time_Start:                     out std_logic_vector(9 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
+        ADC_Peak:                       out std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
+        ADC_Integral:                   out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
+        Number_Peaks:                   out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
         --filtered_dout:                  out std_logic_vector (13 downto 0);                         -- HIGH PASS Filtered signal
         Baseline:                       in std_logic_vector(13 downto 0);                          -- Real Time calculated BASELINE
         Amplitude:                      out std_logic_vector(14 downto 0);                          -- Real Time calculated AMPLITUDE
@@ -359,15 +358,14 @@ begin
         din                         => afe_dat_filtered_TP,               -- Data coming from the Filter Block / Raw data from AFEs
         Config_Param                => st_config,                      -- Configure parameters for filtering & self-trigger bloks
         Ext_Self_Trigger            => triggered_bicocca_reg_2,              --External Self-Trigger coming from another block
-        Self_trigger                => open,               -- Self-Trigger signal comming from the Self-Trigger block
+        Self_trigger                => open,                           -- Self-Trigger signal comming from the Self-Trigger block
         Data_Available              => open,                           -- ACTIVE HIGH when LOCAL primitives are calculated
         Time_Peak                   => open,                           -- Time in Samples to achieve de Max peak
-        Time_Pulse_UB               => open,                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-        Time_Pulse_OB               => open,                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-        Max_Peak                    => open,                           -- Amplitude in ADC counts od the peak
-        Charge                      => open,                           -- Charge of the light pulse (without undershoot) in ADC*samples
-        Number_Peaks_UB             => open,                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-        Number_Peaks_OB             => open,                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+        Time_Over_Baseline          => open,                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+        Time_Start                  => open,                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
+        ADC_Peak                    => open,                           -- Amplitude in ADC counts od the peak
+        ADC_Integral                => open,                           -- Charge of the light pulse (without undershoot) in ADC*samples
+        Number_Peaks                => open,                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
         --filtered_dout               => open,                           -- HIGH PASS Filtered signal
         Baseline                    => baseline,                           
         Amplitude                   => open,                           -- Real Time calculated AMPLITUDE

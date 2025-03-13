@@ -46,12 +46,10 @@ port(
     Interface_LOCAL_Primitves_OUT:  out std_logic_vector(23 downto 0);                          -- Interface with Local Primitives calculation BLOCK --> DEPENDS ON SELF-TRIGGER ALGORITHM 
     Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
     Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
-    Time_Pulse_UB:                  out std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-    Time_Pulse_OB:                  out std_logic_vector(9 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-    Max_Peak:                       out std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
-    Charge:                         out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
-    Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-    Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+    Time_Over_Baseline:             out std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (without undershoot)
+    ADC_Peak:                       out std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
+    ADC_Integral:                   out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
+    Number_Peaks:                   out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
     Baseline:                       in std_logic_vector(13 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
     Amplitude:                      out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
     High_Freq_Noise:                out std_logic                                                 -- ACTIVE HIGH when high freq noise is detected 
@@ -71,6 +69,8 @@ port(
 end LocalPrimitives_CIEMAT;
 
 architecture Behavioral of LocalPrimitives_CIEMAT is
+
+-- HOLA CARACOLA (PRUEBA)! 
 
 -- INTERFACE with SELF-TRIGGER BLOCK signals
 signal Interface_LOCAL_Primitves_IN_reg: std_logic_vector(23 downto 0);
@@ -113,17 +113,14 @@ signal Amplitude_current_reg3, Amplitude_current_reg4: std_logic_vector(14 downt
 
 -- LOCAL TRIGGER PRIMITIVES CALCULATION signals
 signal Time_Peak_Current:   std_logic_vector(8 downto 0):= (others=>'0');       -- Time in Samples to achieve de Max peak
-signal Time_Pulse_UB_Current: std_logic_vector(8 downto 0):= (others=>'0');     -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-signal Time_Pulse_OB_Current: std_logic_vector(9 downto 0):= (others=>'0');     -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-signal Time_Pulse_UB_2_Current: std_logic_vector(9 downto 0):= (others=>'0');   -- Time in Samples of the light pulse signal is UNDER THE BASELINE 2
-signal Max_Peak_Current:   std_logic_vector(14 downto 0):= (others=>'0');       -- Amplitude in ADC counts od the peak
-signal Charge_Current:   std_logic_vector(22 downto 0):= (others=>'0');         -- Charge of the light pulse (without undershoot) in ADC*samples
-signal Number_Peaks_UB_Current:   std_logic_vector(3 downto 0):= (others=>'0'); -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-signal Number_Peaks_OB_Current:   std_logic_vector(3 downto 0):= (others=>'0'); -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+signal Time_Over_Baseline_Current: std_logic_vector(8 downto 0):= (others=>'0');     -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+signal ADC_Peak_Current:   std_logic_vector(14 downto 0):= (others=>'0');       -- Amplitude in ADC counts od the peak
+signal ADC_Integral_Current:   std_logic_vector(22 downto 0):= (others=>'0');         -- Charge of the light pulse (without undershoot) in ADC*samples
+signal Number_Peaks_Current:   std_logic_vector(3 downto 0):= (others=>'0'); -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
 -- NOISE CHECK signals
 signal High_Freq_Noise_aux: std_logic:='0'; -- ACTIVE HIGH when high freq noise is detected  
 
-type Detection_State is   (No_Detection, Detection_UB, Detection_OB, Detection_UB_2, Data);
+type Detection_State is   (No_Detection, Detection, Data);
 signal CurrentState_Detection, NextState_Detection: Detection_State;
 signal Peak_Detection: std_logic :='0';
 CONSTANT Minimum_Time_UB : integer := 20; --  320 ns (Just in case the signal is really noisy) --> Minumum undershoot is 6us
@@ -153,7 +150,8 @@ begin
 --Baseline_Sum1_aux     <= std_logic_vector(unsigned(resize(unsigned('0'& din),17))+unsigned(resize(unsigned('0'& din_delay1),17)));
 
 --Baseline_Add    <= '0' & Baseline_Sum7_reg(16 downto 3);
-Amplitude_Aux        <= std_logic_vector(signed('0' & din) - signed('0' & Baseline)); --Aca esta
+--Amplitude_Aux        <= std_logic_vector(signed('0' & din) - signed('0' & Baseline)); 
+Amplitude_Aux        <= std_logic_vector(resize(signed(din), 15));
 
 --Baseline_Err_aux     <= std_logic_vector(unsigned("0" & din(13 downto 3)) - unsigned("0" & Baseline_Current(13 downto 3)));
 --Baseline_Add         <= std_logic_vector(signed('0' & Baseline_Current) + signed(resize(signed(Baseline_Err_aux),15)));
@@ -251,46 +249,29 @@ end process Baseline_Amplitude;
 
 -- FSM DETECTION: This Finite Sate Machine determines if there is a light detection or not.
 --      * No Detection --> Continous Baseline Calculation 
---      * Detection_UB --> Baseline is constant, Primitives calculation (Max _Amplitude, Time to max, Charge, Width_UB, number of pekas UB)
---      * Detection_OB --> Baseline is constant, Primitives calculation (Width_OB, number of pekas OB)
---      * Detection_UB_2 --> Baseline is constant. Only the time during this stage is calculated.
+--      * Detection    --> Baseline is constant, Primitives calculation (Max _Amplitude, Time to max, Charge, Width_UB, number of pekas UB)
 --      * Data --> Shows data of primitives calculated in previous stage  
-Next_State_Detection: process(CurrentState_Detection, Self_Trigger, Amplitude_Current, Slope_Current, Time_Pulse_OB_Current, Time_Pulse_UB_2_Current, Detection_Time, Peak_Current, Peak_Current_delay1, Peak_Current_delay2, Peak_Current_delay3, Peak_Current_delay4, Peak_Current_delay5, Peak_Current_delay6, Peak_Current_delay7, Peak_Current_delay8, Peak_Current_delay9)
+Next_State_Detection: process(CurrentState_Detection, Self_Trigger, Amplitude_Current, Slope_Current, Time_Over_Baseline_Current, Detection_Time, Peak_Current, Peak_Current_delay1, Peak_Current_delay2, Peak_Current_delay3, Peak_Current_delay4, Peak_Current_delay5, Peak_Current_delay6, Peak_Current_delay7, Peak_Current_delay8, Peak_Current_delay9)
 begin
     case CurrentState_Detection is
         when No_Detection =>
             if(Self_Trigger='1')then
-                NextState_Detection <= Detection_UB;
+                NextState_Detection <= Detection;
             else
                 NextState_Detection <= No_Detection; 
             end if;
-        when Detection_UB =>
-            if ((signed(Amplitude_Current)>0) and (signed(Amplitude_Current_reg2)>0) and (signed(Amplitude_Current_reg4)>=0) and (unsigned(Time_Pulse_UB_Current) > Minimum_Time_UB)) then
-                NextState_Detection <= Detection_OB;
-            elsif (Detection_Time<=0) then
-                NextState_Detection <= No_Detection;
-            else
-                NextState_Detection <= Detection_UB;
-            end if;
-        when Detection_OB => 
-            if ((signed(Amplitude_Current)<=0) and (Peak_Current='0') and (Peak_Current_delay1='0')and (Peak_Current_delay2='0')and (Peak_Current_delay3='0')and (Peak_Current_delay4='0')and (Peak_Current_delay5='0')and (Peak_Current_delay6='0')and (Peak_Current_delay7='0')and (Peak_Current_delay8='0')and (Peak_Current_delay9='0') and (unsigned(Time_Pulse_OB_Current)>=Minimum_Time_Undershoot))then
-                NextState_Detection <= Detection_UB_2;
-            elsif (Detection_Time<=0) then
-                NextState_Detection <= No_Detection;
-            else
-                NextState_Detection <= Detection_OB;
-            end if;
-        when Detection_UB_2 => 
-            if ((signed(Amplitude_Current)>=0) and (unsigned(Time_Pulse_UB_2_Current)>=Minimum_Time_Undershoot))then
+        when Detection =>
+--            if ((signed(Amplitude_Current)>0) and (signed(Amplitude_Current_reg2)>0) and (signed(Amplitude_Current_reg4)>=0) and (unsigned(Time_Over_Baseline_Current) > Minimum_Time_UB)) then
+            if ((signed(Amplitude_Current)>0) and (unsigned(Time_Over_Baseline_Current) > Minimum_Time_UB)) then
                 NextState_Detection <= Data;
             elsif (Detection_Time<=0) then
                 NextState_Detection <= No_Detection;
             else
-                NextState_Detection <= Detection_UB_2;
-            end if;  
+                NextState_Detection <= Detection;
+            end if; 
         when Data =>
             if(Self_Trigger='1')then
-                NextState_Detection <= Detection_UB;
+                NextState_Detection <= Detection;
             else
                 NextState_Detection <= No_Detection; 
             end if;        
@@ -303,114 +284,72 @@ begin
     if (reset='1')  then
         CurrentState_Detection      <= No_Detection;                 -- Primitives calculation available. Active HIGH
         Time_Peak_Current           <= (others=>'0');       -- Time in Samples to achieve de Max peak
-        Time_Pulse_UB_Current       <= (others=>'0');       -- Time in Samples of the light pulse (without undershoot)
-        Time_Pulse_OB_Current       <= (others=>'0');
-        Time_Pulse_UB_2_Current     <= (others=>'0'); 
-        Max_Peak_Current            <= (others=>'0');       -- Amplitude in ADC counts od the peak
-        Charge_Current              <= (others=>'0');       -- Charge of the light pulse (without undershoot) in ADC*samples
-        Number_Peaks_UB_Current     <= (others=>'0');
-        Number_Peaks_OB_Current     <= (others=>'0');
+        Time_Over_Baseline_Current  <= (others=>'0');       -- Time in Samples of the light pulse (without undershoot)
+        ADC_Peak_Current            <= (others=>'0');       -- Amplitude in ADC counts od the peak
+        ADC_Integral_Current        <= (others=>'0');       -- Charge of the light pulse (without undershoot) in ADC*samples
+        Number_Peaks_Current        <= (others=>'0');
         Detection_Time              <= Max_Detection_Time; 
 
     elsif(clock'event and clock='1') then
         CurrentState_Detection <= NextState_Detection;
         if (CurrentState_Detection=No_Detection) then               -- Primitives calculation available. Active HIGH
-            Time_Peak_Current       <= (others=>'0');       -- Time in Samples to achieve de Max peak
-            Time_Pulse_UB_Current   <= "000000001";       -- Time in Samples of the light pulse (without undershoot)
-            Time_Pulse_OB_Current   <= "0000000001";
-            Time_Pulse_UB_2_Current <= "0000000001"; 
-            Max_Peak_Current        <= (others=>'0');       -- Amplitude in ADC counts od the peak
-            Charge_Current          <= (others=>'0');       -- Charge of the light pulse (without undershoot) in ADC*samples
-            Number_Peaks_UB_Current <= "0001";
-            Number_Peaks_OB_Current <= "0000";
-            Detection_Time          <= Max_Detection_Time; 
-        elsif(CurrentState_Detection=Detection_UB) then
-            Time_Pulse_UB_Current <= std_logic_vector(unsigned(Time_Pulse_UB_Current) + to_unsigned(1,9));
+            Time_Peak_Current           <= (others=>'0');       -- Time in Samples to achieve de Max peak
+            Time_Over_Baseline_Current  <= "000000001";       -- Time in Samples of the light pulse (without undershoot)
+            ADC_Peak_Current            <= (others=>'0');       -- Amplitude in ADC counts od the peak
+            ADC_Integral_Current        <= (others=>'0');       -- Charge of the light pulse (without undershoot) in ADC*samples
+            Number_Peaks_Current        <= "0001";
+            Detection_Time              <= Max_Detection_Time; 
+        elsif(CurrentState_Detection=Detection) then
+            Time_Over_Baseline_Current <= std_logic_vector(unsigned(Time_Over_Baseline_Current) + to_unsigned(1,9));
             if (signed(Amplitude_Current)<0) then
-                Charge_Current<= std_logic_vector(signed(Charge_Current) - signed(Amplitude_Current));
+                ADC_Integral_Current<= std_logic_vector(signed(ADC_Integral_Current) - signed(Amplitude_Current));
             end if;
             Detection_Time <= Detection_Time - 1;
-            if (signed(Max_Peak_Current)<= (- signed(Amplitude_Current))) then 
-                Time_Peak_Current <= Time_Pulse_UB_Current(8 downto 0); 
-                Max_Peak_Current <= std_logic_vector(- signed(Amplitude_Current)); 
+            if (signed(ADC_Peak_Current)<= (- signed(Amplitude_Current))) then 
+                Time_Peak_Current <= Time_Over_Baseline_Current(8 downto 0); 
+                ADC_Peak_Current <= std_logic_vector(- signed(Amplitude_Current)); 
             else
                 Time_Peak_Current <= Time_Peak_Current; 
-                Max_Peak_Current <= Max_Peak_Current; 
+                ADC_Peak_Current  <= ADC_Peak_Current; 
             end if;
             
             if (Peak_Current='1') then 
-                Number_Peaks_UB_Current <= std_logic_vector(unsigned(Number_Peaks_UB_Current) + to_unsigned(1,4)); 
+                Number_Peaks_Current <= std_logic_vector(unsigned(Number_Peaks_Current) + to_unsigned(1,4)); 
             else
-                Number_Peaks_UB_Current <= Number_Peaks_UB_Current; 
+                Number_Peaks_Current <= Number_Peaks_Current; 
             end if;
-        elsif(CurrentState_Detection=Detection_OB) then
-            Time_Pulse_OB_Current <= std_logic_vector(unsigned(Time_Pulse_OB_Current) + to_unsigned(1,10));
-            Detection_Time <= Detection_Time - 1;            
-            if (Peak_Current='1') then 
-                Number_Peaks_OB_Current <= std_logic_vector(unsigned(Number_Peaks_OB_Current) + to_unsigned(1,4)); 
-            else
-                Number_Peaks_OB_Current <= Number_Peaks_OB_Current; 
-            end if;
-         elsif(CurrentState_Detection=Detection_UB_2) then
-            Time_Pulse_UB_2_Current <= std_logic_vector(unsigned(Time_Pulse_UB_2_Current) + to_unsigned(1,10));
-            Detection_Time <= Detection_Time - 1;
         end if;
     end if;
 end process FFs_Detection;
 
-Output_Detection: process(CurrentState_Detection,Time_Peak_Current,Time_Pulse_UB_Current, Time_Pulse_OB_Current,Max_Peak_Current, Charge_Current, Number_Peaks_UB_Current,Number_Peaks_OB_Current)
+Output_Detection: process(CurrentState_Detection,Time_Peak_Current,Time_Over_Baseline_Current, ADC_Peak_Current, ADC_Integral_Current, Number_Peaks_Current)
 begin
     case CurrentState_Detection is
         when No_Detection => 
             Peak_Detection <= '0';
             Data_Available <= '0';                  -- Primitives calculation available. Active HIGH
             Time_Peak <= (others=>'0');                                                -- Time in Samples to achieve de Max peak
-            Time_Pulse_UB<= (others=>'0');                          -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-            Time_Pulse_OB<= (others=>'0');                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-            Max_Peak<= (others=>'0');                          -- Amplitude in ADC counts od the peak
-            Charge<= (others=>'0');                          -- Charge of the light pulse (without undershoot) in ADC*samples
-            Number_Peaks_UB<= (others=>'0');                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-            Number_Peaks_OB<= (others=>'0');                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
-        when Detection_UB =>        
+            Time_Over_Baseline<= (others=>'0');                          -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+            ADC_Peak<= (others=>'0');                          -- Amplitude in ADC counts od the peak
+            ADC_Integral<= (others=>'0');                          -- Charge of the light pulse (without undershoot) in ADC*samples
+            Number_Peaks<= (others=>'0');                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
+        when Detection =>        
             Peak_Detection <= '1'; 
             Data_Available <= '0';                  -- Primitives calculation available. Active HIGH
             Time_Peak <= (others=>'0');                                                -- Time in Samples to achieve de Max peak
-            Time_Pulse_UB<= (others=>'0');                          -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-            Time_Pulse_OB<= (others=>'0');                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-            Max_Peak<= (others=>'0');                          -- Amplitude in ADC counts od the peak
-            Charge<= (others=>'0');                          -- Charge of the light pulse (without undershoot) in ADC*samples
-            Number_Peaks_UB<= (others=>'0');                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-            Number_Peaks_OB<= (others=>'0');        
-        when Detection_OB =>        
-            Peak_Detection <= '1'; 
-            Data_Available <= '0';                  -- Primitives calculation available. Active HIGH  
-            Time_Peak <= (others=>'0');                                                -- Time in Samples to achieve de Max peak
-            Time_Pulse_UB<= (others=>'0');                          -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-            Time_Pulse_OB<= (others=>'0');                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-            Max_Peak<= (others=>'0');                          -- Amplitude in ADC counts od the peak
-            Charge<= (others=>'0');                          -- Charge of the light pulse (without undershoot) in ADC*samples
-            Number_Peaks_UB<= (others=>'0');                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-            Number_Peaks_OB<= (others=>'0');
-        when Detection_UB_2 =>        
-            Peak_Detection <= '1'; 
-            Data_Available <= '0';                  -- Primitives calculation available. Active HIGH
-            Time_Peak <= (others=>'0');                                                -- Time in Samples to achieve de Max peak
-            Time_Pulse_UB<= (others=>'0');                          -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-            Time_Pulse_OB<= (others=>'0');                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-            Max_Peak<= (others=>'0');                          -- Amplitude in ADC counts od the peak
-            Charge<= (others=>'0');                          -- Charge of the light pulse (without undershoot) in ADC*samples
-            Number_Peaks_UB<= (others=>'0');                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-            Number_Peaks_OB<= (others=>'0');        
+            Time_Over_Baseline<= (others=>'0');                          -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+            ADC_Peak<= (others=>'0');                          -- Amplitude in ADC counts od the peak
+            ADC_Integral<= (others=>'0');                          -- Charge of the light pulse (without undershoot) in ADC*samples
+            Number_Peaks<= (others=>'0');                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).      
        when Data => 
             Peak_Detection <= '0';
             Data_Available <= '1';                  -- Primitives calculation available. Active HIGH
             Time_Peak <= Time_Peak_Current;                                                -- Time in Samples to achieve de Max peak
-            Time_Pulse_UB <= std_logic_vector(unsigned(Time_Pulse_UB_Current) - to_unsigned(6,9));                          -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-            Time_Pulse_OB <= std_logic_vector(unsigned(Time_Pulse_OB_Current) + to_unsigned(6,10));                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-            Max_Peak <= Max_Peak_Current(13 downto 0);                          -- Amplitude in ADC counts od the peak
-            Charge <= Charge_Current;                          -- Charge of the light pulse (without undershoot) in ADC*samples
-            Number_Peaks_UB <= Number_Peaks_UB_Current;                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-            Number_Peaks_OB <= Number_Peaks_OB_Current;                  
+--            Time_Over_Baseline <= std_logic_vector(unsigned(Time_Over_Baseline_Current) - to_unsigned(6,9));
+            Time_Over_Baseline <= std_logic_vector(unsigned(Time_Over_Baseline_Current));                            -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+            ADC_Peak <= ADC_Peak_Current(13 downto 0);                          -- Amplitude in ADC counts od the peak
+            ADC_Integral <= ADC_Integral_Current;                          -- Charge of the light pulse (without undershoot) in ADC*samples
+            Number_Peaks <= Number_Peaks_Current;                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     end case;
 end process Output_Detection;
 
@@ -443,10 +382,10 @@ begin
 end process Peak_Delay;
 
 ----------------------- HIGH FREQUENCY NOISE CHECK    -----------------------
-Noise_Check: process(clock,Time_Pulse_UB_Current, CurrentState_Detection)
+Noise_Check: process(clock,Time_Over_Baseline_Current, CurrentState_Detection)
 begin
     if(clock'event and clock='1') then
-        if ((CurrentState_Detection = Detection_OB ) and (unsigned(Time_Pulse_UB_Current)< Minimum_Time_UB)) then
+        if ((CurrentState_Detection = Data ) and (unsigned(Time_Over_Baseline_Current)< Minimum_Time_UB)) then
             High_Freq_Noise_aux <='1'; 
         else
             High_Freq_Noise_aux <='0'; 

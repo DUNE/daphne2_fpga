@@ -46,12 +46,11 @@ port(
     Self_trigger:                   out std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
     Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
     Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
-    Time_Pulse_UB:                  out std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-    Time_Pulse_OB:                  out std_logic_vector(9 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-    Max_Peak:                       out std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
-    Charge:                         out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
-    Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-    Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+    Time_Over_Baseline:             out std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+    Time_Start:                     out std_logic_vector(9 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
+    ADC_Peak:                       out std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
+    ADC_Integral:                   out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
+    Number_Peaks:                   out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     --filtered_dout:                  out std_logic_vector (13 downto 0);                         -- HIGH PASS Filtered signal
     Baseline:                       in std_logic_vector(13 downto 0);                          -- Real Time calculated BASELINE
     Amplitude:                      out std_logic_vector(14 downto 0);                          -- Real Time calculated AMPLITUDE
@@ -116,12 +115,10 @@ COMPONENT LocalPrimitives_CIEMAT IS
     Interface_LOCAL_Primitves_OUT:  out std_logic_vector(23 downto 0);                          -- Interface with Local Primitives calculation BLOCK --> DEPENDS ON SELF-TRIGGER ALGORITHM 
     Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
     Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
-    Time_Pulse_UB:                  out std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-    Time_Pulse_OB:                  out std_logic_vector(9 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-    Max_Peak:                       out std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
-    Charge:                         out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
-    Number_Peaks_UB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-    Number_Peaks_OB:                out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+    Time_Over_Baseline:             out std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+    ADC_Peak:                       out std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
+    ADC_Integral:                   out std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
+    Number_Peaks:                   out std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     Baseline:                       in std_logic_vector(13 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
     Amplitude:                      out std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
     High_Freq_Noise:                out std_logic);                                                 -- ACTIVE HIGH when high freq noise is detected 
@@ -153,24 +150,22 @@ signal Noise_OR: bit:='0';
 -- LOCAL TRIGGER SIGNALS
 SIGNAL Data_Available_aux:                 std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
 SIGNAL Time_Peak_aux:                      std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
-SIGNAL Time_Pulse_UB_aux:                  std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-SIGNAL Time_Pulse_OB_aux:                  std_logic_vector(9 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-SIGNAL Max_Peak_aux:                       std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
-SIGNAL Charge_aux:                         std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
-SIGNAL Number_Peaks_UB_aux:                std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-SIGNAL Number_Peaks_OB_aux:                std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+SIGNAL Time_Over_Baseline_aux:             std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+SIGNAL ADC_Peak_aux:                       std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
+SIGNAL ADC_Integral_aux:                   std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
+SIGNAL Number_Peaks_aux:                   std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
 SIGNAL Baseline_aux:                       std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
 SIGNAL Amplitude_aux:                      std_logic_vector(14 downto 0);                            -- TO BE REMOVED AFTER DEBUGGING
+SIGNAL Time_Start_aux:                     std_logic_vector(9 downto 0);                           -- Time from TIME STAMP where the hit starts
 
 -- LOCAL TRIGGER SIGNALS registers
 SIGNAL Data_Available_reg:                 std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
 SIGNAL Time_Peak_reg:                      std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
-SIGNAL Time_Pulse_UB_reg:                  std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-SIGNAL Time_Pulse_OB_reg:                  std_logic_vector(9 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-SIGNAL Max_Peak_reg:                       std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
-SIGNAL Charge_reg:                         std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
-SIGNAL Number_Peaks_UB_reg:                std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-SIGNAL Number_Peaks_OB_reg:                std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is OVER BASELINE (undershoot).
+SIGNAL Time_Over_Baseline_reg:             std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+SIGNAL ADC_Peak_reg:                       std_logic_vector(13 downto 0);                          -- Amplitude in ADC counts od the peak
+SIGNAL ADC_Integral_reg:                   std_logic_vector(22 downto 0);                          -- Charge of the light pulse (without undershoot) in ADC*samples
+SIGNAL Number_Peaks_reg:                   std_logic_vector(3 downto 0);                           -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
+SIGNAL Time_Start_reg,Time_Start_reg2:     std_logic_vector(9 downto 0);                           -- Time from TIME STAMP where the hit starts
 
 -- TRAILER WORDS registers
 SIGNAL Trailer_Word_0_reg:                 std_logic_vector(31 downto 0);
@@ -187,7 +182,7 @@ SIGNAL Trailer_Word_10_reg:                 std_logic_vector(31 downto 0);
 SIGNAL Trailer_Word_11_reg:                 std_logic_vector(31 downto 0);
                             
 -- Sending Data control Signal 
-signal Data_Sent_Count: integer:=960; -- 1024 total samples - 64 pretrigger samples
+signal Data_Sent_Count: integer:=0; -- 1024 total samples - 64 pretrigger samples
 CONSTANT Frame_Size : integer := 960; -- 1024 total samples - 64 pretrigger samples
 type Data_State is   (Not_Sending_Data, Sending_Data);
 signal CurrentState_Data, NextState_Data: Data_State;
@@ -239,12 +234,10 @@ UUT3 : LocalPrimitives_CIEMAT
     Interface_LOCAL_Primitves_OUT=>  Interface_LOCAL_Primitves_IN_aux, -- Interface with Local Primitives calculation BLOCK --> DEPENDS ON SELF-TRIGGER ALGORITHM 
     Data_Available=>  Data_Available_aux,                               -- ACTIVE HIGH when LOCAL primitives are calculated
     Time_Peak=>  Time_Peak_aux,                                         -- Time in Samples to achieve de Max peak
-    Time_Pulse_UB=>  Time_Pulse_UB_aux,                                 -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
-    Time_Pulse_OB=>  Time_Pulse_OB_aux,                                 -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
-    Max_Peak=>  Max_Peak_aux,                                           -- Amplitude in ADC counts od the peak
-    Charge=>  Charge_aux,                                               -- Charge of the light pulse (without undershoot) in ADC*samples
-    Number_Peaks_UB=>  Number_Peaks_UB_aux,                             -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
-    Number_Peaks_OB=>  Number_Peaks_OB_aux,                             -- Number of peaks detected when signal is OVER BASELINE (undershoot).  
+    Time_Over_Baseline=>  Time_Over_Baseline_aux,                                 -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
+    ADC_Peak=>  ADC_Peak_aux,                                           -- Amplitude in ADC counts od the peak
+    ADC_Integral=>  ADC_Integral_aux,                                               -- Charge of the light pulse (without undershoot) in ADC*samples
+    Number_Peaks=>  Number_Peaks_aux,                             -- Number of peaks detected when signal is UNDER BASELINE (without undershoot).  
     Baseline=>  Baseline,                                           -- TO BE REMOVED AFTER DEBUGGING
     Amplitude=>  Amplitude_aux,                                        -- TO BE REMOVED AFTER DEBUGGING
     High_Freq_Noise=> Noise_aux);
@@ -277,20 +270,16 @@ begin
     if (clock_aux'event and clock_aux='1') then
         if (reset_aux='1') then
             Time_Peak_reg <= (others=>'1');
-            Time_Pulse_UB_reg <= (others=>'1');
-            Time_Pulse_OB_reg <= (others=>'1');
-            Max_Peak_reg <= (others=>'1');
-            Charge_reg <= (others=>'1');
-            Number_Peaks_UB_reg <= (others=>'1');
-            Number_Peaks_OB_reg <= (others=>'1');
+            Time_Over_Baseline_reg <= (others=>'1');
+            ADC_Peak_reg <= (others=>'1');
+            ADC_Integral_reg <= (others=>'1');
+            Number_Peaks_reg <= (others=>'1');
         elsif (Data_Available_aux = '1') then
             Time_Peak_reg <= Time_Peak_aux;
-            Time_Pulse_UB_reg <= Time_Pulse_UB_aux;
-            Time_Pulse_OB_reg <= Time_Pulse_OB_aux;
-            Max_Peak_reg <= Max_Peak_aux;
-            Charge_reg <= Charge_aux;
-            Number_Peaks_UB_reg <= Number_Peaks_UB_aux;
-            Number_Peaks_OB_reg <= Number_Peaks_OB_aux;       
+            Time_Over_Baseline_reg <= Time_Over_Baseline_aux;
+            ADC_Peak_reg <= ADC_Peak_aux;
+            ADC_Integral_reg <= ADC_Integral_aux;
+            Number_Peaks_reg <= Number_Peaks_aux;
         end if; 
     end if;
 end process Get_Local_Primitives_Params;
@@ -332,10 +321,10 @@ begin
                 NextState_Data <= Not_Sending_Data; 
             end if;
         when Sending_Data =>
-            if(Data_Sent_Count>1) then
-                NextState_Data <= Sending_Data;
-            else
+            if(Data_Sent_Count >= Frame_Size) then
                 NextState_Data <= Not_Sending_Data;
+            else
+                NextState_Data <= Sending_Data;
             end if;        
     end case;
 end process Next_State_Sending;
@@ -344,13 +333,13 @@ FFs_Sending: process(clock_aux, reset_aux)
 begin
     if (reset_aux='1')  then
         CurrentState_Data <= Not_Sending_Data;
-        Data_Sent_Count <= Frame_Size;
+        Data_Sent_Count <= 0;
     elsif(clock_aux'event and clock_aux='1') then
         CurrentState_Data <= NextState_Data;
         if (CurrentState_Data=Not_Sending_Data) then               
-            Data_Sent_Count <= Frame_Size;
+            Data_Sent_Count <= 0;
         else
-            Data_Sent_Count <= Data_Sent_Count - 1;
+            Data_Sent_Count <= Data_Sent_Count + 1;
         end if;
     end if;
 end process FFs_Sending;
@@ -471,25 +460,25 @@ begin
             Trailer_Word_10_reg     <= X"FFFFFFFF";
             Trailer_Word_11_reg     <= X"FFFFFFFF";
         elsif(CurrentState_Frame=One) then
-            Trailer_Word_0_reg      <= ('1' & Charge_reg & Number_Peaks_OB_reg & Number_Peaks_UB_reg); 
-            Trailer_Word_1_reg      <= (Time_Pulse_UB_reg & Time_Peak_reg & Max_Peak_reg);
-            Trailer_Word_10_reg(31 downto 22)       <= (Time_Pulse_OB_reg); 
+            Trailer_Word_0_reg      <= ('1' & ADC_Integral_reg & "1111" & Number_Peaks_reg); 
+            Trailer_Word_1_reg      <= (Time_Over_Baseline_reg & Time_Peak_reg & ADC_Peak_reg);
+            Trailer_Word_10_reg(31 downto 22)       <= (Time_Start_reg2); 
         elsif(CurrentState_Frame=Two) then
-            Trailer_Word_2_reg      <= ('1' & Charge_reg & Number_Peaks_OB_reg & Number_Peaks_UB_reg); 
-            Trailer_Word_3_reg      <= (Time_Pulse_UB_reg & Time_Peak_reg & Max_Peak_reg);
-            Trailer_Word_10_reg(21 downto 12)       <= (Time_Pulse_OB_reg);  
+            Trailer_Word_2_reg      <= ('1' & ADC_Integral_reg & "1111" & Number_Peaks_reg); 
+            Trailer_Word_3_reg      <= (Time_Over_Baseline_reg & Time_Peak_reg & ADC_Peak_reg);
+            Trailer_Word_10_reg(21 downto 12)       <= (Time_Start_reg2);  
         elsif(CurrentState_Frame=Three) then
-            Trailer_Word_4_reg      <= ('1' & Charge_reg & Number_Peaks_OB_reg & Number_Peaks_UB_reg); 
-            Trailer_Word_5_reg      <= (Time_Pulse_UB_reg & Time_Peak_reg & Max_Peak_reg);
-            Trailer_Word_10_reg(11 downto 2)       <= (Time_Pulse_OB_reg);  
+            Trailer_Word_4_reg      <= ('1' & ADC_Integral_reg & "1111" & Number_Peaks_reg);  
+            Trailer_Word_5_reg      <= (Time_Over_Baseline_reg & Time_Peak_reg & ADC_Peak_reg);
+            Trailer_Word_10_reg(11 downto 2)       <= (Time_Start_reg2);  
         elsif(CurrentState_Frame=Four) then
-            Trailer_Word_6_reg      <= ('1' & Charge_reg & Number_Peaks_OB_reg & Number_Peaks_UB_reg); 
-            Trailer_Word_7_reg      <= (Time_Pulse_UB_reg & Time_Peak_reg & Max_Peak_reg);
-            Trailer_Word_11_reg(31 downto 22)       <= (Time_Pulse_OB_reg);         
+            Trailer_Word_6_reg      <= ('1' & ADC_Integral_reg & "1111" & Number_Peaks_reg); 
+            Trailer_Word_7_reg      <= (Time_Over_Baseline_reg & Time_Peak_reg & ADC_Peak_reg);
+            Trailer_Word_11_reg(31 downto 22)       <= (Time_Start_reg2);         
         elsif(CurrentState_Frame=Five) then
-            Trailer_Word_8_reg      <= ('1' & Charge_reg & Number_Peaks_OB_reg & Number_Peaks_UB_reg); 
-            Trailer_Word_9_reg      <= (Time_Pulse_UB_reg & Time_Peak_reg & Max_Peak_reg);
-            Trailer_Word_11_reg(21 downto 12)       <= (Time_Pulse_OB_reg);                 
+            Trailer_Word_8_reg      <= ('1' & ADC_Integral_reg & "1111" & Number_Peaks_reg);  
+            Trailer_Word_9_reg      <= (Time_Over_Baseline_reg & Time_Peak_reg & ADC_Peak_reg);
+            Trailer_Word_11_reg(21 downto 12)       <= (Time_Start_reg2);                 
         else
             Trailer_Word_0_reg      <= Trailer_Word_0_reg;
             Trailer_Word_1_reg      <= Trailer_Word_1_reg;
@@ -626,6 +615,19 @@ begin
     end case;
 end process Output_FrameFormat;
 
+
+---- TIME START For hits within the frame
+Time_Start_aux <= std_logic_vector(to_unsigned(Data_Sent_Count + 64,10));
+Proc_Time_Start: process(clock_aux, Ext_Self_Trigger, Data_Available_aux)
+begin
+    if(clock_aux'event and clock_aux='1') then
+        if (Ext_Self_Trigger='1') then               
+            Time_Start_reg <= Time_Start_aux;
+        elsif (Data_Available_aux='1') then               
+            Time_Start_reg2 <= Time_Start_reg;            
+        end if;
+    end if;
+end process Proc_Time_Start;
 ------- add in some fake/synthetic latency, adjust it so total trigger latency is 64 clocks -----------
 
 --Select_Delay: process(Config_Param_FILTER_aux (0)) -- While filtering delay is bigger 
@@ -744,12 +746,11 @@ din_aux             <= din;
 Self_trigger        <= Self_trigger_out_aux;                   
 Data_Available      <= Data_Available_aux;                 
 Time_Peak           <= Time_Peak_aux;                       
-Time_Pulse_UB       <= Time_Pulse_UB_aux;                   
-Time_Pulse_OB       <= Time_Pulse_OB_aux;                  
-Max_Peak            <= Max_Peak_aux;                        
-Charge              <= Charge_aux;                          
-Number_Peaks_UB     <= Number_Peaks_UB_aux;                 
-Number_Peaks_OB     <= Number_Peaks_OB_aux; 
+Time_Over_Baseline  <= Time_Over_Baseline_aux;                   
+--Time_Start          <= Time_Start_reg;                  
+ADC_Peak            <= ADC_Peak_aux;                        
+ADC_Integral        <= ADC_Integral_aux;                          
+Number_Peaks        <= Number_Peaks_aux;                 
 --filtered_dout       <= filtered_dout_aux;                  
 --Baseline            <= Baseline_aux;                        
 Amplitude           <= Amplitude_aux;                       
