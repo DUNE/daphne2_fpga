@@ -606,7 +606,7 @@ begin
     trig_proc: process(mclk) -- note external trigger input is inverted on DAPHNE2
     begin
         if rising_edge(mclk) then
-            trig_sync <= trig_core_selftrigger or trig_gbe_total or (trig_internal_enable and (trig_en_total or (not trig_ext))); --------------- WARNING------------------- 
+            trig_sync <= trig_gbe_total or (trig_internal_enable and (trig_core_selftrigger or trig_en_total or (not trig_ext))); --------------- WARNING------------------- 
         end if;
     end process trig_proc;
 
