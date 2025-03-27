@@ -25,7 +25,7 @@ port(
     threshold_xc: in std_logic_vector(41 downto 0); -- user defined threshold relative to avg baseline
     ti_trigger: in std_logic_vector(7 downto 0); -------------------------
     ti_trigger_stbr: in std_logic;  -------------------------
-    trig_rst_count: in std_logic;
+    reset_st_counters: in std_logic;
     slot_id: in std_logic_vector(3 downto 0);
     crate_id: in std_logic_vector(9 downto 0);
     detector_id: in std_logic_vector(5 downto 0);
@@ -33,7 +33,8 @@ port(
     enable: in std_logic_vector(39 downto 0);
     afe_comp_enable: in std_logic_vector(39 downto 0);
     invert_enable: in std_logic_vector(39 downto 0);
-    trigger_signal: out std_logic_vector(39 downto 0);
+    st_40_signals_enable_reg: in std_logic_vector(39 downto 0);
+    st_40_selftrigger_4_spybuffer: out std_logic;
     filter_output_selector: in std_logic_vector(1 downto 0);
 
     aclk: in std_logic; -- AFE clock 62.500 MHz
@@ -64,12 +65,15 @@ architecture st40_top_arch of st40_top is
     signal fifo_ready: std_logic;
     signal fifo_do: array_5x8x32_type;
     signal fifo_ko: array_5x8x4_type;
+    signal trigger_signal: std_logic_vector(39 downto 0);
     signal d, dout_reg: std_logic_vector(31 downto 0);
     signal k, kout_reg: std_logic_vector( 3 downto 0);
     --signal packet_size_counter: integer range 0 to 467;
     signal trigcount: array_5x8x64_type;
     signal packcount: array_5x8x64_type;
     signal sendCount: unsigned(63 downto 0) := (others => '0');
+    signal reset_st_counters_fclk0, reset_st_counters_fclk1, reset_st_counters_fclk2: std_logic := '0';
+    signal reset_st_counters_aclk0, reset_st_counters_aclk1, reset_st_counters_aclk2: std_logic := '0';
 
     component stc is
     generic( link_id: std_logic_vector(5 downto 0) := "000000"; ch_id: std_logic_vector(5 downto 0) := "000000" );
@@ -92,7 +96,7 @@ architecture st40_top_arch of st40_top is
         timestamp: in std_logic_vector(63 downto 0);
     	ti_trigger: in std_logic_vector(7 downto 0); -------------------------
         ti_trigger_stbr: in std_logic;  -------------------------
-        trig_rst_count: in std_logic;
+        reset_st_counters: in std_logic;
         afe_dat: in std_logic_vector(13 downto 0);
         st_afe_dat_filtered: out std_logic_vector(13 downto 0);
         fclk: in std_logic; -- transmit clock to FELIX 120.237 MHz 
@@ -120,7 +124,7 @@ begin
                 threshold_xc => threshold_xc,
                 ti_trigger => ti_trigger, -------------------------
                 ti_trigger_stbr => ti_trigger_stbr,  -------------------------
-                trig_rst_count => reset_aclk,
+                reset_st_counters => reset_st_counters_aclk2,
                 slot_id => slot_id,
                 crate_id => crate_id,
                 detector_id => detector_id,
@@ -191,12 +195,38 @@ begin
     -- FSM scans all STC machines in round robin manner, looking for a FIFO almost empty "fifo_ae" flag set. when it finds
     -- this, it reads one complete frame from that machine, then sends a few idles, then returns to scanning again.
 
+    sync_st_counters_reset_fclk: process(fclk)
+    begin
+        if rising_edge(fclk) then
+            reset_st_counters_fclk0 <= reset_st_counters;
+            reset_st_counters_fclk1 <= reset_st_counters_fclk0;
+            reset_st_counters_fclk2 <= reset_st_counters_fclk1;
+        end if;
+    end process sync_st_counters_reset_fclk;
+
+    sync_st_counters_reset_aclk: process(aclk)
+    begin
+        if rising_edge(aclk) then
+            reset_st_counters_aclk0 <= reset_st_counters;
+            reset_st_counters_aclk1 <= reset_st_counters_aclk0;
+            reset_st_counters_aclk2 <= reset_st_counters_aclk1;
+        end if;
+    end process sync_st_counters_reset_aclk;
+
+    reset_send_counter: process(fclk)
+    begin
+        if rising_edge(fclk) then
+            if (reset_fclk ='1' or reset_st_counters_fclk2='1') then
+                sendCount <= (others => '0');
+            end if;
+        end if;
+    end process reset_send_counter;
+
     fsm_proc: process(fclk)
     begin
         if rising_edge(fclk) then
-            if (reset_fclk='1' or trig_rst_count='1') then 
+            if (reset_fclk='1') then 
                 state <= rst;
-                sendCount <= (others => '0');
             else
                 case(state) is
 
@@ -206,9 +236,6 @@ begin
                         state <= scan;
 
                     when scan => 
-                        if (trig_rst_count = '1') then
-                            sendCount <= (others => '0');
-                        end if;
                         if (fifo_ready='1') then
                             state <= dump;
                             sela_rden <= sela; 
@@ -229,11 +256,8 @@ begin
                         end if;
                         --packet_size_counter <= 0;
                     when dump =>
-                        if (trig_rst_count = '1') then
-                            sendCount <= (others => '0');
-                        end if;
                         --if ((k="0001" and d(7 downto 0)=X"DC") or packet_size_counter=467) then -- this the EOF word, done reading from this STC
-                        if (k="0001" and d(7 downto 0)=X"DC") then -- this the EOF word, done reading from this STC 
+                        if (k="0001" and d(7 downto 0)=X"DC" and reset_st_counters_fclk2='0') then -- this the EOF word, done reading from this STC 
                             state <= scan;
                             sendCount <= sendCount + 1;
                         else
@@ -490,5 +514,47 @@ begin
             end case;
         end if;
     end process rcount_mux_proc;
+
+    st_40_selftrigger_4_spybuffer <= (trigger_signal(0) and st_40_signals_enable_reg(0)) or
+                                     (trigger_signal(1) and st_40_signals_enable_reg(1)) or
+                                     (trigger_signal(2) and st_40_signals_enable_reg(2)) or
+                                     (trigger_signal(3) and st_40_signals_enable_reg(3)) or
+                                     (trigger_signal(4) and st_40_signals_enable_reg(4)) or
+                                     (trigger_signal(5) and st_40_signals_enable_reg(5)) or
+                                     (trigger_signal(6) and st_40_signals_enable_reg(6)) or
+                                     (trigger_signal(7) and st_40_signals_enable_reg(7)) or
+                                     (trigger_signal(8) and st_40_signals_enable_reg(8)) or
+                                     (trigger_signal(9) and st_40_signals_enable_reg(9)) or
+                                     (trigger_signal(10) and st_40_signals_enable_reg(10)) or
+                                     (trigger_signal(11) and st_40_signals_enable_reg(11)) or
+                                     (trigger_signal(12) and st_40_signals_enable_reg(12)) or
+                                     (trigger_signal(13) and st_40_signals_enable_reg(13)) or
+                                     (trigger_signal(14) and st_40_signals_enable_reg(14)) or
+                                     (trigger_signal(15) and st_40_signals_enable_reg(15)) or
+                                     (trigger_signal(16) and st_40_signals_enable_reg(16)) or
+                                     (trigger_signal(17) and st_40_signals_enable_reg(17)) or
+                                     (trigger_signal(18) and st_40_signals_enable_reg(18)) or
+                                     (trigger_signal(19) and st_40_signals_enable_reg(19)) or
+                                     (trigger_signal(20) and st_40_signals_enable_reg(20)) or
+                                     (trigger_signal(20) and st_40_signals_enable_reg(20)) or
+                                     (trigger_signal(21) and st_40_signals_enable_reg(21)) or
+                                     (trigger_signal(22) and st_40_signals_enable_reg(22)) or
+                                     (trigger_signal(23) and st_40_signals_enable_reg(23)) or
+                                     (trigger_signal(24) and st_40_signals_enable_reg(24)) or
+                                     (trigger_signal(25) and st_40_signals_enable_reg(25)) or
+                                     (trigger_signal(26) and st_40_signals_enable_reg(26)) or
+                                     (trigger_signal(27) and st_40_signals_enable_reg(27)) or
+                                     (trigger_signal(28) and st_40_signals_enable_reg(28)) or
+                                     (trigger_signal(29) and st_40_signals_enable_reg(29)) or
+                                     (trigger_signal(30) and st_40_signals_enable_reg(30)) or
+                                     (trigger_signal(31) and st_40_signals_enable_reg(31)) or
+                                     (trigger_signal(32) and st_40_signals_enable_reg(32)) or
+                                     (trigger_signal(33) and st_40_signals_enable_reg(33)) or
+                                     (trigger_signal(34) and st_40_signals_enable_reg(34)) or
+                                     (trigger_signal(35) and st_40_signals_enable_reg(35)) or
+                                     (trigger_signal(36) and st_40_signals_enable_reg(36)) or
+                                     (trigger_signal(37) and st_40_signals_enable_reg(37)) or
+                                     (trigger_signal(38) and st_40_signals_enable_reg(38)) or
+                                     (trigger_signal(39) and st_40_signals_enable_reg(39));
 
 end st40_top_arch;

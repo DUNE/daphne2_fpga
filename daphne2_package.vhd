@@ -105,6 +105,8 @@ package daphne2_package is
 
     constant EP_RST_ADDR: std_logic_vector(31 downto 0) := X"00004003";
 
+    constant RESET_ST_COUNTERS_ADDR: std_logic_vector(31 downto 0) := X"00004004";
+
     -- choose which inputs are connected to each streaming core sender.
     -- This is a block of 16 registers and is R/W 0x5000 - 0x500F  
 

@@ -43,7 +43,7 @@ port(
 
     ti_trigger: in std_logic_vector(7 downto 0); ------------------------
     ti_trigger_stbr: in std_logic; -------------------------------------
-    --trig_rst_count: in std_logic;
+    reset_st_counters: in std_logic;
     
     slot_id: in std_logic_vector(3 downto 0); -- used in output header
     crate_id: in std_logic_vector(9 downto 0); -- used in output header
@@ -52,7 +52,8 @@ port(
     st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
     st_afe_comp_enable: in std_logic_vector(39 downto 0);
     st_invert_enable: in std_logic_vector(39 downto 0);
-    st_trigger_signal: out std_logic_vector(39 downto 0);
+    st_40_signals_enable_reg: in std_logic_vector(39 downto 0);
+    st_40_selftrigger_4_spybuffer: out std_logic;
     filter_output_selector: in std_logic_vector(1 downto 0); -- filter type selector
 
     oeiclk: in std_logic; -- interface used for output spy buffer and to configure input mux
@@ -119,7 +120,7 @@ architecture core_arch of core is
         threshold_xc: in std_logic_vector(41 downto 0); -- user defined threshold relative to baseline
         ti_trigger: in std_logic_vector(7 downto 0); -------------------------
         ti_trigger_stbr: in std_logic;  -------------------------
-        trig_rst_count: in std_logic;
+        reset_st_counters: in std_logic;
         slot_id: in std_logic_vector(3 downto 0);
         crate_id: in std_logic_vector(9 downto 0);
         detector_id: in std_logic_vector(5 downto 0);
@@ -127,7 +128,8 @@ architecture core_arch of core is
         enable: in std_logic_vector(39 downto 0);
         afe_comp_enable: in std_logic_vector(39 downto 0);
         invert_enable: in std_logic_vector(39 downto 0);
-        trigger_signal: out std_logic_vector(39 downto 0);
+        st_40_signals_enable_reg: in std_logic_vector(39 downto 0);
+        st_40_selftrigger_4_spybuffer: out std_logic;
         filter_output_selector: in std_logic_vector(1 downto 0);
         aclk: in std_logic; -- AFE clock 62.500 MHz
         timestamp: in std_logic_vector(63 downto 0);
@@ -286,13 +288,14 @@ begin
         enable => st_enable,
         afe_comp_enable => st_afe_comp_enable,
         invert_enable => st_invert_enable,
-        trigger_signal => st_trigger_signal,
+        st_40_signals_enable_reg => st_40_signals_enable_reg,
+        st_40_selftrigger_4_spybuffer => st_40_selftrigger_4_spybuffer,
         filter_output_selector => filter_output_selector,
         aclk => mclk,
         timestamp => timestamp,
         ti_trigger => ti_trigger, ------------------------------
         ti_trigger_stbr => ti_trigger_stbr, -------------------------
-        trig_rst_count => reset_fclk_reg,
+        reset_st_counters => reset_fclk_reg,
     	afe_dat => afe_dat, -- AFE raw data after alignment all 40 channels
         afe_dat_filtered => afe_dat_filtered,
         oeiclk => oeiclk,
