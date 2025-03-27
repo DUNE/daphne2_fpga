@@ -134,7 +134,11 @@ package daphne2_package is
 
     constant ST_INVERT_ENABLE_ADDR: std_logic_vector(31 downto 0) := X"00006004";
 
-    constant DEFAULT_ST_INVERT_ENABLE_CONFIG: std_logic_vector(39 downto 0) := X"0000000000";  
+    constant DEFAULT_ST_INVERT_ENABLE_CONFIG: std_logic_vector(39 downto 0) := X"0000000000";
+
+    constant ST_CORE_SIGNALS_ENABLE_ADDR: std_logic_vector(31 downto 0) := X"00006005";
+
+    constant DEFAULT_ST_CORE_SIGNALS_ENABLE_CONFIG: std_logic_vector(39 downto 0) := X"0000000000";  
 
     -- address of the ad hoc command for the self trig senders
 

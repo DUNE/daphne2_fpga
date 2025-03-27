@@ -258,7 +258,8 @@ architecture DAPHNE2_arch of DAPHNE2 is
         clka:  in std_logic;  
         reset: in std_logic; -- reset sync to clka
         trig:  in std_logic; -- trigger pulse sync to clka
-        dia:   in std_logic_vector(15 downto 0); -- data bus from AFE channel    
+        dia:   in std_logic_vector(15 downto 0); -- data bus from AFE channel
+        signal_delay: in std_logic_vector(4 downto 0);    
         clkb:  in  std_logic;
         addrb: in  std_logic_vector(11 downto 0);
         dob:   out std_logic_vector(15 downto 0)
@@ -299,6 +300,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
         st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
         st_afe_comp_enable: in std_logic_vector(39 downto 0);
         st_invert_enable: in std_logic_vector(39 downto 0);
+        st_trigger_signal: out std_logic_vector(39 downto 0);
         st_config: in std_logic_vector(13 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
         signal_delay: in std_logic_vector(4 downto 0);
         filter_output_selector: in std_logic_vector(1 downto 0); -- filter signal type selector
@@ -367,7 +369,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal sclk200, sclk100, mclk, fclk: std_logic;
 
     signal trig_sync, trig_gbe: std_logic;
-    signal trig_gbe0_reg, trig_gbe1_reg, trig_gbe2_reg, trig_gbe_total: std_logic;
+    signal trig_gbe0_reg, trig_gbe1_reg, trig_gbe2_reg, trig_gbe_total, trig_core_selftrigger: std_logic;
     signal trig_spybuffer_read_dead_time_ON_reg0, trig_spybuffer_read_dead_time_ON_reg1, trig_spybuffer_read_dead_time_ON_reg2, trig_spybuffer_read_dead_time_total_ON: std_logic;
     signal trig_spybuffer_read_dead_time_OFF_reg0, trig_spybuffer_read_dead_time_OFF_reg1, trig_spybuffer_read_dead_time_OFF_reg2, trig_spybuffer_read_dead_time_total_OFF: std_logic;
     signal trig_internal_enable: std_logic := '1';
@@ -418,11 +420,11 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal ti_trigger_en: std_logic;
     signal ti_trigger_en0, ti_trigger_en1, ti_trigger_en2, trig_en_total: std_logic;    
     
-    signal st_enable_reg: std_logic_vector(39 downto 0);
+    signal st_enable_reg, st_core_signals_enable_reg, st_core_signals: std_logic_vector(39 downto 0);
     signal st_config_reg: std_logic_vector(31 downto 0);
     signal st_afe_comp_enable_reg: std_logic_vector(39 downto 0);
     signal st_invert_enable_reg: std_logic_vector(39 downto 0);
-    signal st_enable_we, st_config_we, st_afe_comp_enable_we, st_invert_enable_we: std_logic;
+    signal st_enable_we, st_config_we, st_afe_comp_enable_we, st_invert_enable_we, st_core_signals_enable_we: std_logic;
 
     signal Rcount_reg: std_logic_vector(63 downto 0);
     signal trig_rst_count: std_logic;
@@ -559,10 +561,52 @@ begin
         end if;
     end process spy_buffer_reading_dead_time;
 
+    trig_core_selftrigger <= (st_core_signals(0) and st_core_signals_enable_reg(0)) or
+                             (st_core_signals(1) and st_core_signals_enable_reg(1)) or
+                             (st_core_signals(2) and st_core_signals_enable_reg(2)) or
+                             (st_core_signals(3) and st_core_signals_enable_reg(3)) or
+                             (st_core_signals(4) and st_core_signals_enable_reg(4)) or
+                             (st_core_signals(5) and st_core_signals_enable_reg(5)) or
+                             (st_core_signals(6) and st_core_signals_enable_reg(6)) or
+                             (st_core_signals(7) and st_core_signals_enable_reg(7)) or
+                             (st_core_signals(8) and st_core_signals_enable_reg(8)) or
+                             (st_core_signals(9) and st_core_signals_enable_reg(9)) or
+                             (st_core_signals(10) and st_core_signals_enable_reg(10)) or
+                             (st_core_signals(11) and st_core_signals_enable_reg(11)) or
+                             (st_core_signals(12) and st_core_signals_enable_reg(12)) or
+                             (st_core_signals(13) and st_core_signals_enable_reg(13)) or
+                             (st_core_signals(14) and st_core_signals_enable_reg(14)) or
+                             (st_core_signals(15) and st_core_signals_enable_reg(15)) or
+                             (st_core_signals(16) and st_core_signals_enable_reg(16)) or
+                             (st_core_signals(17) and st_core_signals_enable_reg(17)) or
+                             (st_core_signals(18) and st_core_signals_enable_reg(18)) or
+                             (st_core_signals(19) and st_core_signals_enable_reg(19)) or
+                             (st_core_signals(20) and st_core_signals_enable_reg(20)) or
+                             (st_core_signals(20) and st_core_signals_enable_reg(20)) or
+                             (st_core_signals(21) and st_core_signals_enable_reg(21)) or
+                             (st_core_signals(22) and st_core_signals_enable_reg(22)) or
+                             (st_core_signals(23) and st_core_signals_enable_reg(23)) or
+                             (st_core_signals(24) and st_core_signals_enable_reg(24)) or
+                             (st_core_signals(25) and st_core_signals_enable_reg(25)) or
+                             (st_core_signals(26) and st_core_signals_enable_reg(26)) or
+                             (st_core_signals(27) and st_core_signals_enable_reg(27)) or
+                             (st_core_signals(28) and st_core_signals_enable_reg(28)) or
+                             (st_core_signals(29) and st_core_signals_enable_reg(29)) or
+                             (st_core_signals(30) and st_core_signals_enable_reg(30)) or
+                             (st_core_signals(31) and st_core_signals_enable_reg(31)) or
+                             (st_core_signals(32) and st_core_signals_enable_reg(32)) or
+                             (st_core_signals(33) and st_core_signals_enable_reg(33)) or
+                             (st_core_signals(34) and st_core_signals_enable_reg(34)) or
+                             (st_core_signals(35) and st_core_signals_enable_reg(35)) or
+                             (st_core_signals(36) and st_core_signals_enable_reg(36)) or
+                             (st_core_signals(37) and st_core_signals_enable_reg(37)) or
+                             (st_core_signals(38) and st_core_signals_enable_reg(38)) or
+                             (st_core_signals(39) and st_core_signals_enable_reg(39));
+
     trig_proc: process(mclk) -- note external trigger input is inverted on DAPHNE2
     begin
         if rising_edge(mclk) then
-            trig_sync <= trig_gbe_total or (trig_internal_enable and (trig_en_total or (not trig_ext))); --------------- WARNING------------------- 
+            trig_sync <= trig_core_selftrigger or trig_gbe_total or (trig_internal_enable and (trig_en_total or (not trig_ext))); --------------- WARNING------------------- 
         end if;
     end process trig_proc;
 
@@ -607,6 +651,7 @@ begin
                 reset => reset_async,
                 trig  => trig_sync,
                 dia   => afe_dout_pad(a)(b),
+                signal_delay => st_config_reg(20 downto 16),
                 -- oeiclk domain    
                 clkb  => oeiclk,
                 addrb => rx_addr(11 downto 0),
@@ -625,7 +670,7 @@ begin
             reset => reset_async,
             trig  => trig_sync,
             dia   => timestamp( ((i*16)+15) downto (i*16) ),
-
+            signal_delay => st_config_reg(20 downto 16),
             -- oeiclk domain    
             clkb  => oeiclk,
             addrb => rx_addr(11 downto 0),
@@ -823,6 +868,7 @@ begin
                (X"000000" & st_enable_reg) when std_match(rx_addr_reg, ST_ENABLE_ADDR) else
                (X"000000" & st_afe_comp_enable_reg) when std_match(rx_addr_reg, ST_AFE_COMP_ENABLE_ADDR) else
                (X"000000" & st_invert_enable_reg) when std_match(rx_addr_reg, ST_INVERT_ENABLE_ADDR) else
+               (X"000000" & st_core_signals_enable_reg) when std_match(rx_addr_reg, ST_CORE_SIGNALS_ENABLE_ADDR) else
                Rcount_reg when std_match(rx_addr_reg, RCOUNT_ADDR) else
 
                (others=>'0');
@@ -1058,6 +1104,19 @@ begin
         end if;
     end process st_invert_enable_proc;
 
+    st_core_signals_enable_we <= '1' when (std_match(rx_addr,ST_CORE_SIGNALS_ENABLE_ADDR) and rx_wren='1') else '0';
+
+    st_core_signals_enable_proc: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            if (reset_async='1') then
+                st_core_signals_enable_reg <= DEFAULT_ST_CORE_SIGNALS_ENABLE_CONFIG;
+            elsif (st_core_signals_enable_we='1') then
+                st_core_signals_enable_reg <= rx_data(39 downto 0);
+            end if;
+        end if;
+    end process st_core_signals_enable_proc;
+
     -- decode write enable for core inmux control register block of 40 6-bit registers
 
     inmux_we <= '1' when (std_match(rx_addr,CORE_INMUX_ADDR) and rx_wren='1') else '0';
@@ -1093,6 +1152,7 @@ begin
         st_enable => st_enable_reg,
         st_afe_comp_enable => st_afe_comp_enable_reg,
         st_invert_enable => st_invert_enable_reg,
+        st_trigger_signal => st_core_signals,
         filter_output_selector => st_config_reg(1 downto 0), -- filter type selector
    
         oeiclk => oeiclk,

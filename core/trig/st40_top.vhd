@@ -33,6 +33,7 @@ port(
     enable: in std_logic_vector(39 downto 0);
     afe_comp_enable: in std_logic_vector(39 downto 0);
     invert_enable: in std_logic_vector(39 downto 0);
+    trigger_signal: out std_logic_vector(39 downto 0);
     filter_output_selector: in std_logic_vector(1 downto 0);
 
     aclk: in std_logic; -- AFE clock 62.500 MHz
@@ -85,6 +86,7 @@ architecture st40_top_arch of st40_top is
         enable: std_logic;
         afe_comp_enable: in std_logic;
         invert_enable: in std_logic;
+        trigger_signal: out std_logic;
         filter_output_selector: in std_logic_vector(1 downto 0);
         aclk: in std_logic; -- AFE clock 62.500 MHz
         timestamp: in std_logic_vector(63 downto 0);
@@ -126,6 +128,7 @@ begin
                 enable => enable(8*a+c),
                 afe_comp_enable => afe_comp_enable(8*a+c),
                 invert_enable => invert_enable(8*a+c),
+                trigger_signal => trigger_signal(8*a+c),
                 st_config => st_config, -- CIEMAT (Nacho)
                 signal_delay => signal_delay,
                 filter_output_selector => filter_output_selector,

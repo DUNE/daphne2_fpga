@@ -52,6 +52,7 @@ port(
     st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
     st_afe_comp_enable: in std_logic_vector(39 downto 0);
     st_invert_enable: in std_logic_vector(39 downto 0);
+    st_trigger_signal: out std_logic_vector(39 downto 0);
     filter_output_selector: in std_logic_vector(1 downto 0); -- filter type selector
 
     oeiclk: in std_logic; -- interface used for output spy buffer and to configure input mux
@@ -126,6 +127,7 @@ architecture core_arch of core is
         enable: in std_logic_vector(39 downto 0);
         afe_comp_enable: in std_logic_vector(39 downto 0);
         invert_enable: in std_logic_vector(39 downto 0);
+        trigger_signal: out std_logic_vector(39 downto 0);
         filter_output_selector: in std_logic_vector(1 downto 0);
         aclk: in std_logic; -- AFE clock 62.500 MHz
         timestamp: in std_logic_vector(63 downto 0);
@@ -146,6 +148,7 @@ architecture core_arch of core is
         reset: in std_logic;
         trig:  in std_logic;
         dia:   in std_logic_vector(15 downto 0);
+        signal_delay: in std_logic_vector(4 downto 0);
         clkb:  in  std_logic;
         addrb: in  std_logic_vector(11 downto 0);
         dob:   out std_logic_vector(15 downto 0)
@@ -283,6 +286,7 @@ begin
         enable => st_enable,
         afe_comp_enable => st_afe_comp_enable,
         invert_enable => st_invert_enable,
+        trigger_signal => st_trigger_signal,
         filter_output_selector => filter_output_selector,
         aclk => mclk,
         timestamp => timestamp,
@@ -345,7 +349,7 @@ begin
         reset => reset_fclk_reg,
         trig  => trig_fclk_reg,
         dia   => sender_dout(0)(31 downto 16),
-
+        signal_delay => signal_delay,
         clkb  => oeiclk,
         addrb => addr(11 downto 0),
         dob   => spy_dout(31 downto 16)
@@ -357,7 +361,7 @@ begin
         reset => reset_fclk_reg,
         trig  => trig_fclk_reg,
         dia   => sender_dout(0)(15 downto 0),
-
+        signal_delay => signal_delay,
         clkb  => oeiclk,
         addrb => addr(11 downto 0),
         dob   => spy_dout(15 downto 0)
