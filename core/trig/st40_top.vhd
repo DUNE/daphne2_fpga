@@ -36,7 +36,6 @@ port(
     st_40_signals_enable_reg: in std_logic_vector(39 downto 0);
     st_40_selftrigger_4_spybuffer: out std_logic;
     filter_output_selector: in std_logic_vector(1 downto 0);
-
     aclk: in std_logic; -- AFE clock 62.500 MHz
     timestamp: in std_logic_vector(63 downto 0);
 	afe_dat: in array_5x9x14_type; -- ALL AFE channels feed into this module
@@ -72,8 +71,14 @@ architecture st40_top_arch of st40_top is
     signal trigcount: array_5x8x64_type;
     signal packcount: array_5x8x64_type;
     signal sendCount: unsigned(63 downto 0) := (others => '0');
-    signal reset_st_counters_fclk0, reset_st_counters_fclk1, reset_st_counters_fclk2: std_logic := '0';
-    signal reset_st_counters_aclk0, reset_st_counters_aclk1, reset_st_counters_aclk2: std_logic := '0';
+    signal reset_st_counters_fclk0, reset_st_counters_fclk1, reset_st_counters_fclk2, reset_st_counters_fclk_total: std_logic := '0';
+    signal reset_st_counters_aclk0, reset_st_counters_aclk1, reset_st_counters_aclk2, reset_st_counters_aclk_total: std_logic := '0';
+    signal enable_reg, afe_comp_enable_reg, invert_enable_reg, trigger_signal_reg : std_logic_vector(39 downto 0) := (others => '0');
+    signal afe_dat_filtered_reg : array_5x9x14_type;
+    signal st_config_reg : std_logic_vector(13 downto 0);
+    signal signal_delay_reg : std_logic_vector(4 downto 0);
+    signal threshold_xc_reg : std_logic_vector(41 downto 0);
+
 
     component stc is
     generic( link_id: std_logic_vector(5 downto 0) := "000000"; ch_id: std_logic_vector(5 downto 0) := "000000" );
@@ -121,25 +126,25 @@ begin
             port map(
                 reset => reset_aclk,
                 adhoc => adhoc,
-                threshold_xc => threshold_xc,
+                threshold_xc => threshold_xc_reg,
                 ti_trigger => ti_trigger, -------------------------
                 ti_trigger_stbr => ti_trigger_stbr,  -------------------------
-                reset_st_counters => reset_st_counters_aclk2,
+                reset_st_counters => reset_st_counters_aclk_total,
                 slot_id => slot_id,
                 crate_id => crate_id,
                 detector_id => detector_id,
                 version_id => version_id,
-                enable => enable(8*a+c),
-                afe_comp_enable => afe_comp_enable(8*a+c),
-                invert_enable => invert_enable(8*a+c),
+                enable => enable_reg(8*a+c),
+                afe_comp_enable => afe_comp_enable_reg(8*a+c),
+                invert_enable => invert_enable_reg(8*a+c),
                 trigger_signal => trigger_signal(8*a+c),
-                st_config => st_config, -- CIEMAT (Nacho)
-                signal_delay => signal_delay,
+                st_config => st_config_reg, -- CIEMAT (Nacho)
+                signal_delay => signal_delay_reg,
                 filter_output_selector => filter_output_selector,
                 aclk => aclk,
                 timestamp => timestamp,
             	afe_dat => afe_dat(a)(c),
-                st_afe_dat_filtered => afe_dat_filtered(a)(c),
+                st_afe_dat_filtered => afe_dat_filtered_reg(a)(c),
                 fclk => fclk,
                 fifo_rden => fifo_rden(a)(c),
                 fifo_ae => fifo_ae(a)(c),
@@ -204,6 +209,8 @@ begin
         end if;
     end process sync_st_counters_reset_fclk;
 
+    reset_st_counters_fclk_total <= reset_st_counters_fclk0 or reset_st_counters_fclk1 or reset_st_counters_fclk2;
+
     sync_st_counters_reset_aclk: process(aclk)
     begin
         if rising_edge(aclk) then
@@ -213,10 +220,32 @@ begin
         end if;
     end process sync_st_counters_reset_aclk;
 
+    reset_st_counters_aclk_total <= reset_st_counters_aclk0 or reset_st_counters_aclk1 or reset_st_counters_aclk2;
+
+    sync_enablers_conf_signals_aclk: process(aclk)
+    begin
+        if rising_edge(aclk) then
+            invert_enable_reg <= invert_enable;
+            afe_comp_enable_reg <= afe_comp_enable;
+            enable_reg <= enable;
+            signal_delay_reg <= signal_delay;
+            st_config_reg <= st_config;
+            threshold_xc_reg <= threshold_xc;
+            afe_dat_filtered <= afe_dat_filtered_reg;
+        end if;
+    end process sync_enablers_conf_signals_aclk;
+
+    sync_triggers_oeiclk: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+            trigger_signal_reg <= trigger_signal;
+        end if;
+    end process sync_triggers_oeiclk;
+
     reset_send_counter: process(fclk)
     begin
         if rising_edge(fclk) then
-            if (reset_fclk ='1' or reset_st_counters_fclk2='1') then
+            if (reset_fclk ='1' or reset_st_counters_fclk_total='1') then
                 sendCount <= (others => '0');
             end if;
         end if;
@@ -515,46 +544,46 @@ begin
         end if;
     end process rcount_mux_proc;
 
-    st_40_selftrigger_4_spybuffer <= (trigger_signal(0) and st_40_signals_enable_reg(0)) or
-                                     (trigger_signal(1) and st_40_signals_enable_reg(1)) or
-                                     (trigger_signal(2) and st_40_signals_enable_reg(2)) or
-                                     (trigger_signal(3) and st_40_signals_enable_reg(3)) or
-                                     (trigger_signal(4) and st_40_signals_enable_reg(4)) or
-                                     (trigger_signal(5) and st_40_signals_enable_reg(5)) or
-                                     (trigger_signal(6) and st_40_signals_enable_reg(6)) or
-                                     (trigger_signal(7) and st_40_signals_enable_reg(7)) or
-                                     (trigger_signal(8) and st_40_signals_enable_reg(8)) or
-                                     (trigger_signal(9) and st_40_signals_enable_reg(9)) or
-                                     (trigger_signal(10) and st_40_signals_enable_reg(10)) or
-                                     (trigger_signal(11) and st_40_signals_enable_reg(11)) or
-                                     (trigger_signal(12) and st_40_signals_enable_reg(12)) or
-                                     (trigger_signal(13) and st_40_signals_enable_reg(13)) or
-                                     (trigger_signal(14) and st_40_signals_enable_reg(14)) or
-                                     (trigger_signal(15) and st_40_signals_enable_reg(15)) or
-                                     (trigger_signal(16) and st_40_signals_enable_reg(16)) or
-                                     (trigger_signal(17) and st_40_signals_enable_reg(17)) or
-                                     (trigger_signal(18) and st_40_signals_enable_reg(18)) or
-                                     (trigger_signal(19) and st_40_signals_enable_reg(19)) or
-                                     (trigger_signal(20) and st_40_signals_enable_reg(20)) or
-                                     (trigger_signal(20) and st_40_signals_enable_reg(20)) or
-                                     (trigger_signal(21) and st_40_signals_enable_reg(21)) or
-                                     (trigger_signal(22) and st_40_signals_enable_reg(22)) or
-                                     (trigger_signal(23) and st_40_signals_enable_reg(23)) or
-                                     (trigger_signal(24) and st_40_signals_enable_reg(24)) or
-                                     (trigger_signal(25) and st_40_signals_enable_reg(25)) or
-                                     (trigger_signal(26) and st_40_signals_enable_reg(26)) or
-                                     (trigger_signal(27) and st_40_signals_enable_reg(27)) or
-                                     (trigger_signal(28) and st_40_signals_enable_reg(28)) or
-                                     (trigger_signal(29) and st_40_signals_enable_reg(29)) or
-                                     (trigger_signal(30) and st_40_signals_enable_reg(30)) or
-                                     (trigger_signal(31) and st_40_signals_enable_reg(31)) or
-                                     (trigger_signal(32) and st_40_signals_enable_reg(32)) or
-                                     (trigger_signal(33) and st_40_signals_enable_reg(33)) or
-                                     (trigger_signal(34) and st_40_signals_enable_reg(34)) or
-                                     (trigger_signal(35) and st_40_signals_enable_reg(35)) or
-                                     (trigger_signal(36) and st_40_signals_enable_reg(36)) or
-                                     (trigger_signal(37) and st_40_signals_enable_reg(37)) or
-                                     (trigger_signal(38) and st_40_signals_enable_reg(38)) or
-                                     (trigger_signal(39) and st_40_signals_enable_reg(39));
+    st_40_selftrigger_4_spybuffer <= (trigger_signal_reg(0) and st_40_signals_enable_reg(0)) or
+                                     (trigger_signal_reg(1) and st_40_signals_enable_reg(1)) or
+                                     (trigger_signal_reg(2) and st_40_signals_enable_reg(2)) or
+                                     (trigger_signal_reg(3) and st_40_signals_enable_reg(3)) or
+                                     (trigger_signal_reg(4) and st_40_signals_enable_reg(4)) or
+                                     (trigger_signal_reg(5) and st_40_signals_enable_reg(5)) or
+                                     (trigger_signal_reg(6) and st_40_signals_enable_reg(6)) or
+                                     (trigger_signal_reg(7) and st_40_signals_enable_reg(7)) or
+                                     (trigger_signal_reg(8) and st_40_signals_enable_reg(8)) or
+                                     (trigger_signal_reg(9) and st_40_signals_enable_reg(9)) or
+                                     (trigger_signal_reg(10) and st_40_signals_enable_reg(10)) or
+                                     (trigger_signal_reg(11) and st_40_signals_enable_reg(11)) or
+                                     (trigger_signal_reg(12) and st_40_signals_enable_reg(12)) or
+                                     (trigger_signal_reg(13) and st_40_signals_enable_reg(13)) or
+                                     (trigger_signal_reg(14) and st_40_signals_enable_reg(14)) or
+                                     (trigger_signal_reg(15) and st_40_signals_enable_reg(15)) or
+                                     (trigger_signal_reg(16) and st_40_signals_enable_reg(16)) or
+                                     (trigger_signal_reg(17) and st_40_signals_enable_reg(17)) or
+                                     (trigger_signal_reg(18) and st_40_signals_enable_reg(18)) or
+                                     (trigger_signal_reg(19) and st_40_signals_enable_reg(19)) or
+                                     (trigger_signal_reg(20) and st_40_signals_enable_reg(20)) or
+                                     (trigger_signal_reg(20) and st_40_signals_enable_reg(20)) or
+                                     (trigger_signal_reg(21) and st_40_signals_enable_reg(21)) or
+                                     (trigger_signal_reg(22) and st_40_signals_enable_reg(22)) or
+                                     (trigger_signal_reg(23) and st_40_signals_enable_reg(23)) or
+                                     (trigger_signal_reg(24) and st_40_signals_enable_reg(24)) or
+                                     (trigger_signal_reg(25) and st_40_signals_enable_reg(25)) or
+                                     (trigger_signal_reg(26) and st_40_signals_enable_reg(26)) or
+                                     (trigger_signal_reg(27) and st_40_signals_enable_reg(27)) or
+                                     (trigger_signal_reg(28) and st_40_signals_enable_reg(28)) or
+                                     (trigger_signal_reg(29) and st_40_signals_enable_reg(29)) or
+                                     (trigger_signal_reg(30) and st_40_signals_enable_reg(30)) or
+                                     (trigger_signal_reg(31) and st_40_signals_enable_reg(31)) or
+                                     (trigger_signal_reg(32) and st_40_signals_enable_reg(32)) or
+                                     (trigger_signal_reg(33) and st_40_signals_enable_reg(33)) or
+                                     (trigger_signal_reg(34) and st_40_signals_enable_reg(34)) or
+                                     (trigger_signal_reg(35) and st_40_signals_enable_reg(35)) or
+                                     (trigger_signal_reg(36) and st_40_signals_enable_reg(36)) or
+                                     (trigger_signal_reg(37) and st_40_signals_enable_reg(37)) or
+                                     (trigger_signal_reg(38) and st_40_signals_enable_reg(38)) or
+                                     (trigger_signal_reg(39) and st_40_signals_enable_reg(39));
 
 end st40_top_arch;

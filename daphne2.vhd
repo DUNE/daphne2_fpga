@@ -370,10 +370,11 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal sclk200, sclk100, mclk, fclk: std_logic;
 
     signal trig_sync, trig_gbe: std_logic;
-    signal trig_gbe0_reg, trig_gbe1_reg, trig_gbe2_reg, trig_gbe_total, st_40_selftrigger_4_spybuffer: std_logic;
+    signal trig_gbe0_reg, trig_gbe1_reg, trig_gbe2_reg, trig_gbe_total: std_logic;
     signal trig_spybuffer_read_dead_time_ON_reg0, trig_spybuffer_read_dead_time_ON_reg1, trig_spybuffer_read_dead_time_ON_reg2, trig_spybuffer_read_dead_time_total_ON: std_logic;
     signal trig_spybuffer_read_dead_time_OFF_reg0, trig_spybuffer_read_dead_time_OFF_reg1, trig_spybuffer_read_dead_time_OFF_reg2, trig_spybuffer_read_dead_time_total_OFF: std_logic;
     signal reset_st_counters, reset_st_counters_reg0, reset_st_counters_reg1, reset_st_counters_reg2 : std_logic := '0';
+    signal st_40_selftrigger_4_spybuffer, st_40_selftrigger_4_spybuffer_reg0, st_40_selftrigger_4_spybuffer_reg1, st_40_selftrigger_4_spybuffer_reg2, st_40_selftrigger_4_spybuffer_total : std_logic := '0';
     signal trig_internal_enable: std_logic := '1';
     signal trig_spybuffer_read_dead_time_ON, trig_spybuffer_read_dead_time_OFF: std_logic;
 
@@ -546,11 +547,15 @@ begin
             reset_st_counters_reg0 <= reset_st_counters;
             reset_st_counters_reg1 <= reset_st_counters_reg0;
             reset_st_counters_reg2 <= reset_st_counters_reg1;
+            st_40_selftrigger_4_spybuffer_reg0 <= st_40_selftrigger_4_spybuffer;
+            st_40_selftrigger_4_spybuffer_reg1 <= st_40_selftrigger_4_spybuffer_reg0;
+            st_40_selftrigger_4_spybuffer_reg2 <= st_40_selftrigger_4_spybuffer_reg1;
         end if;
     end process trig_oei_proc;
 
     trig_en_total <= ti_trigger_en0 or ti_trigger_en1 or ti_trigger_en2;
     trig_gbe_total <= trig_gbe0_reg or trig_gbe1_reg or trig_gbe2_reg;
+    st_40_selftrigger_4_spybuffer_total <= st_40_selftrigger_4_spybuffer_reg0 or st_40_selftrigger_4_spybuffer_reg1 or st_40_selftrigger_4_spybuffer_reg2;
     trig_spybuffer_read_dead_time_total_ON <= trig_spybuffer_read_dead_time_ON_reg0 or trig_spybuffer_read_dead_time_ON_reg1 or trig_spybuffer_read_dead_time_ON_reg2;
     trig_spybuffer_read_dead_time_total_OFF <= trig_spybuffer_read_dead_time_OFF_reg0 or trig_spybuffer_read_dead_time_OFF_reg1 or trig_spybuffer_read_dead_time_OFF_reg2;
 
@@ -569,7 +574,7 @@ begin
     trig_proc: process(mclk) -- note external trigger input is inverted on DAPHNE2
     begin
         if rising_edge(mclk) then
-            trig_sync <= trig_gbe_total or (trig_internal_enable and (st_40_selftrigger_4_spybuffer or trig_en_total or (not trig_ext))); --------------- WARNING------------------- 
+            trig_sync <= trig_gbe_total or (trig_internal_enable and (st_40_selftrigger_4_spybuffer_total or trig_en_total or (not trig_ext))); --------------- WARNING------------------- 
         end if;
     end process trig_proc;
 
