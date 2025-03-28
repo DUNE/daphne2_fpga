@@ -74,7 +74,6 @@ architecture st40_top_arch of st40_top is
     signal reset_st_counters_fclk0, reset_st_counters_fclk1, reset_st_counters_fclk2, reset_st_counters_fclk_total: std_logic := '0';
     signal reset_st_counters_aclk0, reset_st_counters_aclk1, reset_st_counters_aclk2, reset_st_counters_aclk_total: std_logic := '0';
     signal enable_reg, afe_comp_enable_reg, invert_enable_reg, trigger_signal_reg : std_logic_vector(39 downto 0) := (others => '0');
-    signal afe_dat_filtered_reg : array_5x9x14_type;
     signal st_config_reg : std_logic_vector(13 downto 0);
     signal signal_delay_reg : std_logic_vector(4 downto 0);
     signal threshold_xc_reg : std_logic_vector(41 downto 0);
@@ -144,7 +143,7 @@ begin
                 aclk => aclk,
                 timestamp => timestamp,
             	afe_dat => afe_dat(a)(c),
-                st_afe_dat_filtered => afe_dat_filtered_reg(a)(c),
+                st_afe_dat_filtered => afe_dat_filtered(a)(c),
                 fclk => fclk,
                 fifo_rden => fifo_rden(a)(c),
                 fifo_ae => fifo_ae(a)(c),
@@ -231,7 +230,6 @@ begin
             signal_delay_reg <= signal_delay;
             st_config_reg <= st_config;
             threshold_xc_reg <= threshold_xc;
-            afe_dat_filtered <= afe_dat_filtered_reg;
         end if;
     end process sync_enablers_conf_signals_aclk;
 
