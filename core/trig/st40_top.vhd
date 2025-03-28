@@ -242,20 +242,12 @@ begin
         end if;
     end process sync_triggers_oeiclk;
 
-    reset_send_counter: process(fclk)
-    begin
-        if rising_edge(fclk) then
-            if (reset_fclk ='1' or reset_st_counters_fclk_total='1') then
-                sendCount <= (others => '0');
-            end if;
-        end if;
-    end process reset_send_counter;
-
     fsm_proc: process(fclk)
     begin
         if rising_edge(fclk) then
             if (reset_fclk='1') then 
                 state <= rst;
+                sendCount <= (others => '0');
             else
                 case(state) is
 
@@ -286,7 +278,7 @@ begin
                         --packet_size_counter <= 0;
                     when dump =>
                         --if ((k="0001" and d(7 downto 0)=X"DC") or packet_size_counter=467) then -- this the EOF word, done reading from this STC
-                        if (k="0001" and d(7 downto 0)=X"DC" and reset_st_counters_fclk2='0') then -- this the EOF word, done reading from this STC 
+                        if (k="0001" and d(7 downto 0)=X"DC") then -- this the EOF word, done reading from this STC 
                             state <= scan;
                             sendCount <= sendCount + 1;
                         else

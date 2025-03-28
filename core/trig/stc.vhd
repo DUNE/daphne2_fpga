@@ -455,26 +455,18 @@ begin
         end if;
     end process count_proc;
 
-    reset_pack_counter: process(aclk)
-    begin
-        if rising_edge(aclk) then
-            if (reset='1' or reset_st_counters='1') then
-                packCount <= (others => '0');
-            end if;
-        end if;
-    end process reset_pack_counter;
-
     builder_fsm_proc: process(aclk)
     begin
         if rising_edge(aclk) then
-            if (reset='1') then ---------------////
+            if (reset='1' or reset_st_counters='1') then ---------------////
                 state <= rst;
+                packCount <= (others => '0');
             else
                 case(state) is
                     when rst =>
                         state <= wait4trig;
                     when wait4trig => 
-                        if (triggered='1' and enable='1' and fifo_af='1' and reset_st_counters='0') then -- start assembling the output frame
+                        if (triggered='1' and enable='1' and fifo_af='1') then -- start assembling the output frame
                             block_count <= (others => '0');
                             packCount <= packCount + 1;
                             ts_reg <= std_logic_vector( unsigned(timestamp) - 124 );
