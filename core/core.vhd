@@ -52,7 +52,7 @@ port(
     st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
     st_afe_comp_enable: in std_logic_vector(39 downto 0);
     st_invert_enable: in std_logic_vector(39 downto 0);
-    st_40_signals_enable_reg: in std_logic_vector(39 downto 0);
+    st_40_signals_enable_reg: in std_logic_vector(5 downto 0);
     st_40_selftrigger_4_spybuffer: out std_logic;
     filter_output_selector: in std_logic_vector(1 downto 0); -- filter type selector
 
@@ -128,7 +128,7 @@ architecture core_arch of core is
         enable: in std_logic_vector(39 downto 0);
         afe_comp_enable: in std_logic_vector(39 downto 0);
         invert_enable: in std_logic_vector(39 downto 0);
-        st_40_signals_enable_reg: in std_logic_vector(39 downto 0);
+        st_40_signals_enable_reg: in std_logic_vector(5 downto 0);
         st_40_selftrigger_4_spybuffer: out std_logic;
         filter_output_selector: in std_logic_vector(1 downto 0);
         aclk: in std_logic; -- AFE clock 62.500 MHz

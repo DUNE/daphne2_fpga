@@ -33,7 +33,7 @@ port(
     enable: in std_logic_vector(39 downto 0);
     afe_comp_enable: in std_logic_vector(39 downto 0);
     invert_enable: in std_logic_vector(39 downto 0);
-    st_40_signals_enable_reg: in std_logic_vector(39 downto 0);
+    st_40_signals_enable_reg: in std_logic_vector(5 downto 0);
     st_40_selftrigger_4_spybuffer: out std_logic;
     filter_output_selector: in std_logic_vector(1 downto 0);
     aclk: in std_logic; -- AFE clock 62.500 MHz
@@ -510,46 +510,17 @@ begin
         end if;
     end process rcount_mux_proc;
 
-    st_40_selftrigger_4_spybuffer <= (trigger_signal(0) and st_40_signals_enable_reg(0)) or
-                                     (trigger_signal(1) and st_40_signals_enable_reg(1)) or
-                                     (trigger_signal(2) and st_40_signals_enable_reg(2)) or
-                                     (trigger_signal(3) and st_40_signals_enable_reg(3)) or
-                                     (trigger_signal(4) and st_40_signals_enable_reg(4)) or
-                                     (trigger_signal(5) and st_40_signals_enable_reg(5)) or
-                                     (trigger_signal(6) and st_40_signals_enable_reg(6)) or
-                                     (trigger_signal(7) and st_40_signals_enable_reg(7)) or
-                                     (trigger_signal(8) and st_40_signals_enable_reg(8)) or
-                                     (trigger_signal(9) and st_40_signals_enable_reg(9)) or
-                                     (trigger_signal(10) and st_40_signals_enable_reg(10)) or
-                                     (trigger_signal(11) and st_40_signals_enable_reg(11)) or
-                                     (trigger_signal(12) and st_40_signals_enable_reg(12)) or
-                                     (trigger_signal(13) and st_40_signals_enable_reg(13)) or
-                                     (trigger_signal(14) and st_40_signals_enable_reg(14)) or
-                                     (trigger_signal(15) and st_40_signals_enable_reg(15)) or
-                                     (trigger_signal(16) and st_40_signals_enable_reg(16)) or
-                                     (trigger_signal(17) and st_40_signals_enable_reg(17)) or
-                                     (trigger_signal(18) and st_40_signals_enable_reg(18)) or
-                                     (trigger_signal(19) and st_40_signals_enable_reg(19)) or
-                                     (trigger_signal(20) and st_40_signals_enable_reg(20)) or
-                                     (trigger_signal(20) and st_40_signals_enable_reg(20)) or
-                                     (trigger_signal(21) and st_40_signals_enable_reg(21)) or
-                                     (trigger_signal(22) and st_40_signals_enable_reg(22)) or
-                                     (trigger_signal(23) and st_40_signals_enable_reg(23)) or
-                                     (trigger_signal(24) and st_40_signals_enable_reg(24)) or
-                                     (trigger_signal(25) and st_40_signals_enable_reg(25)) or
-                                     (trigger_signal(26) and st_40_signals_enable_reg(26)) or
-                                     (trigger_signal(27) and st_40_signals_enable_reg(27)) or
-                                     (trigger_signal(28) and st_40_signals_enable_reg(28)) or
-                                     (trigger_signal(29) and st_40_signals_enable_reg(29)) or
-                                     (trigger_signal(30) and st_40_signals_enable_reg(30)) or
-                                     (trigger_signal(31) and st_40_signals_enable_reg(31)) or
-                                     (trigger_signal(32) and st_40_signals_enable_reg(32)) or
-                                     (trigger_signal(33) and st_40_signals_enable_reg(33)) or
-                                     (trigger_signal(34) and st_40_signals_enable_reg(34)) or
-                                     (trigger_signal(35) and st_40_signals_enable_reg(35)) or
-                                     (trigger_signal(36) and st_40_signals_enable_reg(36)) or
-                                     (trigger_signal(37) and st_40_signals_enable_reg(37)) or
-                                     (trigger_signal(38) and st_40_signals_enable_reg(38)) or
-                                     (trigger_signal(39) and st_40_signals_enable_reg(39));
+    SpyBuffer_proc: process(aclk)
+    variable index : integer range 0 to 39;
+    begin
+        if rising_edge(aclk) then
+            if st_40_signals_enable_reg < std_logic_vector(to_unsigned(40, 6)) then
+                index := to_integer(unsigned(st_40_signals_enable_reg));
+                st_40_selftrigger_4_spybuffer <= trigger_signal(index);
+            else
+                st_40_selftrigger_4_spybuffer <= '0';
+            end if;
+        end if;
+    end process SpyBuffer_proc;
 
 end st40_top_arch;

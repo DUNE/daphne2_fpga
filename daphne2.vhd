@@ -300,7 +300,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
         st_enable: in std_logic_vector(39 downto 0); -- enable/disable channels for self-triggered sender only
         st_afe_comp_enable: in std_logic_vector(39 downto 0);
         st_invert_enable: in std_logic_vector(39 downto 0);
-        st_40_signals_enable_reg: in std_logic_vector(39 downto 0);
+        st_40_signals_enable_reg: in std_logic_vector(5 downto 0);
         st_40_selftrigger_4_spybuffer: out std_logic;
         st_config: in std_logic_vector(13 downto 0); -- for self-trig senders, CONFIG PARAMETERS --> CIEMAT (Nacho)
         signal_delay: in std_logic_vector(4 downto 0);
@@ -423,7 +423,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal ti_trigger_en: std_logic;
     signal ti_trigger_en0, ti_trigger_en1, ti_trigger_en2, trig_en_total: std_logic;    
     
-    signal st_enable_reg, st_core_signals_enable_reg: std_logic_vector(39 downto 0);
+    signal st_enable_reg: std_logic_vector(39 downto 0);
     signal st_config_reg: std_logic_vector(31 downto 0);
     signal st_afe_comp_enable_reg: std_logic_vector(39 downto 0);
     signal st_invert_enable_reg: std_logic_vector(39 downto 0);
@@ -550,14 +550,9 @@ begin
             st_40_selftrigger_4_spybuffer_reg0 <= st_40_selftrigger_4_spybuffer;
             st_40_selftrigger_4_spybuffer_reg1 <= st_40_selftrigger_4_spybuffer_reg0;
             st_40_selftrigger_4_spybuffer_reg2 <= st_40_selftrigger_4_spybuffer_reg1;
+
         end if;
     end process trig_oei_proc;
-
-    trig_en_total <= ti_trigger_en0 or ti_trigger_en1 or ti_trigger_en2;
-    trig_gbe_total <= trig_gbe0_reg or trig_gbe1_reg or trig_gbe2_reg;
-    st_40_selftrigger_4_spybuffer_total <= st_40_selftrigger_4_spybuffer_reg0 or st_40_selftrigger_4_spybuffer_reg1 or st_40_selftrigger_4_spybuffer_reg2;
-    trig_spybuffer_read_dead_time_total_ON <= trig_spybuffer_read_dead_time_ON_reg0 or trig_spybuffer_read_dead_time_ON_reg1 or trig_spybuffer_read_dead_time_ON_reg2;
-    trig_spybuffer_read_dead_time_total_OFF <= trig_spybuffer_read_dead_time_OFF_reg0 or trig_spybuffer_read_dead_time_OFF_reg1 or trig_spybuffer_read_dead_time_OFF_reg2;
 
     -- process to acount for dead time during async reading of spy registers
     spy_buffer_reading_dead_time: process(oeiclk)
@@ -574,6 +569,12 @@ begin
     trig_proc: process(mclk) -- note external trigger input is inverted on DAPHNE2
     begin
         if rising_edge(mclk) then
+            trig_en_total <= ti_trigger_en0 or ti_trigger_en1 or ti_trigger_en2;
+            trig_gbe_total <= trig_gbe0_reg or trig_gbe1_reg or trig_gbe2_reg;
+            st_40_selftrigger_4_spybuffer_total <= st_40_selftrigger_4_spybuffer_reg0 or st_40_selftrigger_4_spybuffer_reg1 or st_40_selftrigger_4_spybuffer_reg2;
+            trig_spybuffer_read_dead_time_total_ON <= trig_spybuffer_read_dead_time_ON_reg0 or trig_spybuffer_read_dead_time_ON_reg1 or trig_spybuffer_read_dead_time_ON_reg2;
+            trig_spybuffer_read_dead_time_total_OFF <= trig_spybuffer_read_dead_time_OFF_reg0 or trig_spybuffer_read_dead_time_OFF_reg1 or trig_spybuffer_read_dead_time_OFF_reg2;
+            ---------------------------------------------------------------------------------------
             trig_sync <= trig_gbe_total or (trig_internal_enable and (st_40_selftrigger_4_spybuffer_total or trig_en_total or (not trig_ext))); --------------- WARNING------------------- 
         end if;
     end process trig_proc;
@@ -836,7 +837,6 @@ begin
                (X"000000" & st_enable_reg) when std_match(rx_addr_reg, ST_ENABLE_ADDR) else
                (X"000000" & st_afe_comp_enable_reg) when std_match(rx_addr_reg, ST_AFE_COMP_ENABLE_ADDR) else
                (X"000000" & st_invert_enable_reg) when std_match(rx_addr_reg, ST_INVERT_ENABLE_ADDR) else
-               (X"000000" & st_core_signals_enable_reg) when std_match(rx_addr_reg, ST_CORE_SIGNALS_ENABLE_ADDR) else
                Rcount_reg when std_match(rx_addr_reg, RCOUNT_ADDR) else
 
                (others=>'0');
@@ -1070,19 +1070,6 @@ begin
         end if;
     end process st_invert_enable_proc;
 
-    st_core_signals_enable_we <= '1' when (std_match(rx_addr,ST_CORE_SIGNALS_ENABLE_ADDR) and rx_wren='1') else '0';
-
-    st_core_signals_enable_proc: process(oeiclk)
-    begin
-        if rising_edge(oeiclk) then
-            if (reset_async='1') then
-                st_core_signals_enable_reg <= DEFAULT_ST_CORE_SIGNALS_ENABLE_CONFIG;
-            elsif (st_core_signals_enable_we='1') then
-                st_core_signals_enable_reg <= rx_data(39 downto 0);
-            end if;
-        end if;
-    end process st_core_signals_enable_proc;
-
     -- decode write enable for core inmux control register block of 40 6-bit registers
 
     inmux_we <= '1' when (std_match(rx_addr,CORE_INMUX_ADDR) and rx_wren='1') else '0';
@@ -1118,7 +1105,7 @@ begin
         st_enable => st_enable_reg,
         st_afe_comp_enable => st_afe_comp_enable_reg,
         st_invert_enable => st_invert_enable_reg,
-        st_40_signals_enable_reg => st_core_signals_enable_reg,
+        st_40_signals_enable_reg => st_config_reg(26 downto 21),
         st_40_selftrigger_4_spybuffer => st_40_selftrigger_4_spybuffer,
         filter_output_selector => st_config_reg(1 downto 0), -- filter type selector
    
