@@ -92,6 +92,7 @@
 
 	0x00004002  Write anything to reset master clock MMCM1
 	0x00004003  Write anything to reset timing endpoint
+	0x00004004  Write anything to reset the selftrigger counters
 
 	The following registers are used to determine which physical input channels 
 	    (which are numbered decimal 0-7, 10-17, 20-27, 30-37, and 40-47)
@@ -123,13 +124,33 @@
 	Note this value is relative to the automatic baseline value calculated 
 	for each input channel. Default is 256. This register is read/write.
 
-	0x00006000  Trigger threshold for self triggered senders, 14 bits R/W
+	0x00006000  (Deprecated) Trigger threshold for self triggered senders, 14 bits R/W
 
 	There is only one self triggered sender module and it connects to all forty
 	input channels. Use this register to enable which channels you want the self
 	triggered sender to see. The default value is for this register is all inputs DISABLED
 
 	0x00006001  Self Trigger sender input enables, 40 bits R/W
+	0x00006002  Self Trigger sender module configuration, 32 bits R/W
+				Description:
+				bits[1:0]:   Self Trigger Module filter output selector:
+				             	"00": AFE compensated signal (Deprecated: use "01")  
+				             	"01": AFE compensator signal + digital inverter
+				             	"10": Selftrigger correlation signal.
+				             	"11": Raw unfiltered signal.
+				bits[15:2]:  Primitives Calculator module configuration.
+						     	-- Nacho --
+				bits[20:16]: Selftrigger pedestal. Sets the selftrigger pedestal length
+				             from the trigger position.
+							 	Value: 8 x bits[20:16] samples.
+							 	Max: 256 samples.
+				bits[26:21]: Spybuffer trigger selector. Selects which Self Trigger Module
+				             signal will trigger the Spybuffer.
+				             	Values: 0-39: Selftrigger channels.
+				             	Others: 40-63. Internal spybuffer selftrigger disabled.
+				bits[31:27]  Unused.
+	0x00006003	Self Trigger sender AFE	compensator enables, 40 bits R/W
+	0x00006004	Self Trigger sender digital inverter enables, 40 bits R/W
 
 	Specify the value of the command that generates the adhoc trigger. Default is 7
 	This register is read/write
@@ -146,6 +167,11 @@
 	whenever large event happen. Default is -80. This register is read/write
 
 	0x00006100 Cross Correlation Trigger threshold values for self triggered senders, 42 bits R/W
+			   Description:
+			   bits[27:0]:  correlation threshold level. Waveforms whose correlation signal surpasses the configured
+			                value will assert the trigger. 
+			   bits[41:28]: discrimination threshold level. Waveforms whose signal level is above this threshold will
+			                be discarted. 
 
 	0x00009000  Read the FW version aka git commit hash ID, read-only, 28 bits
 

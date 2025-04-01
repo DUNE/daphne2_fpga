@@ -221,7 +221,7 @@ begin
             a => signal_delay,
             d => afe_dat_filtered(i), -- real time AFE data
             q => open,
-            q31 => afe_dly32_i(i) -- AFE data 32 clocks ago 
+            q31 => afe_dly32_i(i)
         );
     
         srlc32e_1_inst : srlc32e
@@ -231,7 +231,7 @@ begin
             a => signal_delay,
             d => afe_dly32_i(i),
             q => open,
-            q31 => afe_dly64_i(i) -- AFE data 64 clocks ago
+            q31 => afe_dly64_i(i)
         );
 
         srlc32e_2_inst : srlc32e
@@ -241,7 +241,7 @@ begin
             a => signal_delay,
             d => afe_dly64_i(i),
             q => open,
-            q31 => afe_dly96_i(i) -- AFE data 96 clocks ago
+            q31 => afe_dly96_i(i)
         );
 
         srlc32e_3_inst : srlc32e
@@ -251,49 +251,49 @@ begin
             a => signal_delay,
             d => afe_dly96_i(i),
             q => open,
-            q31 => afe_dly128_i(i) -- AFE data 128 clocks ago
+            q31 => afe_dly128_i(i)
         );
 
         -- add around 150 delays
 
-        srlc32e_4_inst : srlc32e --32
+        srlc32e_4_inst : srlc32e
         port map(
             clk => aclk,
             ce => '1',
             a => signal_delay,
             d => afe_dly128_i(i),
             q => open,
-            q31 => afe_dly160_i(i) -- AFE data 128 clocks ago
+            q31 => afe_dly160_i(i)
         );
 
-        srlc32e_5_inst : srlc32e --64
+        srlc32e_5_inst : srlc32e
         port map(
             clk => aclk,
             ce => '1',
             a => signal_delay,
             d => afe_dly160_i(i),
             q => open,
-            q31 => afe_dly192_i(i) -- AFE data 128 clocks ago
+            q31 => afe_dly192_i(i)
         );
 
-        srlc32e_6_inst : srlc32e --96
+        srlc32e_6_inst : srlc32e
         port map(
             clk => aclk,
             ce => '1',
             a => signal_delay,
             d => afe_dly192_i(i),
             q => open,
-            q31 => afe_dly224_i(i) -- AFE data 128 clocks ago
+            q31 => afe_dly224_i(i)
         );
 
-        srlc32e_7_inst : srlc32e -- 20
+        srlc32e_7_inst : srlc32e
         port map(
             clk => aclk,
             ce => '1',
             a => signal_delay,
             d => afe_dly224_i(i),
             q => afe_dly(i),
-            q31 => open -- AFE data 128 clocks ago
+            q31 => open
         );
 
         
