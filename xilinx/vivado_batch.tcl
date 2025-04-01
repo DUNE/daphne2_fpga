@@ -23,14 +23,14 @@ read_vhdl ../spy/spy.vhd
 read_vhdl ../spi/spi.vhd
 
 read_vhdl ../core/core.vhd
- read_vhdl ../core/inmux.vhd
- read_vhdl ../core/stream/dstr4.vhd
-  read_vhdl ../core/crc20_update.vhd
- read_vhdl ../core/trig/st40_top.vhd
-  read_vhdl ../core/trig/stc.vhd
-   read_vhdl ../core/trig/baseline256.vhd
-   read_vhdl ../core/trig/trig.vhd
- read_vhdl ../core/core_mgt4.vhd
+read_vhdl ../core/inmux.vhd
+read_vhdl ../core/stream/dstr4.vhd
+read_vhdl ../core/crc20_update.vhd
+read_vhdl ../core/trig/st40_top.vhd
+read_vhdl ../core/trig/stc.vhd
+read_vhdl ../core/trig/baseline256.vhd
+read_vhdl ../core/trig/trig.vhd
+read_vhdl ../core/core_mgt4.vhd
 
 # trigger modules ----
 # bicocca
@@ -92,33 +92,33 @@ read_vhdl ../timing/ep_src/pdts_ep_defs.vhd
 read_vhdl ../timing/ep_src/pdts_clock_defs.vhd
 read_vhdl ../timing/ep_src/pdts_code8b10bpkg.vhd
 read_vhdl ../timing/ep_src/pdts_endpoint.vhd
-	read_vhdl ../timing/ep_src/pdts_ep_cdr.vhd
-		read_vhdl ../timing/ep_src/pdts_cdr_sampler.vhd
-	read_vhdl ../timing/ep_src/pdts_ep_core.vhd
-		read_vhdl ../timing/ep_src/pdts_ep_sm.vhd
-			read_vhdl ../timing/ep_src/pdts_synchro.vhd
-			read_vhdl ../timing/ep_src/pdts_synchro_pulse.vhd
-		read_vhdl ../timing/ep_src/pdts_rx.vhd
-			read_vhdl ../timing/ep_src/pdts_rx_phy.vhd
-				read_vhdl ../timing/ep_src/pdts_del.vhd
-				read_vhdl ../timing/ep_src/pdts_dec8b10b.vhd
-			read_vhdl ../timing/ep_src/pdts_rx_pkt.vhd
-				read_vhdl ../timing/ep_src/pdts_cksum.vhd
-					read_vhdl ../timing/ep_src/outputlogic_crc16.vhd
-			read_vhdl ../timing/ep_src/pdts_ep_ctrl.vhd
-				read_vhdl ../timing/ep_src/pdts_ep_transactor.vhd
-			read_vhdl ../timing/ep_src/pdts_pktbuf.vhd
-				read_vhdl ../timing/ep_src/pdts_lutram.vhd
-		read_vhdl ../timing/ep_src/pdts_ep_ctrlmux.vhd
-		read_vhdl ../timing/ep_src/pdts_ep_regfile.vhd
-		read_vhdl ../timing/ep_src/pdts_tx.vhd
-			read_vhdl ../timing/ep_src/pdts_idle_gen.vhd
-			read_vhdl ../timing/ep_src/pdts_acmd_arb.vhd
-			read_vhdl ../timing/ep_src/pdts_tx_phy.vhd
-				read_vhdl ../timing/ep_src/pdts_enc8b10b.vhd
-			read_vhdl ../timing/ep_src/pdts_tx_pkt.vhd
-		read_vhdl ../timing/ep_src/pdts_ep_tstamp.vhd
-	read_vhdl ../timing/ep_src/pdts_mod.vhd
+read_vhdl ../timing/ep_src/pdts_ep_cdr.vhd
+read_vhdl ../timing/ep_src/pdts_cdr_sampler.vhd
+read_vhdl ../timing/ep_src/pdts_ep_core.vhd
+read_vhdl ../timing/ep_src/pdts_ep_sm.vhd
+read_vhdl ../timing/ep_src/pdts_synchro.vhd
+read_vhdl ../timing/ep_src/pdts_synchro_pulse.vhd
+read_vhdl ../timing/ep_src/pdts_rx.vhd
+read_vhdl ../timing/ep_src/pdts_rx_phy.vhd
+read_vhdl ../timing/ep_src/pdts_del.vhd
+read_vhdl ../timing/ep_src/pdts_dec8b10b.vhd
+read_vhdl ../timing/ep_src/pdts_rx_pkt.vhd
+read_vhdl ../timing/ep_src/pdts_cksum.vhd
+read_vhdl ../timing/ep_src/outputlogic_crc16.vhd
+read_vhdl ../timing/ep_src/pdts_ep_ctrl.vhd
+read_vhdl ../timing/ep_src/pdts_ep_transactor.vhd
+read_vhdl ../timing/ep_src/pdts_pktbuf.vhd
+read_vhdl ../timing/ep_src/pdts_lutram.vhd
+read_vhdl ../timing/ep_src/pdts_ep_ctrlmux.vhd
+read_vhdl ../timing/ep_src/pdts_ep_regfile.vhd
+read_vhdl ../timing/ep_src/pdts_tx.vhd
+read_vhdl ../timing/ep_src/pdts_idle_gen.vhd
+read_vhdl ../timing/ep_src/pdts_acmd_arb.vhd
+read_vhdl ../timing/ep_src/pdts_tx_phy.vhd
+read_vhdl ../timing/ep_src/pdts_enc8b10b.vhd
+read_vhdl ../timing/ep_src/pdts_tx_pkt.vhd
+read_vhdl ../timing/ep_src/pdts_ep_tstamp.vhd
+read_vhdl ../timing/ep_src/pdts_mod.vhd
 read_vhdl ../timing/pdts_endpoint_wrapper.vhd
 
 # whew lad...
