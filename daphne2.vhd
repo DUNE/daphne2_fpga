@@ -345,7 +345,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal status_vector: std_logic_vector(15 downto 0);
     signal EFUSEUSR: std_logic_vector(31 downto 0);
 
-    signal tx_data, rx_data: std_logic_vector(63 downto 0);
+    signal tx_data, tx_data_reg, rx_data: std_logic_vector(63 downto 0);
     signal rx_addr, rx_addr_reg: std_logic_vector(31 downto 0);
     signal tx_rden, rx_wren: std_logic;
 
@@ -751,12 +751,13 @@ begin
     begin
         if rising_edge(oeiclk) then
             rx_addr_reg <= rx_addr;
+            tx_data <= tx_data_reg;
         end if;
     end process readmux_proc;
 
     -- BIG mux to determine what 64 bit value gets sent back to the Ethernet Interface
 
-    tx_data <= test_reg                        when std_match(rx_addr_reg, TESTREG_ADDR) else 
+    tx_data_reg <= test_reg                        when std_match(rx_addr_reg, TESTREG_ADDR) else 
                fifo_DO                         when std_match(rx_addr_reg, FIFO_ADDR) else 
                (X"000000000000" &  status_vector) when std_match(rx_addr_reg, STATVEC_ADDR) else
                sfp_stat_vector                 when std_match(rx_addr_reg, SFPSTATVEC_ADDR) else  
