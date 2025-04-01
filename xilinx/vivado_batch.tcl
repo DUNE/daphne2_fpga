@@ -155,7 +155,7 @@ puts "INFO: passing git commit number $v_git_sha to top level generic"
 
 # synth design...
 
-synth_design -top daphne2 -generic version=$v_git_sha
+synth_design -top daphne2 -generic version=$v_git_sha -directive PerformanceOptimized
 report_clocks -file $outputDir/clocks.rpt
 report_timing_summary -file $outputDir/post_synth_timing_summary.rpt
 report_power -file $outputDir/post_synth_power.rpt
@@ -163,7 +163,7 @@ report_utilization -file $outputDir/post_synth_util.rpt
 
 # place...
 
-opt_design
+opt_design -directive Explore
 place_design -directive WLDrivenBlockPlacement
 phys_opt_design -directive AggressiveFanoutOpt
 # write_checkpoint -force $outputDir/post_place
@@ -172,7 +172,7 @@ report_timing -sort_by group -max_paths 100 -path_type summary -file $outputDir/
 
 # route...
 
-route_design -directive NoTimingRelaxation
+route_design -directive AlternateCLBRouting
 phys_opt_design -directive AggressiveExplore
 # write_checkpoint -force $outputDir/post_route
 
