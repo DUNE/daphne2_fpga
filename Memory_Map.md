@@ -138,8 +138,12 @@
 				             	"01": AFE compensator signal + digital inverter
 				             	"10": Selftrigger correlation signal.
 				             	"11": Raw unfiltered signal.
-				bits[15:2]:  Primitives Calculator module configuration.
-						     	-- Nacho --
+				bits[7:2]:   Not used anymore "000000"
+				bit[8]:	     Slope calculation (used to detect peaks-->Num_Peaks)
+						"0" : 16 samples used --> Raw_Data(0)-Raw_Data(-16)
+					        "1" : 20 samples used --> Raw_Data(0)-Raw_Data(-20)
+				bits[15:9]:  SPE slope threshold (used to detect peaks-->Num_Peaks)
+						"0001100":12 ADC counts
 				bits[20:16]: Selftrigger pedestal. Sets the selftrigger pedestal length
 				             from the trigger position.
 							 	Value: 8 x bits[20:16] samples.
