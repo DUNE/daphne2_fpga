@@ -295,7 +295,7 @@ begin
         timestamp => timestamp,
         ti_trigger => ti_trigger, ------------------------------
         ti_trigger_stbr => ti_trigger_stbr, -------------------------
-        reset_st_counters => reset_fclk_reg,
+        reset_st_counters => reset_st_counters,
     	afe_dat => afe_dat, -- AFE raw data after alignment all 40 channels
         afe_dat_filtered => afe_dat_filtered,
         oeiclk => oeiclk,

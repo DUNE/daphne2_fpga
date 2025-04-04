@@ -455,7 +455,7 @@ begin
         end if;
     end process count_proc;
 
-    builder_fsm_proc: process(aclk)
+    builder_fsm_proc: process(aclk, reset, enable, triggered, fifo_af, reset_st_counters)
     begin
         if rising_edge(aclk) then
             if (reset='1' or reset_st_counters='1') then ---------------////

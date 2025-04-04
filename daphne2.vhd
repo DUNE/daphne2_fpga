@@ -345,7 +345,7 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal status_vector: std_logic_vector(15 downto 0);
     signal EFUSEUSR: std_logic_vector(31 downto 0);
 
-    signal tx_data, tx_data_reg, rx_data: std_logic_vector(63 downto 0);
+    signal tx_data, rx_data: std_logic_vector(63 downto 0);
     signal rx_addr, rx_addr_reg: std_logic_vector(31 downto 0);
     signal tx_rden, rx_wren: std_logic;
 
@@ -373,10 +373,14 @@ architecture DAPHNE2_arch of DAPHNE2 is
     signal trig_gbe0_reg, trig_gbe1_reg, trig_gbe2_reg, trig_gbe_total: std_logic;
     signal trig_spybuffer_read_dead_time_ON_reg0, trig_spybuffer_read_dead_time_ON_reg1, trig_spybuffer_read_dead_time_ON_reg2, trig_spybuffer_read_dead_time_total_ON: std_logic;
     signal trig_spybuffer_read_dead_time_OFF_reg0, trig_spybuffer_read_dead_time_OFF_reg1, trig_spybuffer_read_dead_time_OFF_reg2, trig_spybuffer_read_dead_time_total_OFF: std_logic;
-    signal reset_st_counters, reset_st_counters_reg0, reset_st_counters_reg1, reset_st_counters_reg2 : std_logic := '0';
+    signal reset_st_counters, reset_st_counters_reg0, reset_st_counters_reg1, reset_st_counters_reg2, reset_st_counters_t, reset_st_counters_total : std_logic := '0';
+    signal st_reset_counter: unsigned(5 downto 0) := (others => '0');
     signal st_40_selftrigger_4_spybuffer, st_40_selftrigger_4_spybuffer_reg0, st_40_selftrigger_4_spybuffer_reg1, st_40_selftrigger_4_spybuffer_reg2, st_40_selftrigger_4_spybuffer_total : std_logic := '0';
     signal trig_internal_enable: std_logic := '1';
     signal trig_spybuffer_read_dead_time_ON, trig_spybuffer_read_dead_time_OFF: std_logic;
+
+    type st_state_type is (st_state_reset, st_state_count);
+    signal st_state : st_state_type := st_state_reset;
 
     signal afe_dout: array_5x9x14_type;
     signal afe_dout_filtered: array_5x9x14_type;
@@ -544,15 +548,43 @@ begin
             trig_spybuffer_read_dead_time_OFF_reg0 <= trig_spybuffer_read_dead_time_OFF;
             trig_spybuffer_read_dead_time_OFF_reg1 <= trig_spybuffer_read_dead_time_OFF_reg0;
             trig_spybuffer_read_dead_time_OFF_reg2 <= trig_spybuffer_read_dead_time_OFF_reg1;
-            reset_st_counters_reg0 <= reset_st_counters;
-            reset_st_counters_reg1 <= reset_st_counters_reg0;
-            reset_st_counters_reg2 <= reset_st_counters_reg1;
             st_40_selftrigger_4_spybuffer_reg0 <= st_40_selftrigger_4_spybuffer;
             st_40_selftrigger_4_spybuffer_reg1 <= st_40_selftrigger_4_spybuffer_reg0;
             st_40_selftrigger_4_spybuffer_reg2 <= st_40_selftrigger_4_spybuffer_reg1;
-
+	    reset_st_counters_reg0 <= reset_st_counters;
+	    reset_st_counters_reg1 <= reset_st_counters_reg0;
+	    reset_st_counters_reg2 <= reset_st_counters_reg1;
         end if;
     end process trig_oei_proc;
+
+    reset_st_counters_t <= reset_st_counters_reg0 or reset_st_counters_reg1 or reset_st_counters_reg2;
+
+    reset_st_process: process(oeiclk)
+    begin
+        if rising_edge(oeiclk) then
+	    case(st_state) is
+    	        when st_state_reset =>
+    		    if(reset_st_counters_t = '1') then
+    			st_state <= st_state_count;
+		    else
+    		        st_state <= st_state_reset;
+			st_reset_counter <= (others => '0');
+			reset_st_counters_total <= '0';
+		    end if;
+                when st_state_count =>
+    		    if(st_reset_counter = "111111") then
+    			st_state <= st_state_reset;
+		    else
+    			st_state <= st_state_count;
+			reset_st_counters_total <= '1';
+			st_reset_counter <= st_reset_counter + 1;
+		    end if;
+	        when others =>
+    		    st_state <= st_state_reset;
+	    end case;
+	end if;
+    end process reset_st_process;	
+		
 
     -- process to acount for dead time during async reading of spy registers
     spy_buffer_reading_dead_time: process(oeiclk)
@@ -751,13 +783,12 @@ begin
     begin
         if rising_edge(oeiclk) then
             rx_addr_reg <= rx_addr;
-            tx_data <= tx_data_reg;
         end if;
     end process readmux_proc;
 
     -- BIG mux to determine what 64 bit value gets sent back to the Ethernet Interface
 
-    tx_data_reg <= test_reg                        when std_match(rx_addr_reg, TESTREG_ADDR) else 
+    tx_data <= test_reg                        when std_match(rx_addr_reg, TESTREG_ADDR) else 
                fifo_DO                         when std_match(rx_addr_reg, FIFO_ADDR) else 
                (X"000000000000" &  status_vector) when std_match(rx_addr_reg, STATVEC_ADDR) else
                sfp_stat_vector                 when std_match(rx_addr_reg, SFPSTATVEC_ADDR) else  
@@ -1097,7 +1128,7 @@ begin
         --
         ti_trigger => ti_trigger_reg, --------------------
         ti_trigger_stbr => ti_trigger_stbr_reg, -------------------
-        reset_st_counters => reset_st_counters_reg2,
+        reset_st_counters => reset_st_counters_total,
 
         slot_id => daq_out_param_reg(25 downto 22),  -- 4 bits
         crate_id => daq_out_param_reg(21 downto 12), -- 10 bits

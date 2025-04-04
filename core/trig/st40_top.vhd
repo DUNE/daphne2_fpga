@@ -216,10 +216,10 @@ begin
 
     reset_st_counters_aclk_total <= reset_st_counters_aclk0 or reset_st_counters_aclk1 or reset_st_counters_aclk2;
 
-    fsm_proc: process(fclk)
+    fsm_proc: process(fclk, reset_fclk, reset_st_counters_fclk_total)
     begin
         if rising_edge(fclk) then
-            if (reset_fclk='1' and reset_st_counters_fclk_total ='1') then 
+            if (reset_fclk='1' or reset_st_counters_fclk_total ='1') then 
                 state <= rst;
                 sendCount <= (others => '0');
             else
