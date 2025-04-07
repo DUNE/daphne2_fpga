@@ -209,6 +209,7 @@ architecture core_arch of core is
     signal mux_chid: array_4x4x6_type;
     signal stream_sender_dout, sender_dout: array_4x32_type; 
     signal stream_sender_kout, sender_kout: array_4x4_type;
+    signal afe_dat_filtered_signal: array_5x9x14_type;
     signal selftrig_sender_dout: std_logic_vector(31 downto 0);
     signal selftrig_sender_kout: std_logic_vector(3 downto 0);
     signal trig_fclk_reg: std_logic;
@@ -236,7 +237,7 @@ begin
         din => din,
         dout => inmux_dout, 
 
-        afe_dat => afe_dat, -- AFE raw data after alignment 
+        afe_dat => afe_dat_filtered_signal, -- AFE raw data after alignment 
         data_out => mux_data, -- afe data streams array_4x4x14
         chid_out => mux_chid  -- input channel id array_4x4x6
     );
@@ -297,7 +298,7 @@ begin
         ti_trigger_stbr => ti_trigger_stbr, -------------------------
         reset_st_counters => reset_st_counters,
     	afe_dat => afe_dat, -- AFE raw data after alignment all 40 channels
-        afe_dat_filtered => afe_dat_filtered,
+        afe_dat_filtered => afe_dat_filtered_signal,
         oeiclk => oeiclk,
         fclk => fclk(0), 
         dout => selftrig_sender_dout,
@@ -305,6 +306,7 @@ begin
         Rcount_addr => Rcount_addr,
         Rcount => Rcount
     );
+    afe_dat_filtered <= afe_dat_filtered_signal;
 
     -- there are four outputs (sender_kout and sender_dout) and these muxes 
     -- determine whether the streaming or self trig sender drives them. the muxes are controlled 
