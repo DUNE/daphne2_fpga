@@ -147,9 +147,9 @@ module hpf_pedestal_recovery_filter_trigger(
 
     assign x_i = x;
     assign y1 = w_out; //Esta señal va al DAQ.
-    assign y2 = hpf_out_aux; // Esta señal va al Selftrigger. Aqui podriamos colocar la logica
-                         // condicional de la inversión segun el estado invert_enable, similar al condicional suma_out. 
-                         // La inversion es directa porque la señal esta centrada en cero.
+    assign y2 = hpf_out_xcorr; // Esta señal va al Selftrigger TP. Aqui podriamos colocar la logica
+                               // condicional de la inversión segun el estado invert_enable, similar al condicional suma_out. 
+                               // La inversion es directa porque la señal esta centrada en cero.
     assign baseline = baseline_aux; //lpf_out; // Aqui también habrá que modificar el baseline según la condicion invert_enable.
     assign internal_afe_comp_enable = (enable & afe_comp_enable);
     //assign movmean_out = $signed(movmean_out_14);
