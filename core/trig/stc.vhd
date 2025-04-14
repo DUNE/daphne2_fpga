@@ -76,6 +76,7 @@ architecture stc_arch of stc is
     signal almostfull: std_logic_vector(3 downto 0);
     signal fifo_af: std_logic;
     signal reset_ciemat, triggered_bicocca_reg_1, triggered_bicocca_reg_2: std_logic;
+    signal stable_timestamp: std_logic := '0';
     signal trigCount: unsigned(63 downto 0) := (others => '0');
     signal packCount: unsigned(63 downto 0) := (others => '0');
 
@@ -455,6 +456,8 @@ begin
         end if;
     end process count_proc;
 
+    stable_timestamp <= '1' when (unsigned(timestamp) > 1000000) else '0';
+
     builder_fsm_proc: process(aclk, reset, enable, triggered, fifo_af, reset_st_counters)
     begin
         if rising_edge(aclk) then
@@ -466,7 +469,7 @@ begin
                     when rst =>
                         state <= wait4trig;
                     when wait4trig => 
-                        if (triggered='1' and enable='1' and fifo_af='1') then -- start assembling the output frame
+                        if (triggered='1' and enable='1' and fifo_af='1' and stable_timestamp='1') then -- start assembling the output frame
                             block_count <= (others => '0');
                             packCount <= packCount + 1;
                             ts_reg <= std_logic_vector( unsigned(timestamp) - 124 );
