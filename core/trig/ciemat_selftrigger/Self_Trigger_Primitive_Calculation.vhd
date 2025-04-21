@@ -43,6 +43,7 @@ port(
     din:                            in  std_logic_vector(13 downto 0);                          -- Data coming from the Filter Block / Raw data from AFEs
     Config_Param:                   in  std_logic_vector(13 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
     Ext_Self_Trigger:               in  std_logic;                                              -- External Self-Trigger coming from another block
+    Match_with_Frame:               in  std_logic;                                              -- External signal that allows being matched with the frame construction.
     Self_trigger:                   out std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
     Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
     Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
@@ -148,6 +149,7 @@ SIGNAL Trigger_dly53: bit_vector(53 downto 0):=(others=>'0');
 signal Noise_OR: bit:='0';
 
 -- LOCAL TRIGGER SIGNALS
+SIGNAL Ext_Self_Trigger_Match:             std_logic;                                              -- ACTIVE HIGH when ext_self_trigger and allowed to calculate TPs 
 SIGNAL Data_Available_aux:                 std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
 SIGNAL Time_Peak_aux:                      std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
 SIGNAL Time_Over_Baseline_aux:             std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
@@ -223,12 +225,14 @@ UUT2 : PeakDetector_SelfTrigger_CIEMAT
       Interface_LOCAL_Primitves_IN => Interface_LOCAL_Primitves_IN_aux,
       Interface_LOCAL_Primitves_OUT => Interface_LOCAL_Primitves_OUT_aux,
       Self_trigger => open);
+
+Ext_Self_Trigger_Match <= Ext_Self_Trigger and (Match_with_Frame or Sending_Data_aux); 
       
 UUT3 : LocalPrimitives_CIEMAT
     PORT MAP ( 
     clock =>  clock_aux,                                                -- AFE clock
     reset=>  reset_aux,                                                 -- Reset signal. ACTIVE HIGH
-    Self_trigger=> Ext_Self_Trigger,                                    -- Self-Trigger signal comming from the Self-Trigger block
+    Self_trigger=> Ext_Self_Trigger_Match,                                    -- Self-Trigger signal comming from the Self-Trigger block
     din=>  filtered_dout_aux_delay_Extra,                               -- Data coming from the Filter Block / Raw data from AFEs
     Interface_LOCAL_Primitves_IN=>  Interface_LOCAL_Primitves_OUT_aux,   -- Interface with Local Primitives calculation BLOCK --> DEPENDS ON SELF-TRIGGER ALGORITHM 
     Interface_LOCAL_Primitves_OUT=>  Interface_LOCAL_Primitves_IN_aux, -- Interface with Local Primitives calculation BLOCK --> DEPENDS ON SELF-TRIGGER ALGORITHM 
@@ -315,7 +319,7 @@ Next_State_Sending: process(CurrentState_Data,Ext_Self_Trigger, Data_Sent_Count,
 begin
     case CurrentState_Data is
         when Not_Sending_Data =>
-            if(Ext_Self_Trigger = '1') then
+            if((Ext_Self_Trigger = '1')and (Match_with_Frame ='1')) then
                 NextState_Data <= Sending_Data;
             else
                 NextState_Data <= Not_Sending_Data; 
@@ -618,10 +622,10 @@ end process Output_FrameFormat;
 
 ---- TIME START For hits within the frame
 Time_Start_aux <= std_logic_vector(to_unsigned(Data_Sent_Count + 64,10));
-Proc_Time_Start: process(clock_aux, Ext_Self_Trigger, Data_Available_aux)
+Proc_Time_Start: process(clock_aux, Ext_Self_Trigger_Match, Data_Available_aux)
 begin
     if(clock_aux'event and clock_aux='1') then
-        if (Ext_Self_Trigger='1') then               
+        if (Ext_Self_Trigger_Match='1') then               
             Time_Start_reg <= Time_Start_aux;
         elsif (Data_Available_aux='1') then               
             Time_Start_reg2 <= Time_Start_reg;            
@@ -744,10 +748,10 @@ din_aux             <= din;
 
 ----------------------- OUTPUT SIGNALS   -----------------------
 Self_trigger        <= Self_trigger_out_aux;                   
-Data_Available      <= Data_Available_aux;                 
+Data_Available      <= Data_Available_aux;      
 Time_Peak           <= Time_Peak_aux;                       
 Time_Over_Baseline  <= Time_Over_Baseline_aux;                   
---Time_Start          <= Time_Start_reg;                  
+Time_Start          <= Time_Start_reg2;                  
 ADC_Peak            <= ADC_Peak_aux;                        
 ADC_Integral        <= ADC_Integral_aux;                          
 Number_Peaks        <= Number_Peaks_aux;                 

@@ -91,7 +91,8 @@ architecture stc_arch of stc is
     signal afe_dat_filtered_TP: std_logic_vector(13 downto 0);
 
     --signal    Self_trigger_aux:                    std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
-    signal    Data_Available_aux:                  std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
+    signal    Data_Available_aux:                  std_logic;                                              -- ACTIVE HIGH when Frame Finite State Machine is in WaitingFor Trig MODE
+    signal    Match_TP_With_FRAME:                 std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
     signal    Time_Peak_aux:                       std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
     signal    Time_Pulse_UB_aux:                   std_logic_vector(8 downto 0);                           -- Time in Samples of the light pulse signal is UNDER BASELINE (without undershoot)
     signal    Time_Pulse_OB_aux:                   std_logic_vector(9 downto 0);                           -- Time in Samples of the light pulse signal is OVER BASELINE (undershoot)
@@ -142,6 +143,7 @@ architecture stc_arch of stc is
         din:                            in  std_logic_vector(13 downto 0);                          -- Data coming from the Filter Block / Raw data from AFEs
         Config_Param:                   in  std_logic_vector(13 downto 0);                          -- Configure parameters for filtering & self-trigger bloks
         Ext_Self_Trigger:               in  std_logic;                                              -- External Self-Trigger coming from another block
+        Match_with_Frame:               in  std_logic;                                              -- External signal that allows being matched with the frame construction.
         Self_trigger:                   out std_logic;                                              -- Self-Trigger signal comming from the Self-Trigger block
         Data_Available:                 out std_logic;                                              -- ACTIVE HIGH when LOCAL primitives are calculated
         Time_Peak:                      out std_logic_vector(8 downto 0);                           -- Time in Samples to achieve de Max peak
@@ -323,8 +325,8 @@ begin
             afe_dly1 <= afe_dly0;
             afe_dly2 <= afe_dly1;
             -- selftrigger delay for Nacho's module
-            triggered_bicocca_reg_1 <= triggered_bicocca;
-            triggered_bicocca_reg_2 <= triggered_bicocca_reg_1;
+            -- triggered_bicocca_reg_1 <= triggered_bicocca;
+            -- triggered_bicocca_reg_2 <= triggered_bicocca_reg_1;
         end if;
     end process pack_proc;       
 
@@ -351,14 +353,15 @@ begin
     );
 
         ------------------- SELF-TRIGGER AND LOCAL PRIMITIVE CALCULATION DEVELOPED AT CIEMAT ---------
-    reset_ciemat <= '1' when (reset='1' or state=wait4trig) else '0';
+    -- reset_ciemat <= '1' when (reset='1' or state=wait4trig) else '0';
     ciemat_trig_inst: Self_Trigger_Primitive_Calculation
     port map(
         clock                       => aclk,                           -- AFE clock
-        reset                       => reset_ciemat,                          -- Reset signal. ACTIVE HIGH
-        din                         => afe_dat_filtered_TP,               -- Data coming from the Filter Block / Raw data from AFEs
+        reset                       => reset,                          -- Reset signal. ACTIVE HIGH
+        din                         => afe_dat_filtered_TP,            -- Data coming from the Filter Block / Raw data from AFEs
         Config_Param                => st_config,                      -- Configure parameters for filtering & self-trigger bloks
-        Ext_Self_Trigger            => triggered_bicocca_reg_2,              --External Self-Trigger coming from another block
+        Ext_Self_Trigger            => triggered_bicocca,              --External Self-Trigger coming from another block
+        Match_with_Frame            => Match_TP_With_FRAME,            -- External signal that allows being matched with the frame construction.
         Self_trigger                => open,                           -- Self-Trigger signal comming from the Self-Trigger block
         Data_Available              => open,                           -- ACTIVE HIGH when LOCAL primitives are calculated
         Time_Peak                   => open,                           -- Time in Samples to achieve de Max peak
@@ -394,7 +397,7 @@ begin
     Local_primitives_frame: process(aclk,Data_Available_Trailer_aux)
     begin
         if (rising_edge(aclk)) then
-            if (reset_ciemat ='1') then
+            if (reset='1') then
                Trailer_Word_0_reg <= (others => '0');
                Trailer_Word_1_reg <= (others => '0');
                Trailer_Word_2_reg <= (others => '0');
@@ -422,7 +425,21 @@ begin
                Trailer_Word_11_reg <= Trailer_Word_11_aux;
             end if;
         end if;
-    end process Local_primitives_frame;      
+    end process Local_primitives_frame;  
+    
+    -- Prepare data for the data format 
+    Match_Process: process(reset,state)
+    begin
+        if (reset='1') then
+            Match_TP_With_FRAME <='0'; 
+        else
+            if (state=wait4trig) then
+                Match_TP_With_FRAME <='1'; 
+            else
+                Match_TP_With_FRAME <='0'; 
+            end if;
+        end if;
+    end process Match_Process;          
 
     -- FSM waits for trigger condition then assembles output frame and stores into FIFO
 
