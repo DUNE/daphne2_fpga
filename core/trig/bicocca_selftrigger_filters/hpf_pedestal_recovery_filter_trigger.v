@@ -64,13 +64,13 @@ module hpf_pedestal_recovery_filter_trigger(
         .y(lpf_out)
     );
 
-    IIRFilter_afe_integrator_optimized hpf(
-        .clk(clk),
-        .reset(reset),
-        .enable(internal_afe_comp_enable),
-        .x(resta_out),
-        .y(hpf_out)
-    );
+   // IIRFilter_afe_integrator_optimized hpf(
+   //     .clk(clk),
+   //     .reset(reset),
+   //     .enable(internal_afe_comp_enable),
+   //     .x(resta_out),
+   //     .y(hpf_out)
+   // );
 
     //IIRfilter_movmean25_cfd_trigger mov_mean_cfd(
     //    .clk(clk),
@@ -117,6 +117,8 @@ module hpf_pedestal_recovery_filter_trigger(
                         (enable==1) ?   (x_i - lpf_out) : 
                         16'bx; 
     
+    assign hpf_out = resta_out;
+
     assign suma_out = (enable==0) ?   hpf_out : 
                       (enable==1) ?   (hpf_out + lpf_out) : 
                       16'bx;
