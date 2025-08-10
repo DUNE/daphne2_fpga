@@ -27,14 +27,14 @@ module hpf_pedestal_recovery_filter_trigger(
 );
 	
 	wire signed [15:0] hpf_out, hpf_out_aux, hpf_out_xcorr;
-    wire signed [15:0] movmean_out;
-    wire signed [13:0] movmean_out_14;
-	wire signed [15:0] x_i, x_delayed;
+    //wire signed [15:0] movmean_out;
+    //wire signed [13:0] movmean_out_14;
+    wire signed [15:0] x_i, x_delayed;
     wire signed [15:0] baseline_aux;
     //wire signed [15:0] w_resta_out [4:0][7:0];
     wire signed [15:0] w_out;
-	wire signed [15:0] resta_out, lpf_out, cfd_out;
-	wire signed [15:0] suma_out;
+    wire signed [15:0] resta_out, lpf_out, cfd_out;
+    wire signed [15:0] suma_out;
     wire tm_output_selector;
     wire internal_afe_comp_enable;
 
@@ -83,12 +83,11 @@ module hpf_pedestal_recovery_filter_trigger(
     //    .y(movmean_out)
     //);
 
-    moving_integrator_filter movmean(
+    delay_module delay_module_0(
         .clk(clk),
         .reset(reset),
         .enable(enable),
         .x(hpf_out_xcorr),
-        .y(movmean_out),
         .x_delayed(x_delayed)
         );
 
