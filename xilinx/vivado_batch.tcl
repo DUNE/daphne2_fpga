@@ -5,7 +5,7 @@
 
 # general setup stuff...
 
-set_param general.maxThreads 10
+set_param general.maxThreads 24
 set outputDir ./output
 file mkdir $outputDir
 set_part xc7a200t-fbg676-2
@@ -41,6 +41,7 @@ read_verilog ../core/trig/bicocca_selftrigger_filters/IIRfilter_movmean25_cfd_tr
 read_verilog ../core/trig/bicocca_selftrigger_filters/moving_integrator_filter.v
 read_verilog ../core/trig/bicocca_selftrigger_filters/delay_module.v
 read_verilog ../core/trig/bicocca_selftrigger_filters/constant_fraction_discriminator.v
+read_verilog ../core/trig/bicocca_selftrigger_filters/IIRFilter_3_coeff.v
 # eia
 read_vhdl ../core/trig/eia_selftrigger/st_mm.vhd
 read_vhdl ../core/trig/eia_selftrigger/st_xc.vhd

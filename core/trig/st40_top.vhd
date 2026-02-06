@@ -114,7 +114,7 @@ begin
 
     gen_stc_a: for a in 4 downto 0 generate
         gen_stc_c: for c in 7 downto 0 generate
-
+            gen_PMT_channels: if (c = 0) or (c = 2) or (c = 4) or (c = 6) or (c = 7) generate
             stc_inst: stc 
             generic map( link_id => link_id, ch_id => std_logic_vector(to_unsigned(10*a+c,6)) ) 
             port map(
@@ -147,6 +147,7 @@ begin
                 Tcount => trigcount(a)(c),
                 Pcount => packcount(a)(c)
               );
+    end generate gen_PMT_channels;
 
     end generate gen_stc_c;
     end generate gen_stc_a;
