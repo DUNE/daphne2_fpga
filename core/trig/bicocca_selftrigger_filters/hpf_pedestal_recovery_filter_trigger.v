@@ -11,22 +11,22 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 module hpf_pedestal_recovery_filter_trigger(
-	input wire clk,
-	input wire reset,
-	input wire enable,
+    input wire clk,
+    input wire reset,
+    input wire enable,
     input wire afe_comp_enable,
     input wire invert_enable,
     //input wire signed [13:0] threshold_value,
     input wire [41:0] threshold_xc,
     input wire [1:0] output_selector,
     output wire signed [15:0] baseline,
-	input wire signed [15:0] x,
+    input wire signed [15:0] x,
     output wire trigger_output,
-	output wire signed [15:0] y1,
+    output wire signed [15:0] y1,
     output wire signed [15:0] y2
 );
-	
-	wire signed [15:0] hpf_out, hpf_out_aux, hpf_out_xcorr;
+    
+    wire signed [15:0] hpf_out, hpf_out_i, hpf_out_aux, hpf_out_xcorr;
     //wire signed [15:0] movmean_out;
     //wire signed [13:0] movmean_out_14;
     wire signed [15:0] x_i, x_delayed;
@@ -64,13 +64,33 @@ module hpf_pedestal_recovery_filter_trigger(
         .y(lpf_out)
     );
 
-   // IIRFilter_afe_integrator_optimized hpf(
-   //     .clk(clk),
-   //     .reset(reset),
-   //     .enable(internal_afe_comp_enable),
-   //     .x(resta_out),
-   //     .y(hpf_out)
-   // );
+    IIRFilter_3_coeff #(.n1_i(18'h33ecb),
+                        .n2_i(18'h07472),
+                        .n3_i(18'h3d609),
+                        .d1_i(18'h0c305),
+                        .d2_i(18'h3ad77),
+                        .d3_i(18'h00a77))
+    PMT_comp_1(
+        .clk(clk),
+        .reset(reset),
+        .enable(internal_afe_comp_enable),
+        .x(resta_out),
+        .y(hpf_out_i)
+    );
+
+    IIRFilter_3_coeff #(.n1_i(18'h3096c),
+                        .n2_i(18'h076ae),
+                        .n3_i(18'h0),
+                        .d1_i(18'h0ef44),
+                        .d2_i(18'h3909e),
+                        .d3_i(18'h0))
+    PMT_comp_2(
+        .clk(clk),
+        .reset(reset),
+        .enable(internal_afe_comp_enable),
+        .x(hpf_out_i),
+        .y(hpf_out)
+    );
 
     //IIRfilter_movmean25_cfd_trigger mov_mean_cfd(
     //    .clk(clk),
@@ -116,7 +136,7 @@ module hpf_pedestal_recovery_filter_trigger(
                         (enable==1) ?   (x_i - lpf_out) : 
                         16'bx; 
     
-    assign hpf_out = resta_out;
+    //assign hpf_out = resta_out;
 
     assign suma_out = (enable==0) ?   hpf_out : 
                       (enable==1) ?   (hpf_out + lpf_out) : 
@@ -154,7 +174,7 @@ module hpf_pedestal_recovery_filter_trigger(
     assign baseline = baseline_aux; //lpf_out; // Aqui también habrá que modificar el baseline según la condicion invert_enable.
     assign internal_afe_comp_enable = (enable & afe_comp_enable);
     //assign movmean_out = $signed(movmean_out_14);
-	
+    
     assign tm_output_selector = (output_selector == 2'b00) ?   1'b0 : //hpf 
                                 (output_selector == 2'b01) ?   1'b0 : //movmean
                                 (output_selector == 2'b10) ?   1'b1 : //movmean cfd
