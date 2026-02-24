@@ -149,6 +149,16 @@ begin
               );
     end generate gen_PMT_channels;
 
+            gen_non_PMT_channels: if not( (c = 0) or (c = 2) or (c = 4) or (c = 6) or (c = 7) ) generate
+                fifo_ae(a)(c) <= '0';
+                fifo_do(a)(c) <= X"000000BC";
+                fifo_ko(a)(c) <= "0001";
+                trigger_signal(8*a+c) <= '0';
+                trigcount(a)(c) <= (others => '0');
+                packcount(a)(c) <= (others => '0');
+                afe_dat_filtered(a)(c) <= afe_dat(a)(c);
+            end generate gen_non_PMT_channels;
+
     end generate gen_stc_c;
     end generate gen_stc_a;
 
